@@ -9,6 +9,7 @@ import NotFound from "./NotFound";
 import Login from "./components/Auth/Login";
 import SignUp from "./components/Auth/SignUp";
 import Home from "./components/Home";
+import { LoadingProvider } from "./context/LoadingContext";
 
 function App() {
   const [isMobileView, setIsMobileView] = useState(false);
@@ -43,21 +44,23 @@ function App() {
   }
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="/"
-          element={
-            <RequireAuth>
-              <Home />
-            </RequireAuth>
-          }
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
+    <LoadingProvider>
+      <Router>
+        <Routes>
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/"
+            element={
+              <RequireAuth>
+                <Home />
+              </RequireAuth>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </LoadingProvider>
   );
 }
 

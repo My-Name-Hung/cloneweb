@@ -1,6 +1,7 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import https from "https";
 import mongoose from "mongoose";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -13,6 +14,8 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const SERVER_URL =
+  process.env.SERVER_URL || "https://cloneweb-uhw9.onrender.com";
 
 // Middleware
 app.use(cors());
@@ -24,6 +27,32 @@ mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("Could not connect to MongoDB:", err));
+
+// Anti-sleep mechanism for Render free tier
+// Ping the server every 14 minutes to prevent it from sleeping
+const pingInterval = 14 * 60 * 1000; // 14 minutes in milliseconds
+
+function keepServerAwake() {
+  setInterval(() => {
+    https
+      .get(SERVER_URL, (res) => {
+        console.log(
+          `[${new Date().toISOString()}] Ping sent to server, status: ${
+            res.statusCode
+          }`
+        );
+      })
+      .on("error", (err) => {
+        console.error(`[${new Date().toISOString()}] Ping error:`, err.message);
+      });
+  }, pingInterval);
+
+  console.log(
+    `Anti-sleep mechanism activated, pinging server every ${
+      pingInterval / 60000
+    } minutes`
+  );
+}
 
 // User Schema
 const userSchema = new mongoose.Schema({
@@ -108,6 +137,11 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
+// Health check endpoint for ping
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
 // Check if user agent is mobile
 function isMobile(userAgent) {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -130,4 +164,6 @@ app.get("*", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  // Start the anti-sleep mechanism
+  keepServerAwake();
 });

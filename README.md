@@ -1,88 +1,67 @@
-# MB Bank Clone
+# MB Bank Clone App
 
-A mobile-only web application that replicates the MB Bank registration and login screens. The application shows a 404 page for desktop users and the main content for mobile users.
+Ứng dụng giả lập mobile banking sử dụng React và Express.js.
 
-## Features
+## Cài đặt
 
-- Mobile detection - Shows content only for mobile devices
-- Desktop users see a custom 404 page with animations
-- User registration functionality with MongoDB
-- User login with session management
-- Form validation
-
-## Prerequisites
-
-- Node.js (v14 or higher)
-- MongoDB (running locally or a remote connection)
-
-## Installation
-
-1. Clone the repository
+1. Clone repository:
 
 ```
 git clone <repository-url>
 cd cloneapp
 ```
 
-2. Install dependencies
+2. Cài đặt dependencies:
 
 ```
 npm install
 ```
 
-3. Create a `.env` file in the root directory with the following content:
+3. Tạo file `.env` và cấu hình:
 
 ```
+# Server config
 PORT=3000
-MONGODB_URI=mongodb://localhost:27017/mbbank
+MONGODB_URI=<mongodb-connection-string>
+
+# API URL for frontend (thay thế bằng URL server thật)
+VITE_API_URL=https://cloneweb-uhw9.onrender.com
 ```
 
-## Running the application
+## Chạy ứng dụng
 
-### Development mode
-
-1. Start the MongoDB server (if running locally)
-
-2. Start the development server
+### Chạy development server:
 
 ```
 npm run dev
 ```
 
-3. In a separate terminal, start the backend server
+### Chạy server backend:
 
 ```
 node server.js
 ```
 
-4. Open your browser and navigate to:
-
-```
-http://localhost:5173
-```
-
-### Production mode
-
-1. Build the project
+### Build cho production:
 
 ```
 npm run build
 ```
 
-2. Start the server
+## Thông tin đăng nhập demo
 
-```
-npm start
-```
+Nếu không thể kết nối tới server API, ứng dụng sẽ tự động chuyển sang chế độ demo với bất kỳ thông tin đăng nhập nào có:
 
-3. Open your browser and navigate to:
+- Số điện thoại: 10 chữ số
+- Mật khẩu: Ít nhất 6 ký tự
 
-```
-http://localhost:3000
-```
+## Lưu ý quan trọng
 
-## Testing the application
+- Ứng dụng được thiết kế chỉ cho mobile view
+- Server API được host tại: https://cloneweb-uhw9.onrender.com
 
-- Access from a desktop browser to see the 404 page
-- Access from a mobile device or use responsive mode in browser dev tools to see the registration form
-- Create an account and log in to access the home page
+## Công nghệ sử dụng
+
+- Frontend: React, React Router, Vite
+- Backend: Express.js, MongoDB
+- Deployment: Render
