@@ -1,0 +1,98 @@
+.personal-info-form {
+  padding: 0 16px 30px;
+}
+
+.personal-info-form .form-group {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.personal-info-form label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: #333;
+  font-weight: 500;
+}
+
+.personal-info-form .form-control {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  background-color: #fff;
+}
+
+.personal-info-form .form-control.error {
+  border-color: #e74c3c;
+}
+
+.personal-info-form .error-text {
+  color: #e74c3c;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.personal-info-form select.form-control {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+}
+
+.personal-info-form .date-input-container {
+  position: relative;
+}
+
+.personal-info-form .calendar-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #777;
+  pointer-events: none;
+}
+
+.personal-info-form .continue-button {
+  background-color: #0039a6;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: bold;
+  width: 80%;
+  margin: 30px auto 0;
+  display: block;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.personal-info-form .continue-button:hover {
+  background-color: #002d80;
+}
+
+/* Dropdown styling for gender input */
+.personal-info-form select.form-control {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 30px;
+}
+
+/* For select dropdown arrow */
+.personal-info-form select.form-control::-ms-expand {
+  display: none;
+}
+
+/* Specific styling for different form fields */
+.personal-info-form input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+}

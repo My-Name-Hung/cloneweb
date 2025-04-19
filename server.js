@@ -126,6 +126,21 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  fullName: {
+    type: String,
+    default: null,
+  },
+  personalInfo: {
+    idNumber: String,
+    gender: String,
+    birthDate: String,
+    occupation: String,
+    income: String,
+    loanPurpose: String,
+    address: String,
+    contactPerson: String,
+    relationship: String,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -209,6 +224,8 @@ app.post("/api/auth/login", async (req, res) => {
         id: user._id,
         hasVerifiedDocuments: user.hasVerifiedDocuments,
         avatarUrl: user.avatarUrl,
+        fullName: user.fullName,
+        personalInfo: user.personalInfo,
       },
     });
   } catch (error) {
@@ -363,6 +380,79 @@ app.get("/api/verification/status/:userId", async (req, res) => {
     });
   } catch (error) {
     console.error("Verification status error:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+});
+
+// Update user profile with personal information
+app.post("/api/users/:userId/profile", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const profileData = req.body;
+
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update user with personal information
+    user.fullName = profileData.fullName;
+    user.personalInfo = {
+      idNumber: profileData.idNumber,
+      gender: profileData.gender,
+      birthDate: profileData.birthDate,
+      occupation: profileData.occupation,
+      income: profileData.income,
+      loanPurpose: profileData.loanPurpose,
+      address: profileData.address,
+      contactPerson: profileData.contactPerson,
+      relationship: profileData.relationship,
+    };
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        id: user._id,
+        phone: user.phone,
+        fullName: user.fullName,
+        hasVerifiedDocuments: user.hasVerifiedDocuments,
+        avatarUrl: user.avatarUrl,
+        personalInfo: user.personalInfo,
+      },
+    });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+});
+
+// Get user profile
+app.get("/api/users/:userId/profile", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        phone: user.phone,
+        fullName: user.fullName,
+        hasVerifiedDocuments: user.hasVerifiedDocuments,
+        avatarUrl: user.avatarUrl,
+        personalInfo: user.personalInfo,
+      },
+    });
+  } catch (error) {
+    console.error("Get profile error:", error);
     res.status(500).json({ message: "Lỗi server" });
   }
 });

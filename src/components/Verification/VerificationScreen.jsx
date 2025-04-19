@@ -86,12 +86,11 @@ const VerificationScreen = () => {
       // Update user's avatar with the portrait image
       await updateUserAvatar(userId);
 
-      // Navigate back to the loan page
-      navigate("/loan", {
+      // Navigate to the personal information form after successful verification
+      navigate("/personal-info", {
         state: {
           verificationComplete: true,
-          message:
-            "Xác minh thành công! Bạn có thể tiếp tục khoản vay của mình.",
+          message: "Xác minh thành công! Vui lòng cung cấp thông tin cá nhân.",
         },
       });
     } catch (error) {

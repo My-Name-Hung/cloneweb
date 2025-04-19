@@ -21,13 +21,16 @@ const Login = () => {
   useEffect(() => {
     let timer;
     if (successNotification) {
+      console.log("Login: Success notification showing, will redirect to home");
+
       timer = setTimeout(() => {
         // Hide loading screen before redirecting
         hideLoading();
         setSuccessNotification(false);
 
         // Navigate to home page
-        navigate("/");
+        console.log("Login: Redirecting to home page");
+        navigate("/", { replace: true });
       }, 3000);
     }
 
@@ -70,22 +73,27 @@ const Login = () => {
 
     // Show global loading screen
     showLoading();
+    console.log("Login: Submitting login form");
 
     try {
       // Use the login function from AuthContext
+      console.log("Login: Calling login function");
       const result = await login(formData.phone, formData.password);
+      console.log("Login: Login result:", result);
 
       hideLoading();
 
       if (result.success) {
+        console.log("Login: Login successful, showing notification");
         // Show success notification
         setSuccessNotification(true);
       } else {
+        console.log("Login: Login failed:", result.message);
         setError(result.message || "Đăng nhập thất bại");
       }
     } catch (err) {
       // Handle network errors or server errors
-      console.error("Login error:", err);
+      console.error("Login: Error during login:", err);
 
       // Check if this is a network error (API server not running or CORS issue)
       if (
@@ -98,6 +106,7 @@ const Login = () => {
         // For demo or development purposes - auto login if server is not reachable
         if (formData.phone.length === 10 && formData.password.length >= 6) {
           hideLoading();
+          console.log("Login: Using mock login for development");
 
           // Create mock user data
           const mockUser = {
@@ -108,6 +117,7 @@ const Login = () => {
 
           // Store in localStorage to match AuthContext
           localStorage.setItem("user", JSON.stringify(mockUser));
+          console.log("Login: Mock user stored in localStorage");
 
           setSuccessNotification(true);
           return;

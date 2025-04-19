@@ -6,15 +6,17 @@ import carousel1 from "../../assets/Home/carousel/1.jpg";
 import carousel2 from "../../assets/Home/carousel/2.jpg";
 import carousel3 from "../../assets/Home/carousel/3.jpg";
 import bankImage from "../../assets/Home/home.png";
+import { useAuth } from "../../context/AuthContext";
 import "./HomeScreen.css";
 
 const HomeScreen = ({ user }) => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [animateItems, setAnimateItems] = useState([false, false, false]);
   const [activeSlide, setActiveSlide] = useState(0);
   const [notificationIndex, setNotificationIndex] = useState(0);
 
-  // Dữ liệu mẫu cho thông báo
+  // Sample notification data
   const notificationData = [
     "033***5 đã rút 80.000.000 đ",
     "091***6 đã vay thành công 150.000.000 đ",
@@ -27,9 +29,9 @@ const HomeScreen = ({ user }) => {
   const carouselImages = [carousel1, carousel2, carousel3];
 
   const handleLogout = () => {
-    // Xóa session storage
-    sessionStorage.removeItem("user");
-    // Chuyển hướng về trang login
+    // Use the logout function from AuthContext
+    logout();
+    // Navigate to login page
     navigate("/login");
   };
 
@@ -56,13 +58,13 @@ const HomeScreen = ({ user }) => {
     return () => clearInterval(interval);
   }, [carouselImages.length]);
 
-  // Thay đổi thông báo tự động
+  // Auto-rotate notifications
   useEffect(() => {
     const notificationInterval = setInterval(() => {
       setNotificationIndex(
         (prevIndex) => (prevIndex + 1) % notificationData.length
       );
-    }, 3000); // Thay đổi thông báo mỗi 3 giây
+    }, 3000); // Change notification every 3 seconds
 
     return () => clearInterval(notificationInterval);
   }, [notificationData.length]);
@@ -71,23 +73,28 @@ const HomeScreen = ({ user }) => {
     setActiveSlide((prevSlide) => (prevSlide + 1) % carouselImages.length);
   };
 
-  const goToPrevSlide = () => {
-    setActiveSlide((prevSlide) =>
-      prevSlide === 0 ? carouselImages.length - 1 : prevSlide - 1
-    );
-  };
-
   // Handle manual slide change
   const goToSlide = (index) => {
     setActiveSlide(index);
   };
 
   const handleLoanButtonClick = () => {
-    navigate("/loan"); // Điều hướng đến trang vay
+    navigate("/loan"); // Navigate to loan page
   };
 
   const handleNotificationClick = () => {
-    navigate("/notifications"); // Chuyển đến trang thông báo
+    navigate("/notifications"); // Navigate to notifications page
+  };
+
+  // Get the display name - show fullName if available, otherwise phone number
+  const getDisplayName = () => {
+    if (user?.fullName) {
+      return user.fullName;
+    } else if (user?.personalInfo?.fullName) {
+      return user.personalInfo.fullName;
+    } else {
+      return user?.phone || "Người dùng";
+    }
   };
 
   return (
@@ -96,7 +103,7 @@ const HomeScreen = ({ user }) => {
       <div className="header">
         <div className="greeting">
           <p>Xin chào,</p>
-          <p className="phone-number">{user?.phone || "0705007516"}</p>
+          <p className="phone-number">{getDisplayName()}</p>
         </div>
         <div className="notification-icon" onClick={handleNotificationClick}>
           <FaBell size={20} color="#fff" />

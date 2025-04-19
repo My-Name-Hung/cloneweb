@@ -1,33 +1,60 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const RequireAuth = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, setUser } = useAuth();
+  const [authChecked, setAuthChecked] = useState(false);
   const location = useLocation();
-  
-  useEffect(() => {
-    // For debugging
-    const localStorageUser = localStorage.getItem("user");
-    console.log("RequireAuth - AuthContext user:", user);
-    console.log("RequireAuth - localStorage user:", localStorageUser);
-  }, [user]);
 
-  // If still loading, show a loading spinner
-  if (loading) {
-    return <div className="loading">Loading...</div>;
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      try {
+        // If user already exists in context, we're authenticated
+        if (user) {
+          console.log("User found in context:", user);
+          setAuthChecked(true);
+          return;
+        }
+
+        // If user is not in context, check localStorage
+        const userData = localStorage.getItem("userData");
+
+        if (userData) {
+          console.log("User found in localStorage, updating context");
+          setUser(JSON.parse(userData));
+          setAuthChecked(true);
+        } else {
+          console.log("No user session found, redirecting to login");
+          setAuthChecked(true);
+        }
+      } catch (error) {
+        console.error("Authentication check failed:", error);
+        setAuthChecked(true);
+      }
+    };
+
+    // Only run the check when loading is complete
+    if (!loading) {
+      checkAuthentication();
+    }
+  }, [user, loading, setUser]);
+
+  // If still checking authentication, show nothing (or a loader)
+  if (loading || !authChecked) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>Loading...</p>
+      </div>
+    );
   }
 
-  // Check both AuthContext and localStorage for a user
-  const localStorageUser = localStorage.getItem("user");
-  
-  // If user is not logged in either way, redirect to login page
-  if (!user && !localStorageUser) {
-    console.log("RequireAuth - Not authenticated, redirecting to login");
+  // After checking, if no user, redirect to login
+  if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // User is logged in, render the protected component
+  // User is authenticated
   return children;
 };
 
