@@ -12,13 +12,7 @@ const requiresVerification = (pathname) => {
 };
 
 const RequireAuth = ({ children }) => {
-  const {
-    user,
-    loading,
-    setUser,
-    updateBankInfo,
-    checkUserVerificationStatus,
-  } = useAuth();
+  const { user, loading, setUser, checkUserVerificationStatus } = useAuth();
   const [authChecked, setAuthChecked] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -40,6 +34,14 @@ const RequireAuth = ({ children }) => {
 
         // Nếu route hiện tại yêu cầu xác minh, kiểm tra trạng thái xác minh
         if (requiresVerification(location.pathname)) {
+          // Kiểm tra hasVerifiedDocuments trước - đây là flag nhanh
+          if (user?.hasVerifiedDocuments === true) {
+            // Người dùng đã được xác minh từ trước
+            setAuthChecked(true);
+            return;
+          }
+
+          // Nếu không có flag, kiểm tra chi tiết
           const verificationStatus = await checkUserVerificationStatus();
 
           if (!verificationStatus.verified) {

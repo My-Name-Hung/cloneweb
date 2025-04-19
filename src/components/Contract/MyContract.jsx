@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import thongbaoIcon from "../../assets/Home/thongbao.png";
 import bankSignatureImage from "../../assets/xacminh/chuky.jpg";
 import { useAuth } from "../../context/AuthContext";
-import { getSignature } from "../../database/storageService";
 import "./MyContract.css";
 
 const MyContract = () => {
@@ -19,84 +18,76 @@ const MyContract = () => {
   const [_paymentSchedule, _setPaymentSchedule] = useState([]);
   const modalRef = useRef(null);
   const overlayRef = useRef(null);
+  const [error, setError] = useState(null);
 
   // Define the API_BASE_URL from environment variables or use fallback
   const API_BASE_URL =
     import.meta.env.VITE_API_URL || "https://cloneweb-uhw9.onrender.com";
 
   // Hàm xử lý đường dẫn ảnh
-  const getFullImageUrl = (path) => {
-    if (!path) {
-      console.log("No image path provided");
-      return null;
+  const getFullImageUrl = (url) => {
+    if (!url) return null;
+
+    // Nếu đã là URL đầy đủ, trả về nguyên bản
+    if (url.startsWith("http")) {
+      return url;
     }
 
-    // If it's already a full URL, return it as is
-    if (path.startsWith("http")) {
-      console.log("Using full URL:", path);
-      return path;
-    }
+    // Đảm bảo có dấu / đúng
+    const normalizedPath = url.startsWith("/") ? url : `/${url}`;
 
-    // For local server paths starting with /uploads
-    if (path.startsWith("/uploads")) {
-      const fullUrl = `${API_BASE_URL}${path}`;
-      console.log("Constructed full URL from path:", fullUrl);
-      return fullUrl;
-    }
-
-    // For other relative paths
-    console.log("Using relative path with base URL:", `${API_BASE_URL}${path}`);
-    return `${API_BASE_URL}${path}`;
+    // Kết hợp với API_URL
+    return `${API_BASE_URL}${normalizedPath}`;
   };
 
   useEffect(() => {
-    // Function to fetch contracts
     const fetchContracts = async () => {
       setIsLoading(true);
+      setError(null);
+
       try {
-        if (!user || !user.id) {
-          console.log("No user logged in, cannot fetch contracts");
-          setContracts([]);
-          setIsLoading(false);
-          return;
-        }
+        // Sử dụng getUserContracts từ AuthContext
+        const response = await getUserContracts();
+        console.log("Kết quả lấy hợp đồng:", response);
 
-        // Get contracts from auth context (which tries API first, then localStorage)
-        const result = await getUserContracts();
-
-        if (result.success && result.contracts) {
-          console.log("Found contracts for user:", user.id, result.contracts);
-          setContracts(result.contracts);
-        } else {
-          // If no contracts found through auth context, check localStorage directly
-          console.log(
-            "No contracts found through auth context, checking localStorage"
+        if (response && response.success && response.contracts) {
+          // Đảm bảo URL hình ảnh chữ ký đầy đủ
+          const contractsWithFormattedUrls = response.contracts.map(
+            (contract) => {
+              // Xử lý URL chữ ký
+              if (
+                contract.signatureUrl &&
+                !contract.signatureUrl.startsWith("http")
+              ) {
+                contract.signatureUrl = getFullImageUrl(contract.signatureUrl);
+              }
+              return contract;
+            }
           );
-          const userContractsKey = `userContracts_${user.id}`;
-          const savedContracts = localStorage.getItem(userContractsKey);
 
-          if (savedContracts) {
-            console.log("Found contracts in localStorage for user:", user.id);
-            setContracts(JSON.parse(savedContracts));
-          } else {
-            console.log("No contracts found for user:", user.id);
-            setContracts([]);
-          }
+          console.log(
+            "Danh sách hợp đồng đã xử lý:",
+            contractsWithFormattedUrls
+          );
+          setContracts(contractsWithFormattedUrls);
+        } else {
+          console.error("Lỗi khi lấy hợp đồng:", response);
+          setError("Không thể lấy danh sách hợp đồng. Vui lòng thử lại sau.");
         }
       } catch (error) {
         console.error("Error fetching contracts:", error);
-        setContracts([]);
+        setError("Có lỗi xảy ra khi tải hợp đồng. Vui lòng thử lại sau.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    // Short delay to simulate loading
-    const timer = setTimeout(() => {
+    // Chỉ fetch khi có user
+    if (user && user.id) {
       fetchContracts();
-    }, 500);
-
-    return () => clearTimeout(timer);
+    } else {
+      setIsLoading(false);
+    }
   }, [user, getUserContracts]);
 
   const handleBackClick = () => {
@@ -131,35 +122,39 @@ const MyContract = () => {
 
     if (!contract) return;
 
-    setSelectedContract(contract);
+    // Đảm bảo signatureUrl đã được xử lý trước khi hiển thị contract
+    const processedContract = {
+      ...contract,
+      signatureUrl: processSignatureUrl(contract.signatureUrl),
+    };
+    console.log(
+      "Processed contract with correct signature URL:",
+      processedContract
+    );
 
-    // Attempt to retrieve signature from local storage first
-    if (user && user._id && contract._id) {
-      try {
-        // Get signature image using the updated storage service
-        const signatureUrl = await getSignature(user._id, contract._id);
-        console.log("Retrieved signature URL:", signatureUrl);
+    setSelectedContract(processedContract);
+    setShowContractModal(true);
+  };
 
-        if (signatureUrl) {
-          // Update the contract with the signature URL
-          setSelectedContract({
-            ...contract,
-            signatureUrl: signatureUrl,
-          });
-        } else if (contract.signatureUrl) {
-          console.log(
-            "Using contract's existing signature URL:",
-            contract.signatureUrl
-          );
-        } else {
-          console.log("No signature URL available");
-        }
-      } catch (error) {
-        console.error("Error retrieving signature:", error);
-      }
+  // Hàm xử lý URL ảnh chữ ký để đảm bảo luôn đúng
+  const processSignatureUrl = (url) => {
+    if (!url) {
+      console.log("No signature URL provided");
+      return null;
     }
 
-    setShowContractModal(true);
+    // Nếu URL đã đầy đủ, trả về nguyên bản
+    if (url.startsWith("http")) {
+      console.log("Using full signature URL:", url);
+      return url;
+    }
+
+    // Đảm bảo có dấu / đúng
+    const normalizedPath = url.startsWith("/") ? url : `/${url}`;
+    const fullUrl = `${API_BASE_URL}${normalizedPath}`;
+
+    console.log("Constructed full signature URL:", fullUrl);
+    return fullUrl;
   };
 
   const handleCloseContract = () => {
@@ -255,7 +250,7 @@ const MyContract = () => {
     return (
       <div className="contract-loading">
         <div className="loading-spinner"></div>
-        <p>Đang tải...</p>
+        <p>{error || "Đang tải..."}</p>
       </div>
     );
   }

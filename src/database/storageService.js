@@ -182,59 +182,54 @@ export const saveImage = async (
       }`
     );
 
-    try {
-      const response = await axios.post(
-        `${API_BASE_URL}/api/verification/upload/${
-          imageType === "document" ? documentType : imageType
-        }`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+    const response = await axios.post(
+      `${API_BASE_URL}/api/verification/upload/${
+        imageType === "document" ? documentType : imageType
+      }`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    console.log("Upload response:", response.data);
+
+    if (!response.data.success) {
+      throw new Error(
+        response.data.message || "Failed to upload image to server"
       );
-
-      console.log("Upload response:", response.data);
-
-      if (!response.data.success) {
-        throw new Error(
-          response.data.message || "Failed to upload image to server"
-        );
-      }
-
-      // Get the URL from the server response
-      const imageUrl = response.data.fileUrl || response.data.fullUrl;
-      console.log("Image URL from server:", imageUrl);
-
-      // Save locally and track in local storage
-      await saveFileToLocal(imageUrl, fileName, localPath);
-
-      // Update local storage tracking
-      const localPath_DB = `${localPath}/${fileName}`;
-      if (imageType === "avatar") {
-        const avatars = JSON.parse(
-          localStorage.getItem(STORAGE_KEYS.AVATARS) || "[]"
-        );
-        if (!avatars.includes(localPath_DB)) {
-          avatars.push(localPath_DB);
-          localStorage.setItem(STORAGE_KEYS.AVATARS, JSON.stringify(avatars));
-        }
-      } else {
-        const images = JSON.parse(
-          localStorage.getItem(STORAGE_KEYS.IMAGES) || "[]"
-        );
-        if (!images.includes(localPath_DB)) {
-          images.push(localPath_DB);
-          localStorage.setItem(STORAGE_KEYS.IMAGES, JSON.stringify(images));
-        }
-      }
-
-      return imageUrl;
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      return null;
     }
+
+    // Get the URL from the server response
+    const imageUrl = response.data.fileUrl || response.data.fullUrl;
+    console.log("Image URL from server:", imageUrl);
+
+    // Save locally and track in local storage
+    await saveFileToLocal(imageUrl, fileName, localPath);
+
+    // Update local storage tracking
+    const localPath_DB = `${localPath}/${fileName}`;
+    if (imageType === "avatar") {
+      const avatars = JSON.parse(
+        localStorage.getItem(STORAGE_KEYS.AVATARS) || "[]"
+      );
+      if (!avatars.includes(localPath_DB)) {
+        avatars.push(localPath_DB);
+        localStorage.setItem(STORAGE_KEYS.AVATARS, JSON.stringify(avatars));
+      }
+    } else {
+      const images = JSON.parse(
+        localStorage.getItem(STORAGE_KEYS.IMAGES) || "[]"
+      );
+      if (!images.includes(localPath_DB)) {
+        images.push(localPath_DB);
+        localStorage.setItem(STORAGE_KEYS.IMAGES, JSON.stringify(images));
+      }
+    }
+
+    return imageUrl;
   } catch (error) {
     console.error("Error saving image:", error);
     return null;

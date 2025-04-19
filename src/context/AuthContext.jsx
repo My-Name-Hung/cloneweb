@@ -30,14 +30,40 @@ export const AuthProvider = ({ children }) => {
 
       // Set user from localStorage
       const parsedUser = JSON.parse(userData);
+      console.log("User data from localStorage:", parsedUser);
 
-      // Ensure avatar URL is properly formatted with API base URL if relative
-      if (parsedUser.avatarUrl && !parsedUser.avatarUrl.startsWith("http")) {
-        parsedUser.avatarUrl = `${API_BASE_URL}${parsedUser.avatarUrl}`;
+      // Xử lý đầy đủ URL avatar
+      if (parsedUser.avatarUrl) {
+        // Nếu avatarUrl là đường dẫn tương đối, thêm API_BASE_URL
+        if (!parsedUser.avatarUrl.startsWith("http")) {
+          const normalizedPath = parsedUser.avatarUrl.startsWith("/")
+            ? parsedUser.avatarUrl
+            : `/${parsedUser.avatarUrl}`;
+          parsedUser.avatarUrl = `${API_BASE_URL}${normalizedPath}`;
+          console.log("Normalized avatar URL:", parsedUser.avatarUrl);
+        }
+      }
+
+      // Xử lý cả ảnh chân dung trong personalInfo nếu có
+      if (parsedUser.personalInfo && parsedUser.personalInfo.portraitImage) {
+        if (!parsedUser.personalInfo.portraitImage.startsWith("http")) {
+          const normalizedPath =
+            parsedUser.personalInfo.portraitImage.startsWith("/")
+              ? parsedUser.personalInfo.portraitImage
+              : `/${parsedUser.personalInfo.portraitImage}`;
+          parsedUser.personalInfo.portraitImage = `${API_BASE_URL}${normalizedPath}`;
+          console.log(
+            "Normalized portrait image URL:",
+            parsedUser.personalInfo.portraitImage
+          );
+        }
       }
 
       setUser(parsedUser);
-      console.log("User loaded from localStorage:", parsedUser);
+      console.log(
+        "User loaded from localStorage with normalized URLs:",
+        parsedUser
+      );
 
       // Fetch latest bank info if user is logged in
       if (parsedUser && parsedUser.id) {
@@ -166,45 +192,29 @@ export const AuthProvider = ({ children }) => {
   };
 
   const checkVerificationStatus = async () => {
-    console.log("AuthContext: Checking verification status");
     try {
       if (!user) {
-        console.log("AuthContext: No user to check verification status");
-        return { success: false, message: "Không có người dùng đăng nhập" };
+        return { success: false, isVerified: false };
       }
 
-      console.log("AuthContext: Sending verification status request to API");
-      const response = await axios.get(
-        `${API_BASE_URL}/api/verification/status/${user.id}`
-      );
+      // Sử dụng API mới để kiểm tra
+      const verificationResult = await checkUserVerificationStatus();
 
-      // Format the avatar URL with the full API base URL if it's a relative path
-      let avatarUrl = response.data.avatarUrl;
-      if (avatarUrl && !avatarUrl.startsWith("http")) {
-        avatarUrl = `${API_BASE_URL}${avatarUrl}`;
+      if (verificationResult.success) {
+        // Cập nhật avatar URL nếu có
+        const avatarUrl = user.avatarUrl || null;
+
+        return {
+          success: true,
+          isVerified: verificationResult.verified,
+          avatarUrl,
+        };
       }
 
-      // Update user with latest verification status and properly formatted avatar URL
-      const updatedUser = {
-        ...user,
-        hasVerifiedDocuments: response.data.isVerified,
-        avatarUrl: avatarUrl,
-      };
-      localStorage.setItem("userData", JSON.stringify(updatedUser));
-      setUser(updatedUser);
-
-      return {
-        success: true,
-        isVerified: response.data.isVerified,
-        documents: response.data.documents,
-        avatarUrl: avatarUrl,
-      };
+      return { success: false, isVerified: false };
     } catch (error) {
-      console.error("AuthContext: Verification status error:", error);
-      return {
-        success: false,
-        message: "Không thể kiểm tra trạng thái xác minh",
-      };
+      console.error("Error in verification check:", error);
+      return { success: false, isVerified: false };
     }
   };
 
@@ -214,6 +224,40 @@ export const AuthProvider = ({ children }) => {
     const updatedUser = { ...user, ...userData };
     localStorage.setItem("userData", JSON.stringify(updatedUser));
     setUser(updatedUser);
+    return { success: true, user: updatedUser };
+  };
+
+  // Thêm hàm để cập nhật avatar
+  const updateUserAvatar = (avatarUrl) => {
+    if (!user) return { success: false, message: "No user logged in" };
+
+    console.log("updateUserAvatar called with:", avatarUrl);
+
+    // Đảm bảo avatarUrl đầy đủ
+    let fullAvatarUrl = avatarUrl;
+    if (avatarUrl && !avatarUrl.startsWith("http")) {
+      fullAvatarUrl = `${API_BASE_URL}${
+        avatarUrl.startsWith("/") ? avatarUrl : `/${avatarUrl}`
+      }`;
+      console.log("Converted to full avatar URL:", fullAvatarUrl);
+    }
+
+    // Cập nhật avatar trong user object
+    const updatedUser = {
+      ...user,
+      avatarUrl: fullAvatarUrl,
+      // Lưu cả vào personalInfo nếu có
+      personalInfo: {
+        ...(user.personalInfo || {}),
+        portraitImage: fullAvatarUrl,
+      },
+    };
+
+    // Lưu vào localStorage và state
+    localStorage.setItem("userData", JSON.stringify(updatedUser));
+    setUser(updatedUser);
+
+    console.log("Avatar updated successfully:", fullAvatarUrl);
     return { success: true, user: updatedUser };
   };
 
@@ -266,87 +310,109 @@ export const AuthProvider = ({ children }) => {
 
   const saveUserContract = async (contractData) => {
     if (!user || !user.id) {
-      console.log("Không thể lưu hợp đồng: Không có người dùng đăng nhập");
-      return { success: false, message: "Không có người dùng đăng nhập" };
+      return { success: false, message: "Không tìm thấy thông tin người dùng" };
     }
 
     try {
-      console.log("Đang lưu hợp đồng cho user:", user.id);
+      // Tạo ID hợp đồng duy nhất và thời gian
+      const timestamp = new Date();
+      const contractId = `${Math.floor(
+        Math.random() * 100000000
+      )}_${timestamp.getTime()}`;
 
-      // Tạo mã hợp đồng và timestamp
-      const contractId = Math.floor(
-        10000000 + Math.random() * 90000000
-      ).toString();
-      const now = new Date();
-      const createdTime = now.toLocaleTimeString("vi-VN", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-      const createdDate = now.toLocaleDateString("vi-VN");
+      const currentDate = timestamp.toLocaleDateString("vi-VN");
+      const currentTime = timestamp.toLocaleTimeString("vi-VN");
 
-      try {
-        // Try to save to the API
-        const response = await axios.post(`${API_BASE_URL}/api/contracts`, {
-          userId: user.id,
-          contractId,
-          loanAmount: contractData.loanAmount,
-          loanTerm: contractData.loanTerm,
-          bankName: contractData.bankName || contractData.bank,
-          signatureImage: contractData.signatureImage,
-        });
-
-        if (response.data.success) {
-          console.log("Lưu hợp đồng vào server thành công");
-          // Return the server response if successful
-          return {
-            success: true,
-            message: "Lưu hợp đồng thành công",
-            contract: response.data.contract,
-          };
-        }
-      } catch (apiError) {
-        console.error("Không thể lưu vào API, lưu vào localStorage:", apiError);
-      }
-
-      // Lưu vào localStorage như giải pháp dự phòng
-      const contractInfo = {
+      const newContract = {
+        userId: user.id,
         contractId,
         loanAmount: contractData.loanAmount,
         loanTerm: contractData.loanTerm,
-        bankName: contractData.bankName || contractData.bank,
+        bankName: contractData.bankName,
+        contractContent: contractData.contractContent,
         signatureImage: contractData.signatureImage,
-        createdTime,
-        createdDate,
+        createdDate: currentDate,
+        createdTime: currentTime,
+        timestamp: timestamp.getTime(),
       };
 
-      // Lưu hợp đồng vào localStorage với key riêng cho user
-      const userContractsKey = `userContracts_${user.id}`;
-      const savedContracts = JSON.parse(
-        localStorage.getItem(userContractsKey) || "[]"
-      );
-      savedContracts.push(contractInfo);
-      localStorage.setItem(userContractsKey, JSON.stringify(savedContracts));
+      // Cố gắng lưu vào API
+      try {
+        console.log("API_BASE_URL:", API_BASE_URL);
 
-      // Cập nhật thông tin user
-      const updatedUser = {
-        ...user,
-        latestContract: contractInfo,
-      };
+        // Đầu tiên, thử lưu hợp đồng với endpoint /api/contracts
+        let response;
+        try {
+          response = await axios.post(
+            `${API_BASE_URL}/api/contracts`,
+            newContract
+          );
+          console.log("Thử lưu với /api/contracts:", response.data);
+        } catch (err) {
+          // Nếu thất bại, thử endpoint khác
+          console.log(
+            "Lỗi với /api/contracts, thử endpoint khác:",
+            err.message
+          );
+          response = await axios.post(
+            `${API_BASE_URL}/api/users/${user.id}/contracts`,
+            newContract
+          );
+        }
 
-      localStorage.setItem("userData", JSON.stringify(updatedUser));
-      setUser(updatedUser);
+        console.log("Contract saved to API:", response.data);
 
-      return {
-        success: true,
-        message: "Lưu hợp đồng thành công",
-        contract: contractInfo,
-      };
+        if (response.data.success) {
+          // Cập nhật thông tin người dùng trong state và localStorage
+          const updatedUser = {
+            ...user,
+            hasVerifiedDocuments: true, // Đặt trạng thái xác minh thành true khi lưu hợp đồng thành công
+          };
+
+          setUser(updatedUser);
+          localStorage.setItem("userData", JSON.stringify(updatedUser));
+
+          // Xóa cache contracts để buộc refresh lần sau khi lấy hợp đồng
+          localStorage.removeItem(`userContracts_${user.id}`);
+
+          return {
+            success: true,
+            message: "Hợp đồng đã được lưu thành công",
+            contract: response.data.contract,
+          };
+        }
+      } catch (error) {
+        console.error("API error when saving contract:", error);
+
+        // Nếu API không thành công, lưu vào localStorage
+        const existingContracts = JSON.parse(
+          localStorage.getItem(`contracts_${user.id}`) || "[]"
+        );
+        existingContracts.push(newContract);
+        localStorage.setItem(
+          `contracts_${user.id}`,
+          JSON.stringify(existingContracts)
+        );
+
+        // Cập nhật trạng thái xác minh người dùng
+        const updatedUser = {
+          ...user,
+          hasVerifiedDocuments: true, // Đặt trạng thái xác minh thành true ngay cả khi lưu vào localStorage
+        };
+
+        setUser(updatedUser);
+        localStorage.setItem("userData", JSON.stringify(updatedUser));
+
+        console.log("Contract saved to localStorage as fallback");
+        return {
+          success: true,
+          message: "Hợp đồng đã được lưu thành công (lưu trữ nội bộ)",
+          contract: newContract,
+        };
+      }
     } catch (error) {
-      console.error("Lỗi khi lưu hợp đồng:", error);
-      return {
-        success: false,
-        message: error.message || "Có lỗi khi lưu hợp đồng",
-      };
+      console.error("Error saving contract:", error);
+      return { success: false, message: "Đã xảy ra lỗi khi lưu hợp đồng" };
     }
   };
 
@@ -360,20 +426,38 @@ export const AuthProvider = ({ children }) => {
       const userId = user.id;
       console.log("Đang lấy danh sách hợp đồng cho user:", userId);
 
-      // Sử dụng axios với URL đầy đủ
-      console.log(
-        "API Request URL:",
-        `${API_BASE_URL}/api/users/${userId}/contracts`
-      );
-      const response = await axios.get(
-        `${API_BASE_URL}/api/users/${userId}/contracts`
-      );
+      // Xác định URL đúng - phải là URL đầy đủ
+      const apiUrl = API_BASE_URL.endsWith("/")
+        ? `${API_BASE_URL}api/users/${userId}/contracts`
+        : `${API_BASE_URL}/api/users/${userId}/contracts`;
 
-      if (response.data.success) {
+      console.log("API Request URL:", apiUrl);
+
+      // Sử dụng axios với URL đầy đủ
+      const response = await axios.get(apiUrl);
+
+      if (response.data && response.data.success) {
         console.log(
           "Lấy danh sách hợp đồng thành công:",
           response.data.contracts
         );
+
+        // Đảm bảo URL đầy đủ cho ảnh chữ ký
+        if (response.data.contracts && response.data.contracts.length > 0) {
+          response.data.contracts = response.data.contracts.map((contract) => {
+            if (
+              contract.signatureUrl &&
+              !contract.signatureUrl.startsWith("http")
+            ) {
+              contract.signatureUrl =
+                API_BASE_URL +
+                (contract.signatureUrl.startsWith("/")
+                  ? contract.signatureUrl
+                  : `/${contract.signatureUrl}`);
+            }
+            return contract;
+          });
+        }
 
         // Lưu vào localStorage làm cache
         const userContractsKey = `userContracts_${userId}`;
@@ -394,19 +478,44 @@ export const AuthProvider = ({ children }) => {
       try {
         const userId = user.id;
         const fallbackUrl = "https://cloneweb-uhw9.onrender.com";
-        console.log(
-          "Fallback API URL:",
-          `${fallbackUrl}/api/users/${userId}/contracts`
-        );
-        const fallbackResponse = await axios.get(
-          `${fallbackUrl}/api/users/${userId}/contracts`
-        );
+        const apiUrl = `${fallbackUrl}/api/users/${userId}/contracts`;
+        console.log("Fallback API URL:", apiUrl);
+        const fallbackResponse = await axios.get(apiUrl);
 
-        if (fallbackResponse.data.success) {
+        if (fallbackResponse.data && fallbackResponse.data.success) {
           console.log(
             "Lấy hợp đồng với fallback URL thành công:",
             fallbackResponse.data
           );
+
+          // Đảm bảo URL đầy đủ cho ảnh chữ ký
+          if (
+            fallbackResponse.data.contracts &&
+            fallbackResponse.data.contracts.length > 0
+          ) {
+            fallbackResponse.data.contracts =
+              fallbackResponse.data.contracts.map((contract) => {
+                if (
+                  contract.signatureUrl &&
+                  !contract.signatureUrl.startsWith("http")
+                ) {
+                  contract.signatureUrl =
+                    fallbackUrl +
+                    (contract.signatureUrl.startsWith("/")
+                      ? contract.signatureUrl
+                      : `/${contract.signatureUrl}`);
+                }
+                return contract;
+              });
+          }
+
+          // Lưu vào localStorage làm cache
+          const userContractsKey = `userContracts_${user.id}`;
+          localStorage.setItem(
+            userContractsKey,
+            JSON.stringify(fallbackResponse.data.contracts)
+          );
+
           return fallbackResponse.data;
         }
       } catch (fallbackError) {
@@ -419,6 +528,23 @@ export const AuthProvider = ({ children }) => {
 
       if (savedContracts) {
         const contracts = JSON.parse(savedContracts);
+        console.log("Lấy danh sách hợp đồng từ localStorage:", contracts);
+        return {
+          success: true,
+          contracts: contracts,
+        };
+      }
+
+      // Thử với localStorage khác
+      const localStorageKey = `contracts_${user.id}`;
+      const localContracts = localStorage.getItem(localStorageKey);
+
+      if (localContracts) {
+        const contracts = JSON.parse(localContracts);
+        console.log(
+          "Lấy danh sách hợp đồng từ localStorage alternate key:",
+          contracts
+        );
         return {
           success: true,
           contracts: contracts,
@@ -438,63 +564,91 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const [profileRes, bankInfoRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/users/${user.id}/profile`),
-        axios.get(`${API_BASE_URL}/api/users/${user.id}/bank-info`),
-      ]);
+      // Thử lấy dữ liệu từ API trước
+      try {
+        const [profileRes, bankInfoRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/users/${user.id}/profile`),
+          axios.get(`${API_BASE_URL}/api/users/${user.id}/bank-info`),
+        ]);
 
-      const hasPersonalInfo =
-        profileRes.data.success &&
-        profileRes.data.user?.personalInfo?.idNumber &&
-        profileRes.data.user?.fullName;
+        const hasPersonalInfo =
+          profileRes.data.success &&
+          profileRes.data.user?.personalInfo?.idNumber &&
+          profileRes.data.user?.fullName;
 
-      const hasBankInfo =
-        bankInfoRes.data.success &&
-        bankInfoRes.data.bankInfo?.accountNumber &&
-        bankInfoRes.data.bankInfo?.bank;
+        const hasBankInfo =
+          bankInfoRes.data.success &&
+          bankInfoRes.data.bankInfo?.accountNumber &&
+          bankInfoRes.data.bankInfo?.bank;
 
-      // Cập nhật thông tin người dùng trong state và localStorage
-      if (profileRes.data.success || bankInfoRes.data.success) {
-        const updatedUser = { ...user };
+        // Nếu đã xác minh trước đó thông qua localStorage (từ saveUserContract)
+        const isAlreadyVerified = user.hasVerifiedDocuments === true;
+        const verified = isAlreadyVerified || (hasPersonalInfo && hasBankInfo);
 
-        if (profileRes.data.success) {
-          updatedUser.fullName = profileRes.data.user.fullName;
-          updatedUser.personalInfo = profileRes.data.user.personalInfo;
+        // Cập nhật thông tin người dùng trong state và localStorage
+        if (
+          profileRes.data.success ||
+          bankInfoRes.data.success ||
+          isAlreadyVerified
+        ) {
+          const updatedUser = { ...user };
+
+          if (profileRes.data.success) {
+            updatedUser.fullName = profileRes.data.user.fullName;
+            updatedUser.personalInfo = profileRes.data.user.personalInfo;
+          }
+
+          if (bankInfoRes.data.success) {
+            updatedUser.bankInfo = bankInfoRes.data.bankInfo;
+          }
+
+          if (verified) {
+            updatedUser.hasVerifiedDocuments = true;
+          }
+
+          setUser(updatedUser);
+          localStorage.setItem("userData", JSON.stringify(updatedUser));
         }
 
-        if (bankInfoRes.data.success) {
-          updatedUser.bankInfo = bankInfoRes.data.bankInfo;
-        }
+        return {
+          verified: verified,
+          hasPersonalInfo,
+          hasBankInfo,
+          success: true,
+        };
+      } catch (apiError) {
+        console.log("API error, falling back to localStorage:", apiError);
 
-        setUser(updatedUser);
-        localStorage.setItem("userData", JSON.stringify(updatedUser));
+        // Nếu API thất bại, sử dụng dữ liệu từ localStorage
+        const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+
+        // Kiểm tra hasVerifiedDocuments từ localStorage
+        const isVerified = userData.hasVerifiedDocuments === true;
+        const hasPersonalInfoFromLocalStorage =
+          userData.personalInfo &&
+          userData.personalInfo.idNumber &&
+          userData.fullName;
+        const hasBankInfoFromLocalStorage =
+          userData.bankInfo &&
+          userData.bankInfo.accountNumber &&
+          userData.bankInfo.bank;
+
+        return {
+          verified:
+            isVerified ||
+            (hasPersonalInfoFromLocalStorage && hasBankInfoFromLocalStorage),
+          hasPersonalInfo: hasPersonalInfoFromLocalStorage,
+          hasBankInfo: hasBankInfoFromLocalStorage,
+          success: true,
+        };
       }
-
-      return {
-        verified: hasPersonalInfo && hasBankInfo,
-        hasPersonalInfo,
-        hasBankInfo,
-      };
     } catch (error) {
-      console.error("Lỗi kiểm tra trạng thái xác minh:", error);
-
-      // Fallback: kiểm tra từ localStorage
-      const userData = JSON.parse(localStorage.getItem("userData")) || {};
-
-      const hasPersonalInfo =
-        userData.personalInfo &&
-        userData.personalInfo.idNumber &&
-        userData.fullName;
-
-      const hasBankInfo =
-        userData.bankInfo &&
-        userData.bankInfo.accountNumber &&
-        userData.bankInfo.bank;
-
+      console.error("Error checking verification status:", error);
       return {
-        verified: hasPersonalInfo && hasBankInfo,
-        hasPersonalInfo,
-        hasBankInfo,
+        verified: false,
+        hasPersonalInfo: false,
+        hasBankInfo: false,
+        success: false,
       };
     }
   };
@@ -512,6 +666,7 @@ export const AuthProvider = ({ children }) => {
     saveUserContract,
     getUserContracts,
     checkUserVerificationStatus,
+    updateUserAvatar,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

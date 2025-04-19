@@ -12,56 +12,128 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const ProfileScreen = () => {
   const navigate = useNavigate();
-  const { user, logout, checkVerificationStatus } = useAuth();
+  const { user, logout, checkUserVerificationStatus, updateUserAvatar } =
+    useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [showNotification, setShowNotification] = useState(false);
   const notificationTimeoutRef = useRef(null);
   const [avatarUrl, setAvatarUrl] = useState(null);
+  const [checkComplete, setCheckComplete] = useState(false);
 
   useEffect(() => {
-    // Check verification status on component mount to get latest avatar
+    // Check verification status on component mount to get latest avatar - sửa để tránh loop vô hạn
     const fetchUserData = async () => {
-      if (user && user.id) {
+      if (user && user.id && !checkComplete) {
+        setIsLoading(true);
         try {
-          const result = await checkVerificationStatus();
+          const result = await checkUserVerificationStatus();
           if (result.success) {
             console.log(
-              "Verification status updated, avatar URL:",
-              result.avatarUrl
+              "Verification status updated:",
+              result.verified ? "Verified" : "Not verified"
             );
+            setCheckComplete(true);
           }
         } catch (error) {
           console.error("Error checking verification status:", error);
+        } finally {
+          setIsLoading(false);
         }
-      }
-
-      setIsLoading(false);
-    };
-
-    // Short delay to ensure UI feels responsive
-    const timer = setTimeout(() => {
-      fetchUserData();
-    }, 500);
-
-    return () => {
-      clearTimeout(timer);
-      if (notificationTimeoutRef.current) {
-        clearTimeout(notificationTimeoutRef.current);
+      } else {
+        setIsLoading(false);
       }
     };
-  }, [user, checkVerificationStatus]);
 
-  // Set avatar URL whenever user changes
+    fetchUserData();
+  }, [user, checkUserVerificationStatus, checkComplete]);
+
+  // Set avatar URL whenever user changes - cải thiện logic cài đặt avatar
   useEffect(() => {
     if (user) {
+      console.log("User data for avatar in ProfileScreen:", user);
+      setIsLoading(true);
+
+      // Hàm trợ giúp để fetch avatar từ API
+      const fetchUserAvatar = async () => {
+        if (!user.id) {
+          console.log("No user ID available, cannot fetch avatar");
+          setAvatarUrl(null);
+          setIsLoading(false);
+          return;
+        }
+
+        try {
+          // Xác định URL đầy đủ API endpoint
+          const avatarEndpoint = `${API_BASE_URL}/api/users/${user.id}/avatar`;
+          console.log("Fetching avatar from:", avatarEndpoint);
+
+          const response = await fetch(avatarEndpoint);
+          const data = await response.json();
+
+          console.log("Avatar API response:", data);
+
+          if (data.success) {
+            // Ưu tiên sử dụng fullAvatarUrl nếu có
+            const avatarUrl =
+              data.fullAvatarUrl || imageApi.getImageUrl(data.avatarUrl);
+            console.log("Found avatar URL:", avatarUrl);
+            setAvatarUrl(avatarUrl);
+
+            // Cập nhật user.avatarUrl trong context nếu chưa có
+            if (!user.avatarUrl && data.avatarUrl) {
+              console.log("Updating user.avatarUrl in context");
+              updateUserAvatar(data.avatarUrl);
+            }
+          } else {
+            console.log("No avatar found from API, using default");
+            setAvatarUrl(null);
+          }
+        } catch (error) {
+          console.error("Error fetching avatar:", error);
+          setAvatarUrl(null);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      // Thứ tự ưu tiên:
+      // 1. user.avatarUrl nếu đã có
+      // 2. user.personalInfo.portraitImage nếu có
+      // 3. Fetch từ API
+      // 4. Sử dụng ảnh mặc định
+
       if (user.avatarUrl) {
-        // Use the imageApi helper to get the proper URL
+        // Đảm bảo URL đầy đủ cho avatar
         const formattedUrl = imageApi.getImageUrl(user.avatarUrl);
+        console.log("Using existing avatarUrl:", formattedUrl);
         setAvatarUrl(formattedUrl);
-        console.log("Set avatar URL:", formattedUrl);
+        setIsLoading(false);
+      } else if (user.personalInfo && user.personalInfo.portraitImage) {
+        // Thử lấy ảnh chân dung từ personalInfo nếu có
+        const portraitUrl = imageApi.getImageUrl(
+          user.personalInfo.portraitImage
+        );
+        console.log("Using portrait image as avatar:", portraitUrl);
+        setAvatarUrl(portraitUrl);
+        setIsLoading(false);
       } else {
-        setAvatarUrl(null);
+        // Không có avatarUrl hoặc portraitImage, thử fetch từ API
+        fetchUserAvatar();
       }
+    } else {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  // Add a useEffect to log when user data changes - chỉ log, không cập nhật state
+  useEffect(() => {
+    if (user) {
+      console.log("User data updated:", {
+        id: user.id,
+        verified: user.hasVerifiedDocuments,
+        fullName: user.fullName,
+        avatarUrl: user.avatarUrl,
+      });
     }
   }, [user]);
 
@@ -70,11 +142,11 @@ const ProfileScreen = () => {
   };
 
   const handlePersonalInfoClick = () => {
-    const isUserVerified = user?.hasVerifiedDocuments || false;
+    const isUserVerified = user?.hasVerifiedDocuments === true;
 
     if (isUserVerified) {
-      // If verified, navigate to personal info page
-      navigate("/personal-info");
+      // If verified, navigate to profile detail page
+      navigate("/profile-detail");
     } else {
       // If not verified, show notification
       setShowNotification(true);
@@ -95,11 +167,11 @@ const ProfileScreen = () => {
     navigate("/support");
   };
 
-  const handleHomeClick = () => {
+  const _handleHomeClick = () => {
     navigate("/home");
   };
 
-  const handleWalletClick = () => {
+  const _handleWalletClick = () => {
     navigate("/wallet");
   };
 
@@ -108,11 +180,11 @@ const ProfileScreen = () => {
     navigate("/login");
   };
 
-  // Kiểm tra người dùng đã xác minh chưa
-  const isUserVerified = user?.hasVerifiedDocuments || false;
+  // Kiểm tra người dùng đã xác minh chưa - Đã được cập nhật
+  const isUserVerified = user?.hasVerifiedDocuments === true;
 
-  // Enhanced helper function with more logging for troubleshooting
-  const getFullAvatarUrl = (avatarPath) => {
+  // Thêm tiền tố _ để tránh lỗi linter, hoặc có thể xóa nếu không sử dụng
+  const _getFullAvatarUrl = (avatarPath) => {
     if (!avatarPath) {
       console.log("No avatar path provided, using default");
       return defaultAvatar;
@@ -129,22 +201,6 @@ const ProfileScreen = () => {
     console.log("Created full avatar URL:", fullUrl);
     return fullUrl;
   };
-
-  // Add a useEffect to log when user data changes
-  useEffect(() => {
-    if (user) {
-      console.log("User data updated:", {
-        id: user.id,
-        verified: user.hasVerifiedDocuments,
-        fullName: user.fullName,
-        avatarUrl: user.avatarUrl,
-      });
-
-      if (user.avatarUrl) {
-        console.log("Full avatar URL:", getFullAvatarUrl(user.avatarUrl));
-      }
-    }
-  }, [user]);
 
   if (isLoading) {
     return (

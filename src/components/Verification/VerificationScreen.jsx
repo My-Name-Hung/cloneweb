@@ -2,13 +2,16 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { saveImage } from "../../database/storageService";
-import { updateUserAvatar } from "../../database/userService";
 import "./VerificationStyles.css";
+
+// Thêm API_BASE_URL
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "https://cloneweb-uhw9.onrender.com";
 
 const VerificationScreen = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, checkVerificationStatus } = useAuth();
+  const { user, checkUserVerificationStatus, updateUserAvatar } = useAuth();
   const [frontIdImage, setFrontIdImage] = useState(null);
   const [backIdImage, setBackIdImage] = useState(null);
   const [portraitImage, setPortraitImage] = useState(null);
@@ -32,10 +35,26 @@ const VerificationScreen = () => {
   useEffect(() => {
     const checkUserDocuments = async () => {
       try {
-        const result = await checkVerificationStatus();
-        if (result.success && result.isVerified) {
-          // User is already verified, could show a message
-          setStatusMessage("Tài khoản đã được xác minh trước đó!");
+        const result = await checkUserVerificationStatus();
+        if (result.success && result.verified) {
+          // Người dùng đã được xác minh, hiển thị thông báo và chuyển hướng sau 2 giây
+          setStatusMessage(
+            "Tài khoản đã được xác minh trước đó! Đang chuyển hướng..."
+          );
+
+          // Kiểm tra xem có đường dẫn redirect lưu trước đó không
+          const redirectPath = localStorage.getItem(
+            "redirectAfterVerification"
+          );
+
+          setTimeout(() => {
+            if (redirectPath) {
+              localStorage.removeItem("redirectAfterVerification");
+              navigate(redirectPath);
+            } else {
+              navigate("/profile");
+            }
+          }, 2000);
         }
       } catch (error) {
         console.error("Error checking verification status:", error);
@@ -43,7 +62,7 @@ const VerificationScreen = () => {
     };
 
     checkUserDocuments();
-  }, [checkVerificationStatus]);
+  }, [checkUserVerificationStatus, navigate]);
 
   const handleBackClick = () => {
     navigate(-1);
@@ -67,32 +86,86 @@ const VerificationScreen = () => {
   const handleContinue = async () => {
     try {
       setIsUploading(true);
+      setStatusMessage("Đang xử lý...");
 
-      // Save all images to our storage
-      const uploadPromises = [
-        saveImage(userId, "document", frontIdImage, "frontId"),
-        saveImage(userId, "document", backIdImage, "backId"),
-        saveImage(userId, "avatar", portraitImage),
-      ];
+      console.log("Bắt đầu upload ảnh với userId:", userId);
 
-      // Wait for all uploads to complete
-      await Promise.all(uploadPromises);
+      // Lưu tất cả ảnh - đảm bảo portrait cuối cùng
+      const frontIdResult = await saveImage(
+        userId,
+        "document",
+        frontIdImage,
+        "frontId"
+      );
+      console.log("Front ID upload result:", frontIdResult);
 
-      console.log("All documents uploaded successfully");
+      const backIdResult = await saveImage(
+        userId,
+        "document",
+        backIdImage,
+        "backId"
+      );
+      console.log("Back ID upload result:", backIdResult);
 
-      // Update user's avatar with the portrait image
-      await updateUserAvatar(userId);
+      // Upload portrait cuối cùng để đảm bảo nó được sử dụng làm avatar
+      console.log("Uploading portrait image...");
+      const portraitResult = await saveImage(userId, "portrait", portraitImage);
+      console.log("Portrait upload result:", portraitResult);
 
-      // Navigate to the personal information form after successful verification
-      navigate("/personal-info", {
-        state: {
-          verificationComplete: true,
-          message: "Xác minh thành công! Vui lòng cung cấp thông tin cá nhân.",
-        },
-      });
+      // Xử lý kết quả portrait upload
+      let portraitUrl = null;
+
+      // Xử lý các trường hợp khác nhau của kết quả
+      if (typeof portraitResult === "string") {
+        // Nếu kết quả là string URL trực tiếp
+        portraitUrl = portraitResult;
+        console.log("Portrait result is a direct URL:", portraitUrl);
+      } else if (portraitResult && typeof portraitResult === "object") {
+        // Nếu kết quả là object
+        if (portraitResult.fullUrl) {
+          portraitUrl = portraitResult.fullUrl;
+        } else if (portraitResult.fileUrl) {
+          portraitUrl = portraitResult.fileUrl;
+        } else if (portraitResult.filePath) {
+          portraitUrl =
+            API_BASE_URL +
+            (portraitResult.filePath.startsWith("/")
+              ? portraitResult.filePath
+              : `/${portraitResult.filePath}`);
+        }
+        console.log("Extracted portrait URL from object:", portraitUrl);
+      }
+
+      // Nếu có URL, cập nhật avatar
+      if (portraitUrl) {
+        console.log("Updating user avatar with URL:", portraitUrl);
+        updateUserAvatar(portraitUrl);
+        setStatusMessage("Đã cập nhật avatar thành công!");
+      } else {
+        console.error(
+          "Không thể lấy được URL portrait từ kết quả:",
+          portraitResult
+        );
+      }
+
+      // Force reload user data from server to get latest status
+      console.log("Reloading user verification status...");
+      await checkUserVerificationStatus();
+
+      // Đợi một chút để người dùng thấy thông báo thành công
+      setTimeout(() => {
+        // Navigate to the personal information form after successful verification
+        navigate("/personal-info", {
+          state: {
+            verificationComplete: true,
+            message:
+              "Xác minh thành công! Vui lòng cung cấp thông tin cá nhân.",
+          },
+        });
+      }, 1000);
     } catch (error) {
       console.error("Error uploading documents:", error);
-      // Handle error (show message to user)
+      setStatusMessage("Lỗi khi tải lên tài liệu. Vui lòng thử lại.");
     } finally {
       setIsUploading(false);
     }

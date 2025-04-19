@@ -136,7 +136,12 @@ const LoanConfirmation = () => {
       if (response.success) {
         console.log("Hợp đồng đã được lưu thành công:", response.contract);
         setContractInfo(response.contract);
+
+        // Sau khi lưu hợp đồng, hiển thị màn hình hoàn thành
         setShowCompletedScreen(true);
+
+        // Thêm thông báo log để xác nhận trạng thái xác minh được cập nhật
+        console.log("Trạng thái xác minh đã được cập nhật: Đã xác minh");
       } else {
         console.error("Lỗi khi lưu hợp đồng:", response.message);
         alert("Có lỗi xảy ra khi lưu hợp đồng. Vui lòng thử lại.");
@@ -184,6 +189,8 @@ const LoanConfirmation = () => {
     if (!value) return "";
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
+
+  const _formattedLoanAmount = formatCurrency(loanData.loanAmount);
 
   const interestRate = "1%";
   const currentDate = new Date();
@@ -332,7 +339,7 @@ const LoanConfirmation = () => {
               <div className="loan-detail-row">
                 <span className="loan-detail-label">Khoản tiền vay :</span>
                 <span className="loan-detail-value">
-                  {loanData.loanAmount}VND
+                  {_formattedLoanAmount}VND
                 </span>
               </div>
               <div className="loan-detail-row">
@@ -391,7 +398,7 @@ const LoanConfirmation = () => {
               <div className="loan-detail-row">
                 <span className="loan-detail-label">Khoản tiền vay :</span>
                 <span className="loan-detail-value">
-                  {loanData.loanAmount}VND
+                  {_formattedLoanAmount}VND
                 </span>
               </div>
               <div className="loan-detail-row">
@@ -485,7 +492,7 @@ const LoanConfirmation = () => {
                 </p>
                 <p>
                   <a className="title">Số tiền khoản vay : </a>
-                  {loanData.loanAmount} VNĐ
+                  {_formattedLoanAmount} VNĐ
                 </p>
                 <p>
                   <a className="title">Mã hợp đồng : </a>Cập nhật khi hoàn thành

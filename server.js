@@ -376,9 +376,10 @@ app.post(
       }
 
       // If portrait, update user's avatar
-      if (type === "portrait") {
+      if (type === "portrait" || type === "avatar") {
         user.avatarUrl = filePath;
         await user.save();
+        console.log(`Updated user ${userId} avatarUrl to ${filePath}`);
       }
 
       // Check if user has all required documents
@@ -403,11 +404,18 @@ app.post(
       if (filePath) {
         // Return both the relative path (for database storage) and full URL (for frontend)
         const fullUrl = `${SERVER_URL}${filePath}`;
+
+        // Log URLs for debugging
+        console.log("Server URL:", SERVER_URL);
+        console.log("File path:", filePath);
+        console.log("Full URL:", fullUrl);
+
         res.status(200).json({
           success: true,
           message: "File uploaded successfully",
           filePath,
           fileUrl: fullUrl,
+          fullUrl: fullUrl, // Thêm field fullUrl để đảm bảo client nhận được URL đầy đủ
           isVerified: user.hasVerifiedDocuments,
         });
       }
@@ -545,20 +553,64 @@ app.get("/api/users/:userId/profile", async (req, res) => {
 app.get("/api/users/:userId/avatar", async (req, res) => {
   try {
     const { userId } = req.params;
+    console.log("Avatar request received for user ID:", userId);
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      console.log("User not found for avatar request:", userId);
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
 
     if (!user.avatarUrl) {
-      return res.status(404).json({ message: "User has no avatar" });
+      console.log("User has no avatar:", userId);
+
+      // Tìm ảnh portrait từ collection Document
+      const portraitDoc = await Document.findOne({
+        userId: user._id,
+        documentType: "portrait",
+      });
+
+      if (portraitDoc && portraitDoc.filePath) {
+        console.log("Found portrait document instead:", portraitDoc.filePath);
+        // Trả về ảnh portrait thay thế và cập nhật user
+        user.avatarUrl = portraitDoc.filePath;
+        await user.save();
+
+        const fullUrl = `${SERVER_URL}${portraitDoc.filePath}`;
+        return res.status(200).json({
+          success: true,
+          avatarUrl: portraitDoc.filePath,
+          fullAvatarUrl: fullUrl,
+        });
+      }
+
+      return res.status(404).json({
+        success: false,
+        message: "User has no avatar",
+      });
     }
 
-    res.status(200).json({ avatarUrl: user.avatarUrl });
+    // Ensure we return the full URL
+    const fullAvatarUrl = user.avatarUrl.startsWith("http")
+      ? user.avatarUrl
+      : `${SERVER_URL}${user.avatarUrl}`;
+
+    console.log("Returning avatar URL:", fullAvatarUrl);
+
+    res.status(200).json({
+      success: true,
+      avatarUrl: user.avatarUrl,
+      fullAvatarUrl: fullAvatarUrl,
+    });
   } catch (error) {
     console.error("Get avatar error:", error);
-    res.status(500).json({ message: "Lỗi server" });
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+    });
   }
 });
 

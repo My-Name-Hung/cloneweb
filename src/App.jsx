@@ -14,6 +14,7 @@ import Home from "./components/Home";
 import LoanConfirmation from "./components/Loan/LoanConfirmation";
 import LoanScreen from "./components/Loan/LoanScreen";
 import NotificationScreen from "./components/Notification/NotificationScreen";
+import ProfileDetail from "./components/Profile/ProfileDetail";
 import ProfileScreen from "./components/Profile/ProfileScreen";
 import BankInfoForm from "./components/Verification/BankInfoForm";
 import PersonalInfoForm from "./components/Verification/PersonalInfoForm";
@@ -226,6 +227,14 @@ function App() {
               }
             />
             <Route path="/my-contract" element={<MyContract />} />
+            <Route
+              path="/profile-detail"
+              element={
+                <RequireAuth>
+                  <ProfileDetail />
+                </RequireAuth>
+              }
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>

@@ -132,8 +132,24 @@ export const imageApi = {
   // Get a properly formatted image URL
   getImageUrl: (path) => {
     if (!path) return null;
-    if (path.startsWith("http")) return path;
-    return `${API_URL}${path}`;
+
+    // Log the original path for debugging
+    console.log("Original image path:", path);
+
+    // If it's already a full URL, return it
+    if (path.startsWith("http")) {
+      console.log("Path is already a full URL, using as is:", path);
+      return path;
+    }
+
+    // Ensure path starts with /
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+    // Combine with API URL
+    const fullUrl = `${API_URL}${normalizedPath}`;
+    console.log("Constructed full image URL:", fullUrl);
+
+    return fullUrl;
   },
 };
 
