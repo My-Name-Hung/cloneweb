@@ -81,6 +81,9 @@ export const contractApi = {
 
   // Lấy danh sách hợp đồng của user
   getUserContracts: (userId) => {
+    if (!userId) {
+      return Promise.reject(new Error("User ID is required"));
+    }
     return apiCall(`/api/users/${userId}/contracts`, {
       method: "GET",
     });

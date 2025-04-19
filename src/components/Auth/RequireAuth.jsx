@@ -14,24 +14,27 @@ const RequireAuth = ({ children }) => {
   useEffect(() => {
     const checkAuthentication = async () => {
       try {
-        // If user already exists in context, we're authenticated
+        // Nếu đã có user trong context, đã đăng nhập
         if (user) {
           console.log("User found in context:", user);
 
-          // Cập nhật thông tin ngân hàng nếu user đã đăng nhập
-          if (user.id) {
-            console.log(
-              "Đang kiểm tra và cập nhật thông tin ngân hàng cho user:",
-              user.id
-            );
-            await updateBankInfo();
+          // Không thực hiện API call trong môi trường development
+          // Chỉ cập nhật thông tin ngân hàng khi ở production hoặc đã deploy
+          if (window.location.hostname !== "localhost") {
+            if (user.id) {
+              console.log(
+                "Đang kiểm tra và cập nhật thông tin ngân hàng cho user:",
+                user.id
+              );
+              await updateBankInfo();
+            }
           }
 
           setAuthChecked(true);
           return;
         }
 
-        // If user is not in context, check localStorage
+        // Kiểm tra localStorage nếu chưa có user trong context
         const userData = localStorage.getItem("userData");
 
         if (userData) {
@@ -39,33 +42,35 @@ const RequireAuth = ({ children }) => {
           const parsedUser = JSON.parse(userData);
           setUser(parsedUser);
 
-          // Cập nhật thông tin ngân hàng nếu có thông tin user
-          if (parsedUser && parsedUser.id) {
-            try {
-              const bankInfoRes = await axios.get(
-                `${API_BASE_URL}/api/users/${parsedUser.id}/bank-info`
-              );
-
-              if (bankInfoRes.data.success && bankInfoRes.data.bankInfo) {
-                console.log(
-                  "Lấy thông tin ngân hàng thành công:",
-                  bankInfoRes.data.bankInfo
+          // Không thực hiện API call trong môi trường development
+          if (window.location.hostname !== "localhost") {
+            if (parsedUser && parsedUser.id) {
+              try {
+                const bankInfoRes = await axios.get(
+                  `${API_BASE_URL}/api/users/${parsedUser.id}/bank-info`
                 );
 
-                // Cập nhật user với thông tin ngân hàng mới nhất
-                const updatedUser = {
-                  ...parsedUser,
-                  bankInfo: bankInfoRes.data.bankInfo,
-                };
+                if (bankInfoRes.data.success && bankInfoRes.data.bankInfo) {
+                  console.log(
+                    "Lấy thông tin ngân hàng thành công:",
+                    bankInfoRes.data.bankInfo
+                  );
 
-                setUser(updatedUser);
-                localStorage.setItem("userData", JSON.stringify(updatedUser));
+                  // Cập nhật user với thông tin ngân hàng mới nhất
+                  const updatedUser = {
+                    ...parsedUser,
+                    bankInfo: bankInfoRes.data.bankInfo,
+                  };
+
+                  setUser(updatedUser);
+                  localStorage.setItem("userData", JSON.stringify(updatedUser));
+                }
+              } catch (bankInfoError) {
+                console.error(
+                  "Không thể lấy thông tin ngân hàng:",
+                  bankInfoError
+                );
               }
-            } catch (bankInfoError) {
-              console.error(
-                "Không thể lấy thông tin ngân hàng:",
-                bankInfoError
-              );
             }
           }
 
@@ -80,27 +85,28 @@ const RequireAuth = ({ children }) => {
       }
     };
 
-    // Only run the check when loading is complete
+    // Chỉ chạy khi loading hoàn tất
     if (!loading) {
       checkAuthentication();
     }
   }, [user, loading, setUser, updateBankInfo]);
 
-  // If still checking authentication, show nothing (or a loader)
+  // Nếu đang kiểm tra auth, hiển thị màn hình loading
   if (loading || !authChecked) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <p>Loading...</p>
+        <div className="loading-spinner"></div>
+        <p>Đang tải...</p>
       </div>
     );
   }
 
-  // After checking, if no user, redirect to login
+  // Sau khi kiểm tra, nếu không có user, chuyển đến trang login
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // User is authenticated
+  // Người dùng đã đăng nhập (có xác minh hoặc chưa) đều được phép truy cập
   return children;
 };
 

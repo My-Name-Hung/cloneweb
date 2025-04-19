@@ -9,10 +9,12 @@ import NotFound from "./NotFound";
 import Login from "./components/Auth/Login";
 import RequireAuth from "./components/Auth/RequireAuth";
 import SignUp from "./components/Auth/SignUp";
+import MyContract from "./components/Contract/MyContract";
 import Home from "./components/Home";
 import LoanConfirmation from "./components/Loan/LoanConfirmation";
 import LoanScreen from "./components/Loan/LoanScreen";
 import NotificationScreen from "./components/Notification/NotificationScreen";
+import ProfileScreen from "./components/Profile/ProfileScreen";
 import BankInfoForm from "./components/Verification/BankInfoForm";
 import PersonalInfoForm from "./components/Verification/PersonalInfoForm";
 import VerificationScreen from "./components/Verification/VerificationScreen";
@@ -215,6 +217,15 @@ function App() {
               }
             />
             <Route path="/loan-confirmation" element={<LoanConfirmation />} />
+            <Route
+              path="/profile"
+              element={
+                <RequireAuth>
+                  <ProfileScreen />
+                </RequireAuth>
+              }
+            />
+            <Route path="/my-contract" element={<MyContract />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>

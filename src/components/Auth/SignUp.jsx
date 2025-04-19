@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MBLogo from "../../assets/logo/mblogo.png";
+import { useAuth } from "../../context/AuthContext";
 import { useLoading } from "../../context/LoadingContext";
 import { authApi } from "../../services/api";
 import "./AuthStyles.css";
@@ -8,6 +9,7 @@ import "./AuthStyles.css";
 const SignUp = () => {
   const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     phone: "",
     password: "",
@@ -33,21 +35,17 @@ const SignUp = () => {
     };
   }, [termsError]);
 
-  // Auto-hide success notification after 5 seconds and redirect to home
+  // Auto-hide success notification after 3 seconds and navigate to home
   useEffect(() => {
     let timer;
     if (successNotification) {
       timer = setTimeout(() => {
-        // Ẩn loading screen trước khi chuyển hướng
         hideLoading();
         setSuccessNotification(false);
-
-        // Navigate to home page
-        navigate("/");
-      }, 5000);
+        navigate("/home");
+      }, 3000);
     }
 
-    // Clean up timer on unmount or when successNotification changes
     return () => {
       if (timer) clearTimeout(timer);
     };
@@ -110,38 +108,39 @@ const SignUp = () => {
     showLoading();
 
     try {
-      // Sử dụng API service thay vì fetch trực tiếp
-      const data = await authApi.signup({
+      // Đăng ký tài khoản
+      const signupResponse = await authApi.signup({
         phone: formData.phone,
         password: formData.password,
       });
 
-      console.log("Signup successful:", data);
+      console.log("Signup successful:", signupResponse);
 
-      // Ẩn loading screen trước khi hiển thị success notification
-      hideLoading();
+      // Tự động đăng nhập sau khi đăng ký thành công
+      const loginResult = await login(formData.phone, formData.password);
 
-      // Lưu session ngay khi đăng ký thành công
-      sessionStorage.setItem(
-        "user",
-        JSON.stringify(
-          data.user || {
-            phone: formData.phone,
-            id: Date.now(),
-          }
-        )
-      );
+      if (loginResult.success) {
+        // Hiển thị thông báo thành công
+        hideLoading();
+        setSuccessNotification(true);
 
-      // Show success notification
-      setSuccessNotification(true);
-
-      // Clear form
-      setFormData({
-        phone: "",
-        password: "",
-        confirmPassword: "",
-        agreeToTerms: false,
-      });
+        // Clear form
+        setFormData({
+          phone: "",
+          password: "",
+          confirmPassword: "",
+          agreeToTerms: false,
+        });
+      } else {
+        // Nếu đăng nhập thất bại sau khi đăng ký thành công
+        hideLoading();
+        setError(
+          "Đăng ký thành công nhưng không thể tự động đăng nhập. Vui lòng đăng nhập thủ công."
+        );
+        setTimeout(() => {
+          navigate("/login");
+        }, 3000);
+      }
     } catch (err) {
       console.error("Signup error:", err);
 
@@ -153,25 +152,27 @@ const SignUp = () => {
       ) {
         setError("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
 
-        // For demo or development purposes - auto success if server is not reachable
-        // Đảm bảo ẩn loading screen
-        hideLoading();
+        // Cho môi trường development - auto login nếu server không khả dụng
+        try {
+          // Giả lập đăng nhập thành công
+          const demoLoginResult = await login(
+            formData.phone,
+            formData.password
+          );
 
-        // Lưu session và hiển thị thông báo thành công
-        sessionStorage.setItem(
-          "user",
-          JSON.stringify({
-            phone: formData.phone,
-            id: Date.now(),
-            demoMode: true, // Đánh dấu là demo mode
-          })
-        );
-
-        setSuccessNotification(true);
-        return; // Skip the rest
+          if (demoLoginResult.success) {
+            hideLoading();
+            setSuccessNotification(true);
+          } else {
+            throw new Error("Demo login failed");
+          }
+        } catch (loginErr) {
+          hideLoading();
+          console.error("Auto login failed:", loginErr);
+          setError("Không thể đăng nhập tự động. Vui lòng thử lại sau.");
+        }
       } else {
         setError(err.message || "Có lỗi xảy ra. Vui lòng thử lại sau.");
-        // Ẩn loading screen nếu có lỗi
         hideLoading();
       }
     }
@@ -191,7 +192,9 @@ const SignUp = () => {
       {successNotification && (
         <div className="custom-success">
           <div className="success-icon">✓</div>
-          <div className="success-text">Tạo tài khoản thành công.</div>
+          <div className="success-text">
+            Tạo tài khoản thành công. Đang chuyển hướng...
+          </div>
         </div>
       )}
 

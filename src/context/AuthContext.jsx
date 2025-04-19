@@ -114,6 +114,24 @@ export const AuthProvider = ({ children }) => {
         console.error("Could not fetch bank info after login:", bankInfoError);
       }
 
+      // Fetch user profile data immediately after login
+      try {
+        if (userData.id) {
+          const profileRes = await axios.get(
+            `${API_BASE_URL}/api/users/${userData.id}/profile`
+          );
+
+          if (profileRes.data.success) {
+            // Include profile data in user data
+            userData.fullName = profileRes.data.user.fullName;
+            userData.personalInfo = profileRes.data.user.personalInfo;
+            console.log("Fetched profile after login:", userData);
+          }
+        }
+      } catch (profileError) {
+        console.error("Could not fetch profile after login:", profileError);
+      }
+
       localStorage.setItem("userData", JSON.stringify(userData));
       setUser(userData);
       return { success: true, message: response.data.message };
@@ -250,8 +268,25 @@ export const AuthProvider = ({ children }) => {
       const createdDate = now.toLocaleDateString("vi-VN");
 
       try {
-        // Thử lưu vào API trước
-        // ...các API calls ở đây...
+        // Try to save to the API
+        const response = await axios.post(`${API_BASE_URL}/api/contracts`, {
+          userId: user.id,
+          contractId,
+          loanAmount: contractData.loanAmount,
+          loanTerm: contractData.loanTerm,
+          bankName: contractData.bankName || contractData.bank,
+          signatureImage: contractData.signatureImage,
+        });
+
+        if (response.data.success) {
+          console.log("Lưu hợp đồng vào server thành công");
+          // Return the server response if successful
+          return {
+            success: true,
+            message: "Lưu hợp đồng thành công",
+            contract: response.data.contract,
+          };
+        }
       } catch (apiError) {
         console.error("Không thể lưu vào API, lưu vào localStorage:", apiError);
       }
@@ -261,18 +296,19 @@ export const AuthProvider = ({ children }) => {
         contractId,
         loanAmount: contractData.loanAmount,
         loanTerm: contractData.loanTerm,
-        bankName: contractData.bankName || loanData.bank,
+        bankName: contractData.bankName || contractData.bank,
         signatureImage: contractData.signatureImage,
         createdTime,
         createdDate,
       };
 
-      // Lưu hợp đồng vào localStorage
+      // Lưu hợp đồng vào localStorage với key riêng cho user
+      const userContractsKey = `userContracts_${user.id}`;
       const savedContracts = JSON.parse(
-        localStorage.getItem("userContracts") || "[]"
+        localStorage.getItem(userContractsKey) || "[]"
       );
       savedContracts.push(contractInfo);
-      localStorage.setItem("userContracts", JSON.stringify(savedContracts));
+      localStorage.setItem(userContractsKey, JSON.stringify(savedContracts));
 
       // Cập nhật thông tin user
       const updatedUser = {
@@ -305,6 +341,7 @@ export const AuthProvider = ({ children }) => {
 
     try {
       console.log("Đang lấy danh sách hợp đồng cho user:", user.id);
+      // Try to get from API
       const response = await axios.get(
         `${API_BASE_URL}/api/users/${user.id}/contracts`
       );
@@ -314,12 +351,34 @@ export const AuthProvider = ({ children }) => {
           "Lấy danh sách hợp đồng thành công:",
           response.data.contracts
         );
+
+        // Store the API results in localStorage as a cache
+        const userContractsKey = `userContracts_${user.id}`;
+        localStorage.setItem(
+          userContractsKey,
+          JSON.stringify(response.data.contracts)
+        );
+
         return response.data;
       }
 
       return { success: false, message: "Lấy danh sách hợp đồng thất bại" };
     } catch (error) {
-      console.error("Lỗi khi lấy danh sách hợp đồng:", error);
+      console.error("Lỗi khi lấy danh sách hợp đồng từ API:", error);
+
+      // Fallback to localStorage
+      console.log("Đang thử lấy hợp đồng từ localStorage cho user:", user.id);
+      const userContractsKey = `userContracts_${user.id}`;
+      const savedContracts = localStorage.getItem(userContractsKey);
+
+      if (savedContracts) {
+        const contracts = JSON.parse(savedContracts);
+        return {
+          success: true,
+          contracts: contracts,
+        };
+      }
+
       return {
         success: false,
         message: error.message || "Có lỗi khi lấy danh sách hợp đồng",
