@@ -145,6 +145,8 @@ const userSchema = new mongoose.Schema({
     accountNumber: String,
     accountName: String,
     bank: String,
+    bankLogo: String,
+    bankId: String,
   },
   createdAt: {
     type: Date,
@@ -500,6 +502,8 @@ app.post("/api/users/:userId/bank-info", async (req, res) => {
       accountNumber: bankData.accountNumber,
       accountName: bankData.accountName,
       bank: bankData.bank,
+      bankLogo: bankData.bankLogo,
+      bankId: bankData.bankId,
     };
 
     await user.save();

@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
   background-color: #fff;
 }
 
@@ -12,7 +12,7 @@
   align-items: center;
   padding: 15px;
   position: relative;
-  background-color: #0000a0;
+  background-color: #0000aa;
   color: white;
   height: 60px;
   z-index: 10;
@@ -48,29 +48,27 @@
 
 .personal-info-title {
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 700;
   text-align: center;
   margin-bottom: 24px;
   color: #333;
 }
 
+/* Card ngân hàng */
 .bank-card-container {
   position: relative;
   width: 100%;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  height: 190px;
   background-color: #0066cc;
-  aspect-ratio: 1.6/1;
 }
 
 .bank-card-image {
-  position: absolute;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.3;
 }
 
 .bank-card-overlay {
@@ -84,101 +82,124 @@
   padding: 20px;
 }
 
-.chip-container {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.chip-image {
-  width: 50px;
-  height: 40px;
-  background-color: #ffd700;
-  border-radius: 5px;
-  margin-right: 15px;
-}
-
-.chip-signal {
-  width: 25px;
-  height: 25px;
-}
-
 .card-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   color: white;
-  margin-top: 10px;
-}
-
-.card-numbers {
-  margin-top: auto;
-  margin-bottom: 10px;
+  position: absolute;
+  top: 20px;
+  left: 20px;
 }
 
 .bank-card-account-number {
-  font-size: 18px;
+  font-size: 20px;
   color: white;
-  letter-spacing: 3px;
-  margin-bottom: 5px;
+  letter-spacing: 2px;
+  position: absolute;
+  bottom: 45px;
+  left: 20px;
 }
 
 .bank-card-account-name {
   font-size: 16px;
+  font-weight: 500;
   color: white;
   text-transform: uppercase;
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
 }
 
+/* Style cho form field */
 .form-field {
   position: relative;
   margin-bottom: 20px;
 }
 
+/* Input có viền bao quanh */
 .form-input {
   width: 100%;
   height: 50px;
+  border: 1px solid #e0e0e0;
   border-radius: 8px;
-  border: 1px solid #ddd;
-  padding: 0 15px;
+  padding: 0 16px 0 50px;
   font-size: 16px;
+  color: #333;
+  background-color: white;
 }
 
+/* Icon nằm bên trái đầu ô input */
+.input-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.input-icon svg {
+  width: 24px;
+  height: 24px;
+  color: #888;
+}
+
+/* Placeholder style */
+.form-input::placeholder {
+  color: #aaa;
+  font-size: 15px;
+}
+
+/* Focus style */
 .form-input:focus {
   outline: none;
-  border-color: #0000a0;
+  border-color: #4d90fe;
 }
 
+/* Error message - chỉ hiển thị khi có lỗi */
+/* .error-text {
+  color: #f44336;
+  font-size: 14px;
+  margin-top: 4px;
+} */
+
+/* Select input */
 .form-select {
   width: 100%;
-  height: 50px;
+  height: 56px;
+  border: 1px solid #e0e0e0;
   border-radius: 8px;
-  border: 1px solid #ddd;
-  padding: 0 15px;
+  padding: 0 16px;
   font-size: 16px;
-  appearance: none;
+  color: #333;
   background-color: white;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23000' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E");
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23666' d='M6 7.4L0.6 2 2 0.6 6 4.6 10 0.6 11.4 2z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 15px center;
+  background-position: right 16px center;
 }
 
 .form-select:focus {
   outline: none;
-  border-color: #0000a0;
+  border-color: #4d90fe;
 }
 
+/* Nút gửi yêu cầu */
 .submit-button {
-  margin: 30px auto;
   display: block;
-  width: 180px;
-  height: 50px;
-  background-color: #0000a0;
+  min-width: 200px;
+  height: 56px;
+  background-color: #0000cc;
   color: white;
   border: none;
-  border-radius: 25px;
+  border-radius: 28px;
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  margin: 30px auto 0;
 }
 
 .submit-button:disabled {
@@ -219,4 +240,298 @@
     margin-left: auto;
     margin-right: auto;
   }
+}
+
+/* Ant Design Input Styles */
+.ant-input-affix-wrapper-lg {
+  padding: 6.5px 11px;
+  font-size: 16px;
+}
+
+.ant-input-affix-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  min-width: 0;
+  padding: 4px 11px;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: 14px;
+  line-height: 1.5715;
+  background-color: #fff;
+  background-image: none;
+  border: 1px solid #d9d9d9;
+  border-radius: 2px;
+  transition: all 0.3s;
+  display: inline-flex;
+}
+
+.bank-input {
+  border-radius: 5px !important;
+  font-size: 18px !important;
+  margin: 10px 0px !important;
+}
+
+.ant-input-prefix {
+  margin-right: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.information-icon {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 20px;
+}
+
+.ant-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  background-color: transparent;
+  border: 0;
+  outline: none;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.ant-input-lg {
+  padding: 6.5px 11px;
+  font-size: 16px;
+}
+
+.ant-input::placeholder {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+/* Card Bank Logo */
+.card-bank-logo {
+  height: 30px;
+  max-width: 120px;
+  object-fit: contain;
+}
+
+/* Custom Bank Dropdown */
+.bank-dropdown-container {
+  position: relative;
+  margin: 10px 0;
+  z-index: 100;
+}
+
+.bank-dropdown-selected {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  border: 1px solid #d9d9d9;
+  border-radius: 5px;
+  background-color: white;
+  cursor: pointer;
+  min-height: 56px;
+}
+
+.selected-bank {
+  display: flex;
+  align-items: center;
+}
+
+.bank-dropdown-logo {
+  height: 24px;
+  width: auto;
+  max-width: 100px;
+  margin-right: 10px;
+  object-fit: contain;
+}
+
+.dropdown-arrow {
+  color: #888;
+  font-size: 12px;
+  transition: transform 0.3s;
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.placeholder {
+  color: #aaa;
+}
+
+.bank-dropdown-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 1px solid #d9d9d9;
+  border-top: none;
+  border-radius: 0 0 5px 5px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.bank-option {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.bank-option:last-child {
+  border-bottom: none;
+}
+
+.bank-option:hover {
+  background-color: #f5f5f5;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .bank-dropdown-logo {
+    height: 20px;
+  }
+}
+
+/* Ant Design Select Styles */
+.ant-select {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: 14px;
+  font-variant: tabular-nums;
+  line-height: 1.5715;
+  list-style: none;
+  font-feature-settings: "tnum", "tnum";
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.select-bank {
+  width: 100% !important;
+  margin: 10px 0px !important;
+  border-radius: 5px !important;
+  font-size: 18px !important;
+}
+
+.ant-select:not(.ant-select-customize-input) .ant-select-selector {
+  position: relative;
+  background-color: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 2px;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  width: 100%;
+  height: 48px;
+  padding: 0 11px;
+}
+
+.ant-select-single .ant-select-selector {
+  display: flex;
+  align-items: center;
+}
+
+.ant-select-selection-placeholder {
+  color: #aaa;
+  flex: 1;
+  opacity: 1;
+}
+
+.ant-select-selection-item {
+  flex: 1;
+  padding-right: 18px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.selected-bank {
+  display: flex;
+  align-items: center;
+}
+
+.bank-dropdown-logo {
+  height: 24px;
+  width: auto;
+  max-width: 100px;
+  margin-right: 10px;
+  object-fit: contain;
+}
+
+.ant-select-arrow {
+  display: inline-block;
+  color: inherit;
+  font-style: normal;
+  line-height: 0;
+  text-transform: none;
+  vertical-align: -0.125em;
+  text-rendering: optimizelegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  position: absolute;
+  top: 50%;
+  right: 11px;
+  display: flex;
+  align-items: center;
+  height: 12px;
+  margin-top: -6px;
+  color: rgba(0, 0, 0, 0.25);
+  font-size: 12px;
+  line-height: 1;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* Dropdown Menu */
+.ant-select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 1px solid #d9d9d9;
+  border-radius: 2px;
+  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12),
+    0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  z-index: 1050;
+  margin-top: 4px;
+  padding: 4px 0;
+  max-height: 256px;
+  overflow-y: auto;
+}
+
+.ant-select-dropdown-content {
+  padding: 4px 0;
+}
+
+.ant-select-item {
+  position: relative;
+  display: block;
+  min-height: 32px;
+  padding: 8px 12px;
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: normal;
+  font-size: 14px;
+  line-height: 22px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.ant-select-item-option-content {
+  display: flex;
+  align-items: center;
+}
+
+.ant-select-item:hover {
+  background-color: #f5f5f5;
+}
+
+/* Card Bank Logo */
+.card-bank-logo {
+  height: 30px;
+  max-width: 120px;
+  object-fit: contain;
 }
