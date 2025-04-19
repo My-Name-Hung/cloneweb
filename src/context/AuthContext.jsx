@@ -249,11 +249,15 @@ export const AuthProvider = ({ children }) => {
 
       const contractId = contractIdRes.data.contractId;
 
-      // Lưu hợp đồng
+      // Lưu hợp đồng với thông tin chi tiết từ modal
       const response = await axios.post(`${API_BASE_URL}/api/contracts`, {
         userId: user.id,
         contractId,
-        ...contractData,
+        loanAmount: contractData.loanAmount,
+        loanTerm: contractData.loanTerm,
+        bankName: contractData.bankName || "",
+        contractContent: contractData.contractContent || "",
+        signatureImage: contractData.signatureImage,
       });
 
       if (response.data.success) {

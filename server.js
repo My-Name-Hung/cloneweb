@@ -658,8 +658,15 @@ app.get("/api/contracts/generate-id", async (req, res) => {
 // Thêm API endpoint để lưu hợp đồng
 app.post("/api/contracts", async (req, res) => {
   try {
-    const { userId, contractId, loanAmount, loanTerm, signatureImage } =
-      req.body;
+    const {
+      userId,
+      contractId,
+      loanAmount,
+      loanTerm,
+      bankName,
+      contractContent,
+      signatureImage,
+    } = req.body;
 
     if (!userId || !contractId || !loanAmount || !loanTerm || !signatureImage) {
       return res.status(400).json({ message: "Thiếu thông tin hợp đồng" });
@@ -685,27 +692,20 @@ app.post("/api/contracts", async (req, res) => {
     fs.writeFileSync(filePath, buffer);
     const signatureUrl = `/uploads/documents/${filename}`;
 
-    // Tạo hợp đồng mới
+    // Tạo hợp đồng mới với thông tin chi tiết
     const contract = new Contract({
       contractId,
       userId,
       loanAmount,
       loanTerm,
+      bankName, // Thêm tên ngân hàng
+      contractContent, // Thêm nội dung hợp đồng chi tiết
       signatureImage: signatureUrl,
       createdTime,
       createdDate,
     });
 
     await contract.save();
-
-    // Cập nhật thông tin user nếu cần
-    const user = await User.findById(userId);
-    if (user) {
-      // Có thể thêm trường hasContract hoặc activeContracts vào User schema nếu cần
-      // user.hasContract = true;
-      // user.activeContracts = [...(user.activeContracts || []), contract._id];
-      // await user.save();
-    }
 
     res.status(201).json({
       success: true,
