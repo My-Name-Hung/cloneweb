@@ -389,11 +389,16 @@ app.post(
         await user.save();
       }
 
-      res.status(200).json({
-        message: "File uploaded successfully",
-        filePath,
-        isVerified: user.hasVerifiedDocuments,
-      });
+      if (filePath) {
+        // Return both the relative path (for database storage) and full URL (for frontend)
+        const fullUrl = `${SERVER_URL}${filePath}`;
+        res.status(200).json({
+          message: "File uploaded successfully",
+          filePath,
+          fileUrl: fullUrl,
+          isVerified: user.hasVerifiedDocuments,
+        });
+      }
     } catch (error) {
       console.error("Upload error:", error);
       res.status(500).json({ message: "Lỗi server" });
@@ -424,14 +429,26 @@ app.get("/api/verification/status/:userId", async (req, res) => {
       documentType: "portrait",
     });
 
+    // Add full URLs in the response alongside relative paths
+    const documentsWithUrls = {};
+    if (frontId) {
+      documentsWithUrls.frontId = frontId.filePath;
+      documentsWithUrls.frontIdUrl = `${SERVER_URL}${frontId.filePath}`;
+    }
+    if (backId) {
+      documentsWithUrls.backId = backId.filePath;
+      documentsWithUrls.backIdUrl = `${SERVER_URL}${backId.filePath}`;
+    }
+    if (portrait) {
+      documentsWithUrls.portrait = portrait.filePath;
+      documentsWithUrls.portraitUrl = `${SERVER_URL}${portrait.filePath}`;
+    }
+
     res.status(200).json({
       isVerified: user.hasVerifiedDocuments,
-      documents: {
-        frontId: frontId ? frontId.filePath : null,
-        backId: backId ? backId.filePath : null,
-        portrait: portrait ? portrait.filePath : null,
-      },
+      documents: documentsWithUrls,
       avatarUrl: user.avatarUrl,
+      avatarFullUrl: user.avatarUrl ? `${SERVER_URL}${user.avatarUrl}` : null,
     });
   } catch (error) {
     console.error("Verification status error:", error);

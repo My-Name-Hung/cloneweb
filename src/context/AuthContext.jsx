@@ -26,6 +26,12 @@ export const AuthProvider = ({ children }) => {
 
       // Set user from localStorage
       const parsedUser = JSON.parse(userData);
+
+      // Ensure avatar URL is properly formatted with API base URL if relative
+      if (parsedUser.avatarUrl && !parsedUser.avatarUrl.startsWith("http")) {
+        parsedUser.avatarUrl = `${API_BASE_URL}${parsedUser.avatarUrl}`;
+      }
+
       setUser(parsedUser);
       console.log("User loaded from localStorage:", parsedUser);
 
@@ -168,11 +174,17 @@ export const AuthProvider = ({ children }) => {
         `${API_BASE_URL}/api/verification/status/${user.id}`
       );
 
-      // Update user with latest verification status
+      // Format the avatar URL with the full API base URL if it's a relative path
+      let avatarUrl = response.data.avatarUrl;
+      if (avatarUrl && !avatarUrl.startsWith("http")) {
+        avatarUrl = `${API_BASE_URL}${avatarUrl}`;
+      }
+
+      // Update user with latest verification status and properly formatted avatar URL
       const updatedUser = {
         ...user,
         hasVerifiedDocuments: response.data.isVerified,
-        avatarUrl: response.data.avatarUrl,
+        avatarUrl: avatarUrl,
       };
       localStorage.setItem("userData", JSON.stringify(updatedUser));
       setUser(updatedUser);
@@ -181,6 +193,7 @@ export const AuthProvider = ({ children }) => {
         success: true,
         isVerified: response.data.isVerified,
         documents: response.data.documents,
+        avatarUrl: avatarUrl,
       };
     } catch (error) {
       console.error("AuthContext: Verification status error:", error);

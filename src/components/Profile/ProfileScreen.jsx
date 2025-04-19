@@ -1,31 +1,94 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import defaultAvatar from "../../assets/profile/default-avatar.svg";
 import { useAuth } from "../../context/AuthContext";
+import { imageApi } from "../../services/api";
 import VerificationAlert from "../Verification/VerificationAlert";
 import BottomNavigation from "../common/BottomNavigation";
 import "./ProfileScreen.css";
 
+// Add the API base URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const ProfileScreen = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, checkVerificationStatus } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
+  const [showNotification, setShowNotification] = useState(false);
+  const notificationTimeoutRef = useRef(null);
+  const [avatarUrl, setAvatarUrl] = useState(null);
 
   useEffect(() => {
-    // Giả lập thời gian tải
-    const timer = setTimeout(() => {
+    // Check verification status on component mount to get latest avatar
+    const fetchUserData = async () => {
+      if (user && user.id) {
+        try {
+          const result = await checkVerificationStatus();
+          if (result.success) {
+            console.log(
+              "Verification status updated, avatar URL:",
+              result.avatarUrl
+            );
+          }
+        } catch (error) {
+          console.error("Error checking verification status:", error);
+        }
+      }
+
       setIsLoading(false);
+    };
+
+    // Short delay to ensure UI feels responsive
+    const timer = setTimeout(() => {
+      fetchUserData();
     }, 500);
 
-    return () => clearTimeout(timer);
-  }, []);
+    return () => {
+      clearTimeout(timer);
+      if (notificationTimeoutRef.current) {
+        clearTimeout(notificationTimeoutRef.current);
+      }
+    };
+  }, [user, checkVerificationStatus]);
+
+  // Set avatar URL whenever user changes
+  useEffect(() => {
+    if (user) {
+      if (user.avatarUrl) {
+        // Use the imageApi helper to get the proper URL
+        const formattedUrl = imageApi.getImageUrl(user.avatarUrl);
+        setAvatarUrl(formattedUrl);
+        console.log("Set avatar URL:", formattedUrl);
+      } else {
+        setAvatarUrl(null);
+      }
+    }
+  }, [user]);
 
   const handleLoanClick = () => {
     navigate("/my-contract");
   };
 
   const handlePersonalInfoClick = () => {
-    navigate("/personal-info");
+    const isUserVerified = user?.hasVerifiedDocuments || false;
+
+    if (isUserVerified) {
+      // If verified, navigate to personal info page
+      navigate("/personal-info");
+    } else {
+      // If not verified, show notification
+      setShowNotification(true);
+
+      // Clear any existing timeout
+      if (notificationTimeoutRef.current) {
+        clearTimeout(notificationTimeoutRef.current);
+      }
+
+      // Set timeout to hide notification after 3 seconds
+      notificationTimeoutRef.current = setTimeout(() => {
+        setShowNotification(false);
+      }, 3000);
+    }
   };
 
   const handleSupportClick = () => {
@@ -48,6 +111,41 @@ const ProfileScreen = () => {
   // Kiểm tra người dùng đã xác minh chưa
   const isUserVerified = user?.hasVerifiedDocuments || false;
 
+  // Enhanced helper function with more logging for troubleshooting
+  const getFullAvatarUrl = (avatarPath) => {
+    if (!avatarPath) {
+      console.log("No avatar path provided, using default");
+      return defaultAvatar;
+    }
+
+    // If it's already a full URL, return it
+    if (avatarPath.startsWith("http")) {
+      console.log("Avatar already has a full URL:", avatarPath);
+      return avatarPath;
+    }
+
+    // Otherwise, prepend the API base URL
+    const fullUrl = `${API_BASE_URL}${avatarPath}`;
+    console.log("Created full avatar URL:", fullUrl);
+    return fullUrl;
+  };
+
+  // Add a useEffect to log when user data changes
+  useEffect(() => {
+    if (user) {
+      console.log("User data updated:", {
+        id: user.id,
+        verified: user.hasVerifiedDocuments,
+        fullName: user.fullName,
+        avatarUrl: user.avatarUrl,
+      });
+
+      if (user.avatarUrl) {
+        console.log("Full avatar URL:", getFullAvatarUrl(user.avatarUrl));
+      }
+    }
+  }, [user]);
+
   if (isLoading) {
     return (
       <div className="profile-loading">
@@ -64,24 +162,32 @@ const ProfileScreen = () => {
         <h1 className="header-title">Hồ sơ</h1>
       </div>
 
-      {/* User Info Section */}
+      {/* Notification for unverified users - Only shown when triggered */}
+      {showNotification && (
+        <div className="verification-notification">
+          <div className="notification-icon">i</div>
+          <span>Bạn chưa xác minh danh tính.</span>
+        </div>
+      )}
+
+      {/* User Info Section - Enhanced */}
       <div className="user-info-section">
         <div className="avatar-container">
           <img
-            src={user?.avatarUrl || defaultAvatar}
+            src={avatarUrl || defaultAvatar}
             alt="Avatar"
             className="user-avatar"
+            onError={(e) => {
+              console.log("Avatar failed to load, using default");
+              e.target.onerror = null;
+              e.target.src = defaultAvatar;
+            }}
           />
         </div>
-        <div className="user-phone">{user?.phone || "0705007588"}</div>
-
-        {/* Notification banner for unverified users */}
-        {!isUserVerified && (
-          <div className="verification-notification">
-            <div className="notification-icon">i</div>
-            <span>Bạn chưa xác minh danh tính.</span>
-          </div>
-        )}
+        <div className="user-info-text">
+          {user?.fullName && <div className="user-name">{user.fullName}</div>}
+          <div className="user-phone">{user?.phone || "0705007588"}</div>
+        </div>
       </div>
 
       {/* Verification Alert - Chỉ hiển thị khi chưa xác minh */}

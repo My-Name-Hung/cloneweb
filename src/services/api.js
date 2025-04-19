@@ -90,4 +90,49 @@ export const contractApi = {
   },
 };
 
+export const uploadImage = async (imageData, userId, type) => {
+  try {
+    // For base64 images
+    if (imageData.startsWith("data:image")) {
+      return apiCall("/api/verification/upload/" + type, {
+        method: "POST",
+        body: JSON.stringify({
+          userId,
+          imageData,
+        }),
+      });
+    }
+    // For file uploads (could be implemented if needed)
+    else {
+      // Handle file upload
+      const formData = new FormData();
+      formData.append("image", imageData);
+      formData.append("userId", userId);
+
+      return fetch(`${API_URL}/api/verification/upload/${type}`, {
+        method: "POST",
+        body: formData,
+        // No Content-Type header for multipart/form-data
+      }).then((response) => {
+        if (!response.ok) throw new Error("Upload failed");
+        return response.json();
+      });
+    }
+  } catch (error) {
+    console.error(`Error uploading ${type} image:`, error);
+    throw error;
+  }
+};
+
+export const imageApi = {
+  upload: uploadImage,
+
+  // Get a properly formatted image URL
+  getImageUrl: (path) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    return `${API_URL}${path}`;
+  },
+};
+
 export default apiCall;
