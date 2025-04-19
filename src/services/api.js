@@ -1,5 +1,6 @@
-// Lấy URL API từ biến môi trường hoặc sử dụng default
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+// Đảm bảo API_URL chính xác
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://cloneweb-uhw9.onrender.com";
 
 // Hàm helper để thực hiện các API call
 async function apiCall(endpoint, options = {}) {

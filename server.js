@@ -759,20 +759,57 @@ app.get("/api/users/:userId/contracts", async (req, res) => {
     console.log("Đang lấy hợp đồng cho userId:", userId);
 
     // Thử với cả ObjectId và string ID
-    let contracts;
+    let contracts = [];
+    let _err1, _err2;
+
     try {
-      // Với mongoose.Types.ObjectId
+      // Debug logging
+      console.log("Attempting to find contracts with userId (as is):", userId);
+
+      // Với userId như đã cung cấp
       contracts = await Contract.find({ userId: userId }).sort({
         createdAt: -1,
       });
-    } catch (objIdError) {
+
+      console.log(`Found ${contracts.length} contracts with direct userId`);
+    } catch (err1) {
+      _err1 = err1;
+      console.log("Error with direct userId:", err1.message);
+
+      try {
+        // Debug logging
+        console.log("Attempting to find contracts with userId as ObjectId");
+
+        // Thử với mongoose.Types.ObjectId
+        if (mongoose.Types.ObjectId.isValid(userId)) {
+          const objectId = new mongoose.Types.ObjectId(userId);
+          contracts = await Contract.find({ userId: objectId }).sort({
+            createdAt: -1,
+          });
+          console.log(`Found ${contracts.length} contracts with ObjectId`);
+        } else {
+          console.log("UserId is not a valid ObjectId:", userId);
+        }
+      } catch (err2) {
+        _err2 = err2;
+        console.log("Error with ObjectId:", err2.message);
+      }
+    }
+
+    if (contracts.length === 0) {
       console.log(
-        "Lỗi khi query với ObjectId, thử với string:",
-        objIdError.message
+        "No contracts found. Dumping contract collection structure for debug:"
       );
-      contracts = await Contract.find({ userId: userId.toString() }).sort({
-        createdAt: -1,
-      });
+      // Lấy một mẫu hợp đồng để xem cấu trúc thực tế trong DB
+      const sampleContract = await Contract.findOne({});
+      if (sampleContract) {
+        console.log(
+          "Sample contract structure:",
+          JSON.stringify(sampleContract)
+        );
+      } else {
+        console.log("No contracts exist in the database");
+      }
     }
 
     console.log(`Tìm thấy ${contracts.length} hợp đồng cho user ${userId}`);
