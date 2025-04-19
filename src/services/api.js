@@ -6,21 +6,22 @@ async function apiCall(endpoint, options = {}) {
   const url = `${API_URL}${endpoint}`;
 
   try {
-    console.log(`Calling API: ${url}`);
+    console.log(`Calling API: ${url} with method: ${options.method || "GET"}`);
     const response = await fetch(url, {
       ...options,
       headers: {
         "Content-Type": "application/json",
         ...options.headers,
       },
-      // Bỏ hoặc comment các dòng dưới đây
-      // credentials: "include",
-      // mode: "cors",
     });
+
+    // Log response status
+    console.log(`API response status: ${response.status} for ${url}`);
 
     // Kiểm tra nếu response không ok, throw error
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error(`API error data:`, errorData);
       throw new Error(
         errorData.message || `API call failed with status: ${response.status}`
       );

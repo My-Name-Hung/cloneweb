@@ -293,10 +293,8 @@ const LoanSelectionScreen = () => {
 
   const handleLoanConfirmation = async () => {
     try {
-      // Get loanAmount and loanTerm để truyền vào state
+      // Lưu thông tin khoản vay vào localStorage
       const loanAmount = getDisplayAmount();
-
-      // Lưu thông tin khoản vay vào localStorage để có thể truy cập từ các trang khác
       localStorage.setItem(
         "loanData",
         JSON.stringify({
@@ -306,34 +304,29 @@ const LoanSelectionScreen = () => {
         })
       );
 
-      // Sửa cách lấy thông tin user từ localStorage
+      // Lấy thông tin user từ localStorage
       const userData = JSON.parse(localStorage.getItem("userData")) || {};
-
-      // Kiểm tra đăng nhập với key chính xác
       const userId = userData.id || userData._id;
 
       if (!userId) {
-        console.log("Không tìm thấy ID người dùng trong userData:", userData);
+        console.log(
+          "Không tìm thấy ID người dùng, chuyển hướng đến trang đăng nhập"
+        );
         navigate("/login");
         return;
       }
 
-      // Get API URL - Thêm dòng này vì bị thiếu khai báo API_URL
+      // Kiểm tra xác minh từ API
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
       try {
-        // Kiểm tra thông tin xác minh của user từ API
-        console.log("Đang kiểm tra API với userId:", userId);
-
+        // Kiểm tra cả thông tin cá nhân và thông tin ngân hàng
         const [profileRes, bankInfoRes] = await Promise.all([
           axios.get(`${API_URL}/api/users/${userId}/profile`),
           axios.get(`${API_URL}/api/users/${userId}/bank-info`),
         ]);
 
-        console.log("Kết quả từ API - profile:", profileRes.data);
-        console.log("Kết quả từ API - bankInfo:", bankInfoRes.data);
-
-        // Kiểm tra xem user đã có đầy đủ thông tin chưa
+        // Kiểm tra người dùng đã có đầy đủ thông tin chưa
         const hasPersonalInfo =
           profileRes.data.success &&
           profileRes.data.user?.personalInfo?.idNumber &&
@@ -344,23 +337,21 @@ const LoanSelectionScreen = () => {
           bankInfoRes.data.bankInfo?.accountNumber &&
           bankInfoRes.data.bankInfo?.bank;
 
-        // CẬP NHẬT THÔNG TIN NGƯỜI DÙNG VỚI BANKINFO TỪ SERVER
+        console.log("Trạng thái xác minh thông tin cá nhân:", hasPersonalInfo);
+        console.log("Trạng thái xác minh thông tin ngân hàng:", hasBankInfo);
+
+        // Cập nhật thông tin ngân hàng nếu có
         if (bankInfoRes.data.success && bankInfoRes.data.bankInfo) {
-          // Cập nhật userData trong localStorage với thông tin ngân hàng mới nhất
           const updatedUserData = {
             ...userData,
             bankInfo: bankInfoRes.data.bankInfo,
           };
-
-          console.log("Cập nhật userData vào localStorage:", updatedUserData);
           localStorage.setItem("userData", JSON.stringify(updatedUserData));
         }
 
+        // Điều hướng dựa trên trạng thái xác minh
         if (hasPersonalInfo && hasBankInfo) {
-          // Nếu đã có đầy đủ thông tin, điều hướng trực tiếp đến trang xác nhận khoản vay
-          console.log(
-            "Đã xác minh đầy đủ, chuyển đến trang xác nhận khoản vay"
-          );
+          // Đã xác minh đầy đủ, điều hướng đến trang xác nhận khoản vay
           navigate("/loan-confirmation", {
             state: {
               loanAmount: loanAmount,
@@ -370,31 +361,30 @@ const LoanSelectionScreen = () => {
           });
         } else if (hasPersonalInfo) {
           // Có thông tin cá nhân nhưng chưa có thông tin ngân hàng
-          console.log(
-            "Chưa có thông tin ngân hàng, chuyển đến trang thông tin ngân hàng"
-          );
-          navigate("/bank-info");
+          navigate("/bank-info", {
+            state: {
+              loanAmount: loanAmount,
+              loanTerm: loanTerm,
+              loanDate: loanDate,
+            },
+          });
         } else {
           // Chưa có thông tin cá nhân
-          console.log(
-            "Chưa có thông tin cá nhân, chuyển đến trang thông tin cá nhân"
-          );
-          navigate("/personal-info");
+          navigate("/verification", {
+            state: {
+              loanAmount: loanAmount,
+              loanTerm: loanTerm,
+              loanDate: loanDate,
+            },
+          });
         }
       } catch (apiError) {
         console.error("Lỗi khi kiểm tra thông tin xác minh API:", apiError);
-
-        // Force kiểm tra lại từ API nếu nhận thấy có bankInfo
-        if (apiError.response?.status === 404) {
-          console.log("API báo không tìm thấy user, kiểm tra từ localStorage");
-        }
-
-        // Kiểm tra từ localStorage nếu API fails
+        // Fallback kiểm tra từ localStorage nếu API fails
         checkUserVerificationFromLocalStorage();
       }
     } catch (error) {
       console.error("Lỗi chung:", error);
-
       // Fallback nếu có lỗi
       checkUserVerificationFromLocalStorage();
     }
@@ -516,7 +506,7 @@ const LoanSelectionScreen = () => {
       <div
         className="custom-dropdown"
         ref={dropdownRef}
-        style={{ position: "relative", width: "20%"}}
+        style={{ position: "relative", width: "20%" }}
       >
         <div
           className="custom-dropdown-header"

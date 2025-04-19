@@ -353,10 +353,12 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      console.log("Đang lấy danh sách hợp đồng cho user:", user.id);
-      // Try to get from API
+      const userId = user.id;
+      console.log("Đang lấy danh sách hợp đồng cho user:", userId);
+
+      // Sử dụng axios với URL đầy đủ
       const response = await axios.get(
-        `${API_BASE_URL}/api/users/${user.id}/contracts`
+        `${API_BASE_URL}/api/users/${userId}/contracts`
       );
 
       if (response.data.success) {
@@ -365,8 +367,8 @@ export const AuthProvider = ({ children }) => {
           response.data.contracts
         );
 
-        // Store the API results in localStorage as a cache
-        const userContractsKey = `userContracts_${user.id}`;
+        // Lưu vào localStorage làm cache
+        const userContractsKey = `userContracts_${userId}`;
         localStorage.setItem(
           userContractsKey,
           JSON.stringify(response.data.contracts)
@@ -380,7 +382,6 @@ export const AuthProvider = ({ children }) => {
       console.error("Lỗi khi lấy danh sách hợp đồng từ API:", error);
 
       // Fallback to localStorage
-      console.log("Đang thử lấy hợp đồng từ localStorage cho user:", user.id);
       const userContractsKey = `userContracts_${user.id}`;
       const savedContracts = localStorage.getItem(userContractsKey);
 
@@ -399,6 +400,73 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const checkUserVerificationStatus = async () => {
+    if (!user || !user.id) {
+      return { verified: false, hasPersonalInfo: false, hasBankInfo: false };
+    }
+
+    try {
+      const [profileRes, bankInfoRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/users/${user.id}/profile`),
+        axios.get(`${API_BASE_URL}/api/users/${user.id}/bank-info`),
+      ]);
+
+      const hasPersonalInfo =
+        profileRes.data.success &&
+        profileRes.data.user?.personalInfo?.idNumber &&
+        profileRes.data.user?.fullName;
+
+      const hasBankInfo =
+        bankInfoRes.data.success &&
+        bankInfoRes.data.bankInfo?.accountNumber &&
+        bankInfoRes.data.bankInfo?.bank;
+
+      // Cập nhật thông tin người dùng trong state và localStorage
+      if (profileRes.data.success || bankInfoRes.data.success) {
+        const updatedUser = { ...user };
+
+        if (profileRes.data.success) {
+          updatedUser.fullName = profileRes.data.user.fullName;
+          updatedUser.personalInfo = profileRes.data.user.personalInfo;
+        }
+
+        if (bankInfoRes.data.success) {
+          updatedUser.bankInfo = bankInfoRes.data.bankInfo;
+        }
+
+        setUser(updatedUser);
+        localStorage.setItem("userData", JSON.stringify(updatedUser));
+      }
+
+      return {
+        verified: hasPersonalInfo && hasBankInfo,
+        hasPersonalInfo,
+        hasBankInfo,
+      };
+    } catch (error) {
+      console.error("Lỗi kiểm tra trạng thái xác minh:", error);
+
+      // Fallback: kiểm tra từ localStorage
+      const userData = JSON.parse(localStorage.getItem("userData")) || {};
+
+      const hasPersonalInfo =
+        userData.personalInfo &&
+        userData.personalInfo.idNumber &&
+        userData.fullName;
+
+      const hasBankInfo =
+        userData.bankInfo &&
+        userData.bankInfo.accountNumber &&
+        userData.bankInfo.bank;
+
+      return {
+        verified: hasPersonalInfo && hasBankInfo,
+        hasPersonalInfo,
+        hasBankInfo,
+      };
+    }
+  };
+
   const value = {
     user,
     setUser,
@@ -411,6 +479,7 @@ export const AuthProvider = ({ children }) => {
     updateBankInfo,
     saveUserContract,
     getUserContracts,
+    checkUserVerificationStatus,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
