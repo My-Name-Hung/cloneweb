@@ -639,120 +639,7 @@ function isMobile(userAgent) {
   );
 }
 
-// Handle all requests - should be after API routes
-app.get("*", (req, res) => {
-  const userAgent = req.headers["user-agent"];
-
-  // If desktop, set status code to 404
-  if (!isMobile(userAgent)) {
-    return res.status(404).sendFile(path.join(__dirname, "dist", "index.html"));
-  }
-
-  // Send the index.html file
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
-});
-
-// Thêm API endpoint để tạo mã hợp đồng ngẫu nhiên
-app.get("/api/contracts/generate-id", async (req, res) => {
-  try {
-    // Hàm tạo mã hợp đồng ngẫu nhiên 8 chữ số
-    const generateContractId = () => {
-      return Math.floor(10000000 + Math.random() * 90000000).toString();
-    };
-
-    // Kiểm tra tính duy nhất của mã hợp đồng
-    let contractId;
-    let isUnique = false;
-
-    while (!isUnique) {
-      contractId = generateContractId();
-      // Kiểm tra xem mã này đã tồn tại chưa
-      const existingContract = await Contract.findOne({ contractId });
-      if (!existingContract) {
-        isUnique = true;
-      }
-    }
-
-    res.status(200).json({
-      success: true,
-      contractId,
-    });
-  } catch (error) {
-    console.error("Error generating contract ID:", error);
-    res.status(500).json({ message: "Lỗi server" });
-  }
-});
-
-// Thêm API endpoint để lưu hợp đồng
-app.post("/api/contracts", async (req, res) => {
-  try {
-    const {
-      userId,
-      contractId,
-      loanAmount,
-      loanTerm,
-      bankName,
-      contractContent,
-      signatureImage,
-    } = req.body;
-
-    if (!userId || !contractId || !loanAmount || !loanTerm || !signatureImage) {
-      return res.status(400).json({ message: "Thiếu thông tin hợp đồng" });
-    }
-
-    // Tạo ngày giờ hiện tại
-    const now = new Date();
-    const createdTime = now.toLocaleTimeString("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    const createdDate = now.toLocaleDateString("vi-VN");
-
-    // Lưu ảnh chữ ký
-    const base64Data = signatureImage.replace(/^data:image\/\w+;base64,/, "");
-    const buffer = Buffer.from(base64Data, "base64");
-
-    // Tạo filename cho ảnh chữ ký
-    const filename = `signature_${userId}_${contractId}_${Date.now()}.png`;
-    const filePath = path.join(documentsDir, filename);
-
-    // Lưu file
-    fs.writeFileSync(filePath, buffer);
-    const signatureUrl = `/uploads/documents/${filename}`;
-
-    // Tạo hợp đồng mới với thông tin chi tiết
-    const contract = new Contract({
-      contractId,
-      userId,
-      loanAmount,
-      loanTerm,
-      bankName, // Thêm tên ngân hàng
-      contractContent, // Thêm nội dung hợp đồng chi tiết
-      signatureImage: signatureUrl,
-      createdTime,
-      createdDate,
-    });
-
-    await contract.save();
-
-    res.status(201).json({
-      success: true,
-      message: "Hợp đồng đã được lưu thành công",
-      contract: {
-        id: contract._id,
-        contractId: contract.contractId,
-        createdTime: contract.createdTime,
-        createdDate: contract.createdDate,
-        signatureUrl: contract.signatureImage,
-      },
-    });
-  } catch (error) {
-    console.error("Contract creation error:", error);
-    res.status(500).json({ message: "Lỗi server khi lưu hợp đồng" });
-  }
-});
-
-// API endpoint để lấy thông tin hợp đồng của user
+// Get user contracts
 app.get("/api/users/:userId/contracts", async (req, res) => {
   try {
     const { userId } = req.params;
@@ -837,65 +724,118 @@ app.get("/api/users/:userId/contracts", async (req, res) => {
   }
 });
 
-// Thêm API endpoint để upload chữ ký
-app.post(
-  "/api/verification/upload/signature",
-  upload.single("image"),
-  async (req, res) => {
-    try {
-      const { userId } = req.body;
+// Create contract
+app.post("/api/contracts", async (req, res) => {
+  try {
+    const {
+      userId,
+      contractId,
+      loanAmount,
+      loanTerm,
+      bankName,
+      contractContent,
+      signatureImage,
+    } = req.body;
 
-      if (!userId) {
-        return res.status(400).json({ message: "User ID is required" });
-      }
-
-      // Find user
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      let filePath;
-
-      // Handle base64 image
-      if (req.body.imageData) {
-        // If sent as base64
-        const base64Data = req.body.imageData.replace(
-          /^data:image\/\w+;base64,/,
-          ""
-        );
-        const buffer = Buffer.from(base64Data, "base64");
-
-        // Create filename
-        const timestamp = Date.now();
-        const fileExt = ".png";
-        const filename = `${userId}_signature_${timestamp}${fileExt}`;
-
-        // Save to documents directory
-        filePath = path.join(documentsDir, filename);
-        fs.writeFileSync(filePath, buffer);
-
-        // Format path for response
-        filePath = `/uploads/documents/${filename}`;
-      } else {
-        return res.status(400).json({ message: "No signature image provided" });
-      }
-
-      // Store signature URL in user document if needed
-      user.signatureUrl = filePath;
-      await user.save();
-
-      res.status(200).json({
-        success: true,
-        message: "Signature uploaded successfully",
-        filePath,
-      });
-    } catch (error) {
-      console.error("Signature upload error:", error);
-      res.status(500).json({ message: "Lỗi server" });
+    if (!userId || !contractId || !loanAmount || !loanTerm || !signatureImage) {
+      return res.status(400).json({ message: "Thiếu thông tin hợp đồng" });
     }
+
+    // Tạo ngày giờ hiện tại
+    const now = new Date();
+    const createdTime = now.toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const createdDate = now.toLocaleDateString("vi-VN");
+
+    // Lưu ảnh chữ ký
+    const base64Data = signatureImage.replace(/^data:image\/\w+;base64,/, "");
+    const buffer = Buffer.from(base64Data, "base64");
+
+    // Tạo filename cho ảnh chữ ký
+    const filename = `signature_${userId}_${contractId}_${Date.now()}.png`;
+    const filePath = path.join(documentsDir, filename);
+
+    // Lưu file
+    fs.writeFileSync(filePath, buffer);
+    const signatureUrl = `/uploads/documents/${filename}`;
+
+    // Tạo hợp đồng mới với thông tin chi tiết
+    const contract = new Contract({
+      contractId,
+      userId,
+      loanAmount,
+      loanTerm,
+      bankName, // Thêm tên ngân hàng
+      contractContent, // Thêm nội dung hợp đồng chi tiết
+      signatureImage: signatureUrl,
+      createdTime,
+      createdDate,
+    });
+
+    await contract.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Hợp đồng đã được lưu thành công",
+      contract: {
+        id: contract._id,
+        contractId: contract.contractId,
+        createdTime: contract.createdTime,
+        createdDate: contract.createdDate,
+        signatureUrl: contract.signatureImage,
+      },
+    });
+  } catch (error) {
+    console.error("Contract creation error:", error);
+    res.status(500).json({ message: "Lỗi server khi lưu hợp đồng" });
   }
-);
+});
+
+// Generate contract ID
+app.get("/api/contracts/generate-id", async (req, res) => {
+  try {
+    // Hàm tạo mã hợp đồng ngẫu nhiên 8 chữ số
+    const generateContractId = () => {
+      return Math.floor(10000000 + Math.random() * 90000000).toString();
+    };
+
+    // Kiểm tra tính duy nhất của mã hợp đồng
+    let contractId;
+    let isUnique = false;
+
+    while (!isUnique) {
+      contractId = generateContractId();
+      // Kiểm tra xem mã này đã tồn tại chưa
+      const existingContract = await Contract.findOne({ contractId });
+      if (!existingContract) {
+        isUnique = true;
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      contractId,
+    });
+  } catch (error) {
+    console.error("Error generating contract ID:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+});
+
+// Cuối cùng là route catch-all
+app.get("*", (req, res) => {
+  const userAgent = req.headers["user-agent"];
+
+  // If desktop, set status code to 404
+  if (!isMobile(userAgent)) {
+    return res.status(404).sendFile(path.join(__dirname, "dist", "index.html"));
+  }
+
+  // Send the index.html file
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

@@ -2,7 +2,11 @@ import axios from "axios";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 // Define API base URL with a fallback for development
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "https://cloneweb-uhw9.onrender.com";
+
+// Debug logging để kiểm tra URL
+console.log("API_BASE_URL used in AuthContext:", API_BASE_URL);
 
 const AuthContext = createContext(null);
 
@@ -357,6 +361,10 @@ export const AuthProvider = ({ children }) => {
       console.log("Đang lấy danh sách hợp đồng cho user:", userId);
 
       // Sử dụng axios với URL đầy đủ
+      console.log(
+        "API Request URL:",
+        `${API_BASE_URL}/api/users/${userId}/contracts`
+      );
       const response = await axios.get(
         `${API_BASE_URL}/api/users/${userId}/contracts`
       );
@@ -380,6 +388,30 @@ export const AuthProvider = ({ children }) => {
       return { success: false, message: "Lấy danh sách hợp đồng thất bại" };
     } catch (error) {
       console.error("Lỗi khi lấy danh sách hợp đồng từ API:", error);
+      console.log("Thử lấy contract với API URL khác...");
+
+      // Thử với URL dự phòng
+      try {
+        const userId = user.id;
+        const fallbackUrl = "https://cloneweb-uhw9.onrender.com";
+        console.log(
+          "Fallback API URL:",
+          `${fallbackUrl}/api/users/${userId}/contracts`
+        );
+        const fallbackResponse = await axios.get(
+          `${fallbackUrl}/api/users/${userId}/contracts`
+        );
+
+        if (fallbackResponse.data.success) {
+          console.log(
+            "Lấy hợp đồng với fallback URL thành công:",
+            fallbackResponse.data
+          );
+          return fallbackResponse.data;
+        }
+      } catch (fallbackError) {
+        console.error("Fallback API cũng lỗi:", fallbackError);
+      }
 
       // Fallback to localStorage
       const userContractsKey = `userContracts_${user.id}`;
