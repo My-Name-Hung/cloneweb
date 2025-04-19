@@ -103,7 +103,6 @@
 
 .dropdown label {
   position: relative;
-  bottom: 20px;
   overflow-wrap: break-word;
   color: rgba(0, 0, 0, 0.85);
 }
@@ -141,8 +140,7 @@
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  z-index: 10;
+  z-index: 9999;
   margin-top: 4px;
   font-size: 13px;
   max-height: 300px;

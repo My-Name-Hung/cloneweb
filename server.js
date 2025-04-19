@@ -757,7 +757,14 @@ app.get("/api/users/:userId/contracts", async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const contracts = await Contract.find({ userId }).sort({ createdAt: -1 });
+    console.log("Getting contracts for userId:", userId);
+
+    // Sửa query để đảm bảo objectId được xử lý đúng
+    const contracts = await Contract.find({ userId: userId.toString() }).sort({
+      createdAt: -1,
+    });
+
+    console.log(`Found ${contracts.length} contracts for user ${userId}`);
 
     res.status(200).json({
       success: true,
@@ -769,11 +776,12 @@ app.get("/api/users/:userId/contracts", async (req, res) => {
         createdTime: contract.createdTime,
         createdDate: contract.createdDate,
         signatureUrl: contract.signatureImage,
+        bankName: contract.bankName,
       })),
     });
   } catch (error) {
     console.error("Get contracts error:", error);
-    res.status(500).json({ message: "Lỗi server" });
+    res.status(500).json({ message: "Lỗi server", error: error.message });
   }
 });
 

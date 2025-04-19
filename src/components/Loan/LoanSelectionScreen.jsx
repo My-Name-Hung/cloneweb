@@ -19,6 +19,7 @@ const LoanSelectionScreen = () => {
   const modalRef = useRef(null);
   const overlayRef = useRef(null);
   const [documentsUploaded, setDocumentsUploaded] = useState(false);
+  const dropdownRef = useRef(null);
 
   // Calculate the first payment based on correct formula
   const calculatePayment = (principal, termMonths, annualInterestRate) => {
@@ -221,13 +222,25 @@ const LoanSelectionScreen = () => {
     return loanAmount ? formatCurrency(loanAmount) : "0";
   };
 
-  const toggleDropdown = () => {
-    setDropdownOpen(!dropdownOpen);
+  const toggleDropdown = (e) => {
+    // Ngăn sự kiện lan tỏa đến các phần tử cha
+    if (e) e.stopPropagation();
+
+    console.log("Toggle dropdown called, current state:", dropdownOpen);
+
+    // Sử dụng functional update để đảm bảo luôn có giá trị state mới nhất
+    setDropdownOpen((prevState) => {
+      console.log("Setting dropdown to:", !prevState);
+      return !prevState;
+    });
   };
 
   const selectTerm = (term) => {
+    console.log("Selecting term:", term);
     setLoanTerm(term);
-    setDropdownOpen(false);
+    setTimeout(() => {
+      setDropdownOpen(false);
+    }, 10);
   };
 
   const openPaymentModal = () => {
@@ -461,6 +474,123 @@ const LoanSelectionScreen = () => {
     checkDocumentsStatus();
   }, []);
 
+  // Thêm useEffect để xử lý click bên ngoài dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Nếu click ra ngoài dropdown-container, đóng dropdown
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    // Thêm event listener vào document
+    document.addEventListener("mousedown", handleClickOutside);
+
+    // Cleanup event listener khi component unmount
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Giải pháp khẩn cấp - component tạm thời
+  function CustomDropdown({ value, options, onChange }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+      function handleClickOutside(event) {
+        if (
+          dropdownRef.current &&
+          !dropdownRef.current.contains(event.target)
+        ) {
+          setIsOpen(false);
+        }
+      }
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }, []);
+
+    return (
+      <div
+        className="custom-dropdown"
+        ref={dropdownRef}
+        style={{ position: "relative", width: "20%"}}
+      >
+        <div
+          className="custom-dropdown-header"
+          onClick={() => setIsOpen(!isOpen)}
+          style={{
+            padding: "10px 15px",
+            backgroundColor: "white",
+            borderRadius: "8px",
+            border: "1px solid #ddd",
+            color: "black",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            cursor: "pointer",
+          }}
+        >
+          <span>{value} tháng</span>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7 10l5 5 5-5"
+              stroke="#999"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+
+        {isOpen && (
+          <div
+            className="custom-dropdown-list"
+            style={{
+              position: "absolute",
+              top: "calc(100% + 5px)",
+              left: 0,
+              width: "100%",
+              color: "black",
+              backgroundColor: "white",
+              borderRadius: "8px",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+              zIndex: 9999,
+              border: "1px solid #ddd",
+            }}
+          >
+            {options.map((option) => (
+              <div
+                key={option}
+                className={option === value ? "active" : ""}
+                onClick={() => {
+                  onChange(option);
+                  setIsOpen(false);
+                }}
+                style={{
+                  padding: "10px 15px",
+                  cursor: "pointer",
+                  backgroundColor: option === value ? "#e6f7ff" : "white",
+                  borderBottom: "1px solid #f5f5f5",
+                }}
+              >
+                {option} tháng
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="loan-page-container">
       {/* Error notification */}
@@ -513,41 +643,11 @@ const LoanSelectionScreen = () => {
 
           <div className="dropdown">
             <label>Chọn thời hạn vay</label>
-            <div className="dropdown-container">
-              <div className="selected-value" onClick={toggleDropdown}>
-                {loanTerm} tháng
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M7 10l5 5 5-5"
-                    stroke="#999"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-              {dropdownOpen && (
-                <div className="dropdown-menu">
-                  {["6", "12", "18", "24", "36", "48", "60"].map((term) => (
-                    <div
-                      key={term}
-                      className={`dropdown-item ${
-                        loanTerm === term ? "selected" : ""
-                      }`}
-                      onClick={() => selectTerm(term)}
-                    >
-                      {term} tháng
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <CustomDropdown
+              value={loanTerm}
+              options={["6", "12", "18", "24", "36", "48", "60"]}
+              onChange={setLoanTerm}
+            />
           </div>
         </div>
       </div>

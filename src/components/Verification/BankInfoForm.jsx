@@ -212,8 +212,8 @@ const BankInfoForm = () => {
   };
 
   const handleContinue = () => {
-    // Khi người dùng bấm nút "Tiếp tục", chuyển hướng đến trang /loan
-    navigate("/loan", {
+    // Khi người dùng bấm nút "Tiếp tục", chuyển hướng đến trang loan-confirmation
+    navigate("/loan-confirmation", {
       state: {
         message: "Thông tin ngân hàng đã được cập nhật thành công!",
         success: true,
