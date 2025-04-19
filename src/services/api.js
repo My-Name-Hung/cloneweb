@@ -94,31 +94,71 @@ export const contractApi = {
 
 export const uploadImage = async (imageData, userId, type) => {
   try {
+    console.log(`Uploading image of type ${type} for user ${userId}`);
+
     // For base64 images
-    if (imageData.startsWith("data:image")) {
-      return apiCall("/api/verification/upload/" + type, {
-        method: "POST",
-        body: JSON.stringify({
-          userId,
-          imageData,
-        }),
-      });
+    if (typeof imageData === "string" && imageData.startsWith("data:image")) {
+      console.log("Uploading base64 image data");
+      const response = await fetch(
+        `${API_URL}/api/verification/upload/${type}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId,
+            imageData,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error(
+          `Upload failed: ${errorData.message || response.statusText}`
+        );
+        throw new Error(
+          `Upload failed: ${errorData.message || response.statusText}`
+        );
+      }
+
+      const result = await response.json();
+      console.log("Upload successful:", result);
+      return result;
     }
-    // For file uploads (could be implemented if needed)
-    else {
-      // Handle file upload
+    // For file uploads (Blob or File objects)
+    else if (imageData instanceof Blob || imageData instanceof File) {
+      console.log("Uploading file object");
       const formData = new FormData();
       formData.append("image", imageData);
       formData.append("userId", userId);
 
-      return fetch(`${API_URL}/api/verification/upload/${type}`, {
-        method: "POST",
-        body: formData,
-        // No Content-Type header for multipart/form-data
-      }).then((response) => {
-        if (!response.ok) throw new Error("Upload failed");
-        return response.json();
-      });
+      const response = await fetch(
+        `${API_URL}/api/verification/upload/${type}`,
+        {
+          method: "POST",
+          body: formData,
+          // No Content-Type header for multipart/form-data
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error(
+          `Upload failed: ${errorData.message || response.statusText}`
+        );
+        throw new Error(
+          `Upload failed: ${errorData.message || response.statusText}`
+        );
+      }
+
+      const result = await response.json();
+      console.log("Upload successful:", result);
+      return result;
+    } else {
+      console.error("Unsupported image data format:", typeof imageData);
+      throw new Error("Unsupported image data format");
     }
   } catch (error) {
     console.error(`Error uploading ${type} image:`, error);
@@ -150,6 +190,37 @@ export const imageApi = {
     console.log("Constructed full image URL:", fullUrl);
 
     return fullUrl;
+  },
+
+  // Get user avatar with full URL
+  getUserAvatar: async (userId) => {
+    if (!userId) {
+      console.error("Missing userId for getUserAvatar");
+      return null;
+    }
+
+    try {
+      console.log(`Fetching avatar for user ${userId}`);
+      const response = await fetch(`${API_URL}/api/users/${userId}/avatar`);
+
+      if (!response.ok) {
+        console.error(`Failed to get avatar: ${response.statusText}`);
+        return null;
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.fullAvatarUrl) {
+        console.log("Avatar found:", data.fullAvatarUrl);
+        return data.fullAvatarUrl;
+      }
+
+      console.log("No avatar found for user");
+      return null;
+    } catch (error) {
+      console.error("Error getting user avatar:", error);
+      return null;
+    }
   },
 };
 

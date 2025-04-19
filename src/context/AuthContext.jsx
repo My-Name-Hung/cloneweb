@@ -1,5 +1,6 @@
 import axios from "axios";
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { imageApi } from "../services/api";
 
 // Define API base URL with a fallback for development
 const API_BASE_URL =
@@ -14,7 +15,14 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Check for existing auth on mount
+  // Add this function to ensure avatar URLs are processed correctly
+  const ensureFullUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith("http")) return url;
+    return `${API_BASE_URL}${url.startsWith("/") ? url : `/${url}`}`;
+  };
+
+  // Update the checkAuth function
   const checkAuth = async () => {
     setLoading(true);
     try {
@@ -32,42 +40,32 @@ export const AuthProvider = ({ children }) => {
       const parsedUser = JSON.parse(userData);
       console.log("User data from localStorage:", parsedUser);
 
-      // Xử lý đầy đủ URL avatar
+      // Ensure avatar URL is a full URL
       if (parsedUser.avatarUrl) {
-        // Nếu avatarUrl là đường dẫn tương đối, thêm API_BASE_URL
-        if (!parsedUser.avatarUrl.startsWith("http")) {
-          const normalizedPath = parsedUser.avatarUrl.startsWith("/")
-            ? parsedUser.avatarUrl
-            : `/${parsedUser.avatarUrl}`;
-          parsedUser.avatarUrl = `${API_BASE_URL}${normalizedPath}`;
-          console.log("Normalized avatar URL:", parsedUser.avatarUrl);
-        }
-      }
-
-      // Xử lý cả ảnh chân dung trong personalInfo nếu có
-      if (parsedUser.personalInfo && parsedUser.personalInfo.portraitImage) {
-        if (!parsedUser.personalInfo.portraitImage.startsWith("http")) {
-          const normalizedPath =
-            parsedUser.personalInfo.portraitImage.startsWith("/")
-              ? parsedUser.personalInfo.portraitImage
-              : `/${parsedUser.personalInfo.portraitImage}`;
-          parsedUser.personalInfo.portraitImage = `${API_BASE_URL}${normalizedPath}`;
-          console.log(
-            "Normalized portrait image URL:",
-            parsedUser.personalInfo.portraitImage
-          );
-        }
+        parsedUser.avatarUrl = ensureFullUrl(parsedUser.avatarUrl);
+        console.log("Normalized avatar URL:", parsedUser.avatarUrl);
       }
 
       setUser(parsedUser);
-      console.log(
-        "User loaded from localStorage with normalized URLs:",
-        parsedUser
-      );
+      console.log("User loaded from localStorage with normalized URLs");
 
-      // Fetch latest bank info if user is logged in
+      // Fetch latest avatar if user is logged in
       if (parsedUser && parsedUser.id) {
         try {
+          // Try to get the avatar first
+          const avatarUrl = await imageApi.getUserAvatar(parsedUser.id);
+          if (avatarUrl && avatarUrl !== parsedUser.avatarUrl) {
+            console.log("Found updated avatar from API:", avatarUrl);
+            parsedUser.avatarUrl = avatarUrl;
+
+            // Update localStorage
+            localStorage.setItem("userData", JSON.stringify(parsedUser));
+
+            // Update state
+            setUser({ ...parsedUser });
+          }
+
+          // Then get the bank info
           const bankInfoRes = await axios.get(
             `${API_BASE_URL}/api/users/${parsedUser.id}/bank-info`
           );
@@ -89,8 +87,8 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem("userData", JSON.stringify(updatedUser));
             console.log("User updated with bank info:", updatedUser);
           }
-        } catch (bankInfoError) {
-          console.error("Could not fetch bank info:", bankInfoError);
+        } catch (error) {
+          console.error("Could not fetch user data:", error);
         }
       }
     } catch (error) {
@@ -227,33 +225,23 @@ export const AuthProvider = ({ children }) => {
     return { success: true, user: updatedUser };
   };
 
-  // Thêm hàm để cập nhật avatar
+  // Update the updateUserAvatar function
   const updateUserAvatar = (avatarUrl) => {
     if (!user) return { success: false, message: "No user logged in" };
 
     console.log("updateUserAvatar called with:", avatarUrl);
 
-    // Đảm bảo avatarUrl đầy đủ
-    let fullAvatarUrl = avatarUrl;
-    if (avatarUrl && !avatarUrl.startsWith("http")) {
-      fullAvatarUrl = `${API_BASE_URL}${
-        avatarUrl.startsWith("/") ? avatarUrl : `/${avatarUrl}`
-      }`;
-      console.log("Converted to full avatar URL:", fullAvatarUrl);
-    }
+    // Ensure avatarUrl is a full URL
+    const fullAvatarUrl = ensureFullUrl(avatarUrl);
+    console.log("Full avatar URL:", fullAvatarUrl);
 
-    // Cập nhật avatar trong user object
+    // Update user with new avatar
     const updatedUser = {
       ...user,
       avatarUrl: fullAvatarUrl,
-      // Lưu cả vào personalInfo nếu có
-      personalInfo: {
-        ...(user.personalInfo || {}),
-        portraitImage: fullAvatarUrl,
-      },
     };
 
-    // Lưu vào localStorage và state
+    // Update localStorage and state
     localStorage.setItem("userData", JSON.stringify(updatedUser));
     setUser(updatedUser);
 

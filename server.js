@@ -327,6 +327,7 @@ app.post(
         filePath = `/uploads/${req.file.destination.split("/").pop()}/${
           req.file.filename
         }`;
+        console.log("File uploaded via multer:", filePath);
       } else if (req.body.imageData) {
         // If sent as base64
         const base64Data = req.body.imageData.replace(
@@ -343,13 +344,18 @@ app.post(
         // Determine directory
         const directory =
           type === "portrait" || type === "avatar" ? avatarsDir : documentsDir;
-        filePath = path.join(directory, filename);
+        const fullFilePath = path.join(directory, filename);
+
+        // Log the directory and file path for debugging
+        console.log("Directory for saving:", directory);
+        console.log("Full file path:", fullFilePath);
 
         // Save file
-        fs.writeFileSync(filePath, buffer);
+        fs.writeFileSync(fullFilePath, buffer);
         filePath = `/uploads/${
           type === "portrait" || type === "avatar" ? "avatars" : "documents"
         }/${filename}`;
+        console.log("File saved from base64:", filePath);
       } else {
         return res.status(400).json({ message: "No image provided" });
       }
@@ -365,6 +371,7 @@ app.post(
         existingDoc.filePath = filePath;
         existingDoc.uploadedAt = Date.now();
         await existingDoc.save();
+        console.log("Updated existing document:", type, filePath);
       } else {
         // Create new document
         const document = new Document({
@@ -373,6 +380,7 @@ app.post(
           filePath: filePath,
         });
         await document.save();
+        console.log("Created new document:", type, filePath);
       }
 
       // If portrait, update user's avatar
@@ -399,29 +407,28 @@ app.post(
       if (frontId && backId && portrait) {
         user.hasVerifiedDocuments = true;
         await user.save();
+        console.log(`User ${userId} is now verified`);
       }
 
-      if (filePath) {
-        // Return both the relative path (for database storage) and full URL (for frontend)
-        const fullUrl = `${SERVER_URL}${filePath}`;
+      // Construct full URL for client use
+      const fullUrl = `${SERVER_URL}${filePath}`;
 
-        // Log URLs for debugging
-        console.log("Server URL:", SERVER_URL);
-        console.log("File path:", filePath);
-        console.log("Full URL:", fullUrl);
+      // Log URLs for debugging
+      console.log("Server URL:", SERVER_URL);
+      console.log("File path:", filePath);
+      console.log("Full URL:", fullUrl);
 
-        res.status(200).json({
-          success: true,
-          message: "File uploaded successfully",
-          filePath,
-          fileUrl: fullUrl,
-          fullUrl: fullUrl, // Thêm field fullUrl để đảm bảo client nhận được URL đầy đủ
-          isVerified: user.hasVerifiedDocuments,
-        });
-      }
+      res.status(200).json({
+        success: true,
+        message: "File uploaded successfully",
+        filePath,
+        fileUrl: fullUrl,
+        fullUrl: fullUrl,
+        isVerified: user.hasVerifiedDocuments,
+      });
     } catch (error) {
       console.error("Upload error:", error);
-      res.status(500).json({ message: "Lỗi server" });
+      res.status(500).json({ message: "Lỗi server", error: error.message });
     }
   }
 );
@@ -565,9 +572,9 @@ app.get("/api/users/:userId/avatar", async (req, res) => {
     }
 
     if (!user.avatarUrl) {
-      console.log("User has no avatar:", userId);
+      console.log("User has no avatar URL:", userId);
 
-      // Tìm ảnh portrait từ collection Document
+      // Look for portrait document as a fallback
       const portraitDoc = await Document.findOne({
         userId: user._id,
         documentType: "portrait",
@@ -575,11 +582,15 @@ app.get("/api/users/:userId/avatar", async (req, res) => {
 
       if (portraitDoc && portraitDoc.filePath) {
         console.log("Found portrait document instead:", portraitDoc.filePath);
-        // Trả về ảnh portrait thay thế và cập nhật user
+
+        // Update user with portrait URL and save
         user.avatarUrl = portraitDoc.filePath;
         await user.save();
 
+        // Construct full URL for client use
         const fullUrl = `${SERVER_URL}${portraitDoc.filePath}`;
+        console.log("Full portrait URL:", fullUrl);
+
         return res.status(200).json({
           success: true,
           avatarUrl: portraitDoc.filePath,
@@ -610,6 +621,7 @@ app.get("/api/users/:userId/avatar", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Lỗi server",
+      error: error.message,
     });
   }
 });

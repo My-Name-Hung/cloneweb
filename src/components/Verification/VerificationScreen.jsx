@@ -109,7 +109,12 @@ const VerificationScreen = () => {
 
       // Upload portrait cuối cùng để đảm bảo nó được sử dụng làm avatar
       console.log("Uploading portrait image...");
-      const portraitResult = await saveImage(userId, "portrait", portraitImage);
+      const portraitResult = await saveImage(
+        userId,
+        "document",
+        portraitImage,
+        "portrait"
+      );
       console.log("Portrait upload result:", portraitResult);
 
       // Xử lý kết quả portrait upload

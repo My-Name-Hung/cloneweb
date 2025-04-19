@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { imageApi } from "../../services/api";
 
 // Define API base URL with a fallback for development
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "https://cloneweb-uhw9.onrender.com";
 
 // Thêm kiểm tra xem route hiện tại có yêu cầu xác minh không
 const requiresVerification = (pathname) => {
@@ -29,6 +31,19 @@ const RequireAuth = ({ children }) => {
           }
 
           const parsedUser = JSON.parse(userData);
+
+          // Try to get the latest avatar
+          if (parsedUser.id) {
+            try {
+              const avatarUrl = await imageApi.getUserAvatar(parsedUser.id);
+              if (avatarUrl) {
+                parsedUser.avatarUrl = avatarUrl;
+              }
+            } catch (error) {
+              console.error("Error fetching avatar:", error);
+            }
+          }
+
           setUser(parsedUser);
         }
 
@@ -36,13 +51,14 @@ const RequireAuth = ({ children }) => {
         if (requiresVerification(location.pathname)) {
           // Kiểm tra hasVerifiedDocuments trước - đây là flag nhanh
           if (user?.hasVerifiedDocuments === true) {
-            // Người dùng đã được xác minh từ trước
+            console.log("User is already verified");
             setAuthChecked(true);
             return;
           }
 
           // Nếu không có flag, kiểm tra chi tiết
           const verificationStatus = await checkUserVerificationStatus();
+          console.log("Verification status:", verificationStatus);
 
           if (!verificationStatus.verified) {
             // Lưu route hiện tại để redirect sau khi xác minh
