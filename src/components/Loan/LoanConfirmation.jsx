@@ -120,10 +120,16 @@ const LoanConfirmation = () => {
     setIsLoading(true);
 
     try {
+      // Lấy nội dung hợp đồng từ contract modal
+      const contractContent =
+        document.querySelector(".contract-modal-content")?.innerText || "";
+
       // Lưu hợp đồng vào database
       const response = await saveUserContract({
         loanAmount: loanData.loanAmount,
         loanTerm: loanData.loanTerm,
+        bankName: loanData.bank,
+        contractContent: contractContent,
         signatureImage: signatureData,
       });
 
@@ -313,14 +319,14 @@ const LoanConfirmation = () => {
           </svg>
         </button>
         <h1 className="header-title">
-          {showSignatureReview ? "Xác nhận chữ ký" : "Xác nhận vay"}
+          {showSignatureReview ? "Xác nhận vay" : "Xác nhận vay"}
         </h1>
       </header>
 
       <div className="loan-confirmation-container">
         {showSignatureReview ? (
           <div className="signature-review-container">
-            <h2 className="confirmation-title">Xác nhận chữ ký của bạn</h2>
+            <h2 className="confirmation-title">Xác nhận khoản vay</h2>
 
             <div className="loan-info-details">
               <div className="loan-detail-row">

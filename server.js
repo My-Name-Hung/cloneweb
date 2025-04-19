@@ -749,6 +749,66 @@ app.get("/api/users/:userId/contracts", async (req, res) => {
   }
 });
 
+// Thêm API endpoint để upload chữ ký
+app.post(
+  "/api/verification/upload/signature",
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const { userId } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+
+      // Find user
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      let filePath;
+
+      // Handle base64 image
+      if (req.body.imageData) {
+        // If sent as base64
+        const base64Data = req.body.imageData.replace(
+          /^data:image\/\w+;base64,/,
+          ""
+        );
+        const buffer = Buffer.from(base64Data, "base64");
+
+        // Create filename
+        const timestamp = Date.now();
+        const fileExt = ".png";
+        const filename = `${userId}_signature_${timestamp}${fileExt}`;
+
+        // Save to documents directory
+        filePath = path.join(documentsDir, filename);
+        fs.writeFileSync(filePath, buffer);
+
+        // Format path for response
+        filePath = `/uploads/documents/${filename}`;
+      } else {
+        return res.status(400).json({ message: "No signature image provided" });
+      }
+
+      // Store signature URL in user document if needed
+      user.signatureUrl = filePath;
+      await user.save();
+
+      res.status(200).json({
+        success: true,
+        message: "Signature uploaded successfully",
+        filePath,
+      });
+    } catch (error) {
+      console.error("Signature upload error:", error);
+      res.status(500).json({ message: "Lỗi server" });
+    }
+  }
+);
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   // Start the anti-sleep mechanism
