@@ -1,0 +1,730 @@
+.loan-selection-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 10vh;
+  background: linear-gradient(180deg, #0404b4 0%, rgba(0, 132, 69, 0.112) 100%);
+  color: white;
+  font-family: "Inter", sans-serif;
+}
+
+.loan-header {
+  display: flex;
+  align-items: center;
+  padding-top: 16px;
+  padding-bottom: 10px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-right: 16px;
+}
+
+.header-title {
+  flex-grow: 1;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 500;
+  margin-right: 24px; /* To offset the back button and center the title */
+}
+
+.loan-form {
+  display: flex;
+  flex-direction: column;
+  padding: 0 22px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 40px;
+}
+
+.input-group label {
+  font-size: 22px;
+  padding: 15px 4px 5px 4px;
+  overflow-wrap: break-word;
+  color: rgb(255, 255, 255);
+  text-align: left;
+  justify-content: start;
+  font-weight: 500;
+}
+
+.loan-amount-input {
+  padding: 5px 10px;
+  min-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  font-variant: tabular-nums;
+  list-style: none;
+  font-feature-settings: "tnum", "tnum";
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  color: rgba(0, 0, 0, 0.85);
+  line-height: 1.5715;
+  background-color: #fff;
+  background-image: none;
+  transition: all 0.3s;
+  font-size: 17px;
+  font-weight: 500;
+  border-radius: 10px;
+  border: 1px solid #c4c4c4;
+}
+
+.loan-amount-input::placeholder {
+  color: #aaa;
+  text-overflow: ellipsis;
+  font-size: 18px;
+}
+
+.loan-range {
+  display: flex;
+  color: black;
+  font-weight: 500;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 8px 4px;
+}
+
+/* Dropdown styles */
+.dropdown {
+  padding: 10px;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.dropdown label {
+  position: relative;
+  bottom: 20px;
+  overflow-wrap: break-word;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.dropdown-container {
+  position: relative;
+  bottom: 20px;
+}
+
+.selected-value {
+  height: 38px;
+  border-radius: 8px;
+  border: none;
+  padding: 0px 15px;
+  font-size: 13px;
+  background-color: white;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.dropdown-arrow {
+  color: #999;
+  font-size: 12px;
+  padding-left: 10px;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  z-index: 10;
+  margin-top: 4px;
+  font-size: 13px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.dropdown-item {
+  padding: 12px 16px;
+  color: #333;
+  font-size: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.dropdown-item:hover {
+  background-color: #f9f9f9;
+}
+
+.dropdown-item.selected {
+  font-size: 12px;
+  background-color: #e6f7ff;
+}
+
+/* Legacy select styling - keeping for reference */
+.loan-term-select {
+  height: 48px;
+  border-radius: 8px;
+  border: none;
+  padding: 0 16px;
+  font-size: 16px;
+  background-color: white;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 16px;
+  appearance: none;
+}
+
+.loan-info-card {
+  background: linear-gradient(180deg, #0c90c8 0%, rgba(0, 132, 69, 0.112) 100%);
+  border-radius: 16px;
+  padding: 16px 16px;
+  margin: 24px 16px;
+  box-shadow: 0 8px 6px rgba(0, 0, 0, 0.2);
+}
+
+.loan-info-title {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  color: white;
+}
+
+.loan-info-row {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 8px;
+}
+
+.loan-info-label {
+  font-size: 16px;
+  color: black;
+}
+
+.loan-info-value {
+  font-size: 16px;
+  font-weight: 400;
+  color: black;
+  text-align: right;
+}
+
+/* New payment details section */
+.loan-payment-details {
+  margin: 0 16px;
+  padding: 16px 0;
+}
+
+.payment-info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.payment-info-label {
+  font-size: 16px;
+  color: #333;
+  flex: 2 1 0%;
+}
+
+.payment-info-value {
+  color: rgb(62, 62, 62);
+  font-size: 16px;
+  flex: 2 1 0%;
+}
+
+.loan-details-link {
+  margin-top: 16px;
+  text-align: left;
+}
+
+.loan-details-link span {
+  color: #0066cc;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* Confirm button styles */
+.confirm-loan-container {
+  display: flex;
+  justify-content: center;
+  padding: 15px 0px;
+  position: relative;
+  width: 100%;
+}
+
+.confirm-loan-button {
+  line-height: 1.5715;
+  position: relative;
+  display: inline-block;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.015);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  user-select: none;
+  touch-action: manipulation;
+  padding: 4px 15px;
+  font-size: 20px;
+  color: white;
+  align-content: center !important;
+  text-align: center !important;
+  height: 58px !important;
+  background: #0404b4 !important;
+  border: 1px solid #c4c4c4 !important;
+  border-radius: 30px !important;
+  min-width: 240px;
+}
+
+/* Legacy footer styles - keeping for reference */
+.loan-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding: 16px;
+  background-color: white;
+  color: #333;
+}
+
+.first-payment-label {
+  font-size: 16px;
+}
+
+.first-payment-amount {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Loan details styling */
+.loan-details-container {
+  padding: 10px 20px;
+  margin-top: 0;
+  background-color: white;
+}
+
+.payment-info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+.payment-info-label {
+  font-size: 16px;
+  color: #555;
+  font-weight: 400;
+}
+
+.payment-info-value {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.loan-details-link {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.loan-details-link span {
+  color: #0066cc;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* Payment Modal Styles */
+:root {
+  --modal-origin-x: 50%;
+  --modal-origin-y: 50%;
+}
+
+.payment-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+.payment-modal-overlay.closing {
+  animation: fadeOut 0.25s ease-in forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.payment-modal {
+  background-color: white;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 500px;
+  padding: 30px 30px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+  animation: zoomIn 0.3s ease-out forwards;
+  transform-origin: var(--modal-origin-x) var(--modal-origin-y);
+  overflow: hidden;
+}
+
+.payment-modal.closing {
+  animation: zoomOut 0.3s ease-in forwards;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes zoomOut {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+}
+
+.payment-modal-content {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.payment-table-header {
+  display: flex;
+  background-color: #f8f8f8;
+  padding: 10px 0;
+  margin-bottom: 0;
+  border-bottom: 1px solid #eee;
+}
+
+.header-cell {
+  flex: 1;
+  padding: 0 15px;
+  font-weight: 500;
+  color: #555;
+  font-size: 14px;
+}
+
+.header-cell:first-child {
+  text-align: left;
+  padding-left: 20px;
+}
+
+.header-cell:last-child {
+  text-align: left;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.header-cell:nth-child(2) {
+  text-align: center;
+}
+
+.payment-table-body {
+  overflow-y: auto;
+  max-height: 340px;
+  position: relative;
+}
+
+.payment-table-row {
+  display: flex;
+  border-bottom: 1px solid #eee;
+  padding: 14px 0;
+}
+
+.table-cell {
+  flex: 1;
+  padding: 0 15px;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  color: #333;
+  font-size: 16px;
+}
+
+.col1 {
+  flex: 1;
+  padding: 0 15px;
+  display: flex;
+  align-items: center;
+  color: #333;
+  font-size: 16px;
+}
+
+.table-cell:first-child {
+  justify-content: flex-start;
+  padding-left: 20px;
+}
+
+.table-cell:last-child {
+  justify-content: flex-start;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.table-cell:nth-child(2) {
+  justify-content: center;
+  text-align: center;
+}
+
+.payment-modal-footer {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 20px;
+}
+
+.ok-button {
+  background-color: #0084ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 30px;
+  font-size: 16px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+/* Custom scrollbar styling to match the image */
+.payment-table-body {
+  scrollbar-width: thin;
+  scrollbar-color: #999 #f1f1f1;
+}
+
+.payment-table-body::-webkit-scrollbar {
+  width: 16px;
+  background-color: transparent;
+}
+
+.payment-table-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+  margin: 5px 0;
+}
+
+.payment-table-body::-webkit-scrollbar-thumb {
+  background: #999;
+  border-radius: 10px;
+  border: 3px solid #f1f1f1;
+}
+
+/* Remove scroll indicators as they're not in the sample image */
+.scroll-indicators {
+  display: none;
+}
+
+/* Confirmation Modal Styles */
+.confirm-modal-overlay {
+  position: absolute;
+  top: -130px;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.confirm-modal {
+  background-color: white;
+  border-radius: 10px;
+  width: 340px;
+  margin: 0 auto;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  pointer-events: auto;
+  position: relative;
+}
+
+.confirm-modal:after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid white;
+}
+
+.confirm-modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.confirm-modal-message {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.confirm-icon {
+  background-color: #f5a623;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  font-weight: bold;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.confirm-text {
+  font-size: 15px;
+  color: #333;
+  line-height: 1.4;
+  flex-grow: 1;
+  padding-top: 2px;
+}
+
+.confirm-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: 5px;
+}
+
+.cancel-button {
+  background-color: white;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.confirm-button {
+  background-color: #0084ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.loan-page-container {
+  position: relative;
+  min-height: 100vh;
+}
+
+.payment-amount {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.payment-details {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.3;
+}
+
+.principal,
+.interest {
+  white-space: nowrap;
+}
+
+/* Error notification styles */
+.error-notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  border-radius: 8px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  z-index: 2000;
+  animation: fadeInDown 0.3s ease-out forwards,
+    fadeOut 0.3s ease-in forwards 2.7s;
+  max-width: 90%;
+  width: auto;
+}
+
+.error-notification .error-icon {
+  background-color: #ff3b30;
+  color: white;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.error-notification .error-message {
+  font-size: 14px;
+  color: #333;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

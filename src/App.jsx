@@ -7,12 +7,40 @@ import {
 } from "react-router-dom";
 import NotFound from "./NotFound";
 import Login from "./components/Auth/Login";
+import RequireAuth from "./components/Auth/RequireAuth";
 import SignUp from "./components/Auth/SignUp";
 import Home from "./components/Home";
+import LoanScreen from "./components/Loan/LoanScreen";
+import NotificationScreen from "./components/Notification/NotificationScreen";
+import VerificationScreen from "./components/Verification/VerificationScreen";
+import { AuthProvider } from "./context/AuthContext";
 import { LoadingProvider } from "./context/LoadingContext";
+
+// Debug component to test authentication
+const AuthTest = () => {
+  const storageUser = localStorage.getItem("user");
+  return (
+    <div style={{ padding: "20px" }}>
+      <h1>Auth Test</h1>
+      <p>Local Storage User: {storageUser ? "Found" : "Not Found"}</p>
+      <pre>
+        {storageUser
+          ? JSON.stringify(JSON.parse(storageUser), null, 2)
+          : "No user data"}
+      </pre>
+      <button onClick={() => (window.location.href = "/")}>Go Home</button>
+    </div>
+  );
+};
 
 function App() {
   const [isMobileView, setIsMobileView] = useState(false);
+
+  // Add logging to check localStorage on app start
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    console.log("App.jsx - localStorage user on start:", user);
+  }, []);
 
   useEffect(() => {
     // Function to check if device is mobile based on user agent and viewport width
@@ -44,36 +72,44 @@ function App() {
   }
 
   return (
-    <LoadingProvider>
-      <Router>
-        <Routes>
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/"
-            element={
-              <RequireAuth>
-                <Home />
-              </RequireAuth>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
-    </LoadingProvider>
+    <AuthProvider>
+      <LoadingProvider>
+        <Router>
+          <Routes>
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/notifications" element={<NotificationScreen />} />
+            <Route path="/auth-test" element={<AuthTest />} />
+            <Route
+              path="/loan"
+              element={
+                <RequireAuth>
+                  <LoanScreen />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/verification"
+              element={
+                <RequireAuth>
+                  <VerificationScreen />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/"
+              element={
+                <RequireAuth>
+                  <Home />
+                </RequireAuth>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </LoadingProvider>
+    </AuthProvider>
   );
-}
-
-// Auth guard component
-function RequireAuth({ children }) {
-  const isAuthenticated = sessionStorage.getItem("user") !== null;
-
-  if (!isAuthenticated) {
-    // Redirect to login if not authenticated
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
 }
 
 export default App;

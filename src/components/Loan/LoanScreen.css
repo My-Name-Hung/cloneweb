@@ -1,0 +1,172 @@
+.loan-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #0012b8 0%, #0039a6 30%, #e9f1f5 60%);
+}
+
+/* Header styles */
+.loan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  padding: 15px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.loan-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  flex-grow: 1;
+  text-align: center;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  padding: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder {
+  width: 24px; /* Để cân bằng với nút back */
+}
+
+/* Content styles */
+.loan-content {
+  padding: 10px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.loan-section {
+  margin-bottom: 15px;
+}
+
+.section-title {
+  font-size: 18px;
+  color: white;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.input-container {
+  width: 100%;
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.loan-input {
+  width: 100%;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  font-size: 18px;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.limit-info {
+  display: flex;
+  justify-content: space-between;
+  color: white;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.select-container {
+  position: relative;
+  width: 100%;
+}
+
+.loan-select {
+  width: 100%;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  font-size: 18px;
+  appearance: none;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.select-arrow {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* Loan Info Card */
+.loan-info-card {
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+.card-title {
+  font-size: 20px;
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  color: #666;
+  font-size: 16px;
+}
+
+.info-value {
+  font-weight: 500;
+  color: #333;
+  font-size: 16px;
+}
+
+/* Submit Button */
+.submit-container {
+  padding: 20px;
+  margin-top: auto; /* Push the button to the bottom */
+  margin-bottom: 20px;
+}
+
+.submit-button {
+  width: 100%;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #0039a6;
+  color: white;
+  border: none;
+  font-size: 18px;
+  font-weight: 600;
+  box-shadow: 0 4px 8px rgba(0, 57, 166, 0.3);
+  cursor: pointer;
+}
+
+.submit-button.disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  box-shadow: none;
+}

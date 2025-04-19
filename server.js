@@ -1,9 +1,13 @@
+import { Buffer } from "buffer";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import fs from "fs";
 import https from "https";
 import mongoose from "mongoose";
+import multer from "multer";
 import path from "path";
+import process from "process";
 import { fileURLToPath } from "url";
 
 // Load environment variables
@@ -12,19 +16,61 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+// Access environment variables safely
+const PORT = process.env?.PORT || 3000;
 const SERVER_URL =
-  process.env.SERVER_URL || "https://cloneweb-uhw9.onrender.com";
+  process.env?.SERVER_URL || "https://cloneweb-uhw9.onrender.com";
+const MONGODB_URI =
+  process.env?.MONGODB_URI || "mongodb://localhost:27017/cloneapp";
+
+const app = express();
+
+// Create upload directories if they don't exist
+const uploadsDir = path.join(__dirname, "uploads");
+const avatarsDir = path.join(uploadsDir, "avatars");
+const documentsDir = path.join(uploadsDir, "documents");
+
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+  fs.mkdirSync(avatarsDir);
+  fs.mkdirSync(documentsDir);
+}
+
+// Configure multer for file storage
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    // Determine directory based on file type
+    const uploadType = req.params.type || req.query.type;
+    if (uploadType === "portrait" || uploadType === "avatar") {
+      cb(null, avatarsDir);
+    } else {
+      cb(null, documentsDir);
+    }
+  },
+  filename: function (req, file, cb) {
+    // Generate unique filename with user ID and timestamp
+    const userId = req.params.userId || req.query.userId || "user";
+    const timestamp = Date.now();
+    const fileExt = path.extname(file.originalname) || ".jpg";
+    cb(
+      null,
+      `${userId}_${req.params.type || req.query.type}_${timestamp}${fileExt}`
+    );
+  },
+});
+
+const upload = multer({ storage });
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "50mb" })); // Increase limit for base64 images
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(express.static(path.join(__dirname, "dist")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Connect to MongoDB
 mongoose
-  .connect(process.env.MONGODB_URI)
+  .connect(MONGODB_URI)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("Could not connect to MongoDB:", err));
 
@@ -72,6 +118,14 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 6,
   },
+  avatarUrl: {
+    type: String,
+    default: null,
+  },
+  hasVerifiedDocuments: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -79,6 +133,30 @@ const userSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model("User", userSchema);
+
+// Verification Document Schema
+const documentSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  documentType: {
+    type: String,
+    required: true,
+    enum: ["frontId", "backId", "portrait"],
+  },
+  filePath: {
+    type: String,
+    required: true,
+  },
+  uploadedAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+const Document = mongoose.model("Document", documentSchema);
 
 // API Routes
 // Sign Up
@@ -129,10 +207,183 @@ app.post("/api/auth/login", async (req, res) => {
       user: {
         phone: user.phone,
         id: user._id,
+        hasVerifiedDocuments: user.hasVerifiedDocuments,
+        avatarUrl: user.avatarUrl,
       },
     });
   } catch (error) {
     console.error("Login error:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+});
+
+// Upload document API - accepts both form data and base64 encoded images
+app.post(
+  "/api/verification/upload/:type",
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const { userId } = req.body;
+      const { type } = req.params;
+
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+
+      // Find user
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      let filePath;
+
+      // Handle file upload or base64 image
+      if (req.file) {
+        // If uploaded via multer
+        filePath = `/uploads/${req.file.destination.split("/").pop()}/${
+          req.file.filename
+        }`;
+      } else if (req.body.imageData) {
+        // If sent as base64
+        const base64Data = req.body.imageData.replace(
+          /^data:image\/\w+;base64,/,
+          ""
+        );
+        const buffer = Buffer.from(base64Data, "base64");
+
+        // Create filename
+        const timestamp = Date.now();
+        const fileExt = ".jpg";
+        const filename = `${userId}_${type}_${timestamp}${fileExt}`;
+
+        // Determine directory
+        const directory =
+          type === "portrait" || type === "avatar" ? avatarsDir : documentsDir;
+        filePath = path.join(directory, filename);
+
+        // Save file
+        fs.writeFileSync(filePath, buffer);
+        filePath = `/uploads/${
+          type === "portrait" || type === "avatar" ? "avatars" : "documents"
+        }/${filename}`;
+      } else {
+        return res.status(400).json({ message: "No image provided" });
+      }
+
+      // Check if a document of this type already exists
+      const existingDoc = await Document.findOne({
+        userId: user._id,
+        documentType: type,
+      });
+
+      if (existingDoc) {
+        // Update existing document
+        existingDoc.filePath = filePath;
+        existingDoc.uploadedAt = Date.now();
+        await existingDoc.save();
+      } else {
+        // Create new document
+        const document = new Document({
+          userId: user._id,
+          documentType: type,
+          filePath: filePath,
+        });
+        await document.save();
+      }
+
+      // If portrait, update user's avatar
+      if (type === "portrait") {
+        user.avatarUrl = filePath;
+        await user.save();
+      }
+
+      // Check if user has all required documents
+      const frontId = await Document.findOne({
+        userId: user._id,
+        documentType: "frontId",
+      });
+      const backId = await Document.findOne({
+        userId: user._id,
+        documentType: "backId",
+      });
+      const portrait = await Document.findOne({
+        userId: user._id,
+        documentType: "portrait",
+      });
+
+      if (frontId && backId && portrait) {
+        user.hasVerifiedDocuments = true;
+        await user.save();
+      }
+
+      res.status(200).json({
+        message: "File uploaded successfully",
+        filePath,
+        isVerified: user.hasVerifiedDocuments,
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      res.status(500).json({ message: "Lỗi server" });
+    }
+  }
+);
+
+// Get verification status
+app.get("/api/verification/status/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const frontId = await Document.findOne({
+      userId: user._id,
+      documentType: "frontId",
+    });
+    const backId = await Document.findOne({
+      userId: user._id,
+      documentType: "backId",
+    });
+    const portrait = await Document.findOne({
+      userId: user._id,
+      documentType: "portrait",
+    });
+
+    res.status(200).json({
+      isVerified: user.hasVerifiedDocuments,
+      documents: {
+        frontId: frontId ? frontId.filePath : null,
+        backId: backId ? backId.filePath : null,
+        portrait: portrait ? portrait.filePath : null,
+      },
+      avatarUrl: user.avatarUrl,
+    });
+  } catch (error) {
+    console.error("Verification status error:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+});
+
+// Get user avatar
+app.get("/api/users/:userId/avatar", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.avatarUrl) {
+      return res.status(404).json({ message: "User has no avatar" });
+    }
+
+    res.status(200).json({ avatarUrl: user.avatarUrl });
+  } catch (error) {
+    console.error("Get avatar error:", error);
     res.status(500).json({ message: "Lỗi server" });
   }
 });

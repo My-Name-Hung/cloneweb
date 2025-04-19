@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MBLogo from "../../assets/logo/mblogo.png";
+import { useAuth } from "../../context/AuthContext";
 import { useLoading } from "../../context/LoadingContext";
-import { authApi } from "../../services/api";
 import "./AuthStyles.css";
 
 const Login = () => {
   const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     phone: "",
     password: "",
@@ -21,7 +22,7 @@ const Login = () => {
     let timer;
     if (successNotification) {
       timer = setTimeout(() => {
-        // Ẩn loading screen trước khi chuyển hướng
+        // Hide loading screen before redirecting
         hideLoading();
         setSuccessNotification(false);
 
@@ -71,30 +72,17 @@ const Login = () => {
     showLoading();
 
     try {
-      // Sử dụng API service
-      const data = await authApi.login({
-        phone: formData.phone,
-        password: formData.password,
-      });
+      // Use the login function from AuthContext
+      const result = await login(formData.phone, formData.password);
 
-      console.log("Login successful:", data);
-
-      // Ẩn loading screen trước khi hiển thị success notification
       hideLoading();
 
-      // Save user data in session storage (use the data from the server)
-      sessionStorage.setItem(
-        "user",
-        JSON.stringify(
-          data.user || {
-            phone: formData.phone,
-            id: Date.now(),
-          }
-        )
-      );
-
-      // Show success notification
-      setSuccessNotification(true);
+      if (result.success) {
+        // Show success notification
+        setSuccessNotification(true);
+      } else {
+        setError(result.message || "Đăng nhập thất bại");
+      }
     } catch (err) {
       // Handle network errors or server errors
       console.error("Login error:", err);
@@ -109,27 +97,26 @@ const Login = () => {
 
         // For demo or development purposes - auto login if server is not reachable
         if (formData.phone.length === 10 && formData.password.length >= 6) {
-          // Đảm bảo ẩn loading screen
           hideLoading();
 
-          // Lưu session và hiển thị thông báo thành công
-          sessionStorage.setItem(
-            "user",
-            JSON.stringify({
-              phone: formData.phone,
-              id: Date.now(),
-              demoMode: true, // Đánh dấu là demo mode
-            })
-          );
+          // Create mock user data
+          const mockUser = {
+            phone: formData.phone,
+            id: `demo_${Date.now()}`,
+            demoMode: true,
+          };
+
+          // Store in localStorage to match AuthContext
+          localStorage.setItem("user", JSON.stringify(mockUser));
 
           setSuccessNotification(true);
-          return; // Skip the rest
+          return;
         }
       } else {
         setError(err.message || "Có lỗi xảy ra. Vui lòng thử lại sau.");
       }
 
-      // Ẩn loading screen nếu có lỗi
+      // Hide loading screen if there's an error
       hideLoading();
     }
   };
@@ -189,11 +176,6 @@ const Login = () => {
       <div className="auth-footer">
         <p>
           Chưa có tài khoản? <a href="/signup">Đăng ký ngay</a>
-        </p>
-        <p>
-          <a href="/forgot-password" className="forgot-password-link">
-            Quên mật khẩu?
-          </a>
         </p>
       </div>
     </div>
