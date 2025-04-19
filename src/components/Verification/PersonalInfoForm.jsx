@@ -300,7 +300,7 @@ const PersonalInfoForm = () => {
                 placeholder="Họ tên"
                 className={`form-input ${errors.fullName ? "error" : ""}`}
               />
-              <div className="input-icon text-icon">
+              <div className="input-icons text-icon">
                 <span>Aa</span>
               </div>
             </div>
@@ -320,7 +320,7 @@ const PersonalInfoForm = () => {
                 placeholder="Số CMND/CCCD"
                 className={`form-input ${errors.idNumber ? "error" : ""}`}
               />
-              <div className="input-icon list-icon">
+              <div className="input-icons list-icon">
                 <svg
                   viewBox="0 0 24 24"
                   width="24"
@@ -379,7 +379,7 @@ const PersonalInfoForm = () => {
                 <option value="Nữ">Nữ</option>
                 <option value="Khác">Khác</option>
               </select>
-              <div className="input-icon dropdown-icon">
+              <div className="input-icons dropdown-icon">
                 <FaChevronDown />
               </div>
             </div>
@@ -413,7 +413,7 @@ const PersonalInfoForm = () => {
                   }
                 }}
               />
-              <div className="input-icon">
+              <div className="input-icons">
                 <svg
                   viewBox="0 0 24 24"
                   width="24"
@@ -445,7 +445,7 @@ const PersonalInfoForm = () => {
                 placeholder="Nghề nghiệp"
                 className="form-input"
               />
-              <div className="input-icon">
+              <div className="input-icons">
                 <svg
                   viewBox="0 0 24 24"
                   width="24"
@@ -521,7 +521,7 @@ const PersonalInfoForm = () => {
                 <option value="10000000-20000000">Từ 10 - 20 triệu</option>
                 <option value="20000000+">Trên 20 triệu</option>
               </select>
-              <div className="input-icon dropdown-icon">
+              <div className="input-icons dropdown-icon">
                 <FaChevronDown />
               </div>
             </div>
@@ -538,7 +538,7 @@ const PersonalInfoForm = () => {
                 placeholder="Mục đích vay"
                 className="form-input"
               />
-              <div className="input-icon list-icon">
+              <div className="input-icons list-icon">
                 <svg
                   viewBox="0 0 24 24"
                   width="24"
@@ -567,7 +567,7 @@ const PersonalInfoForm = () => {
                 placeholder="Địa chỉ"
                 className="form-input"
               />
-              <div className="input-icon list-icon">
+              <div className="input-icons list-icon">
                 <svg
                   viewBox="0 0 24 24"
                   width="24"
@@ -594,7 +594,7 @@ const PersonalInfoForm = () => {
                 placeholder="SĐT người thân"
                 className="form-input"
               />
-              <div className="input-icon">
+              <div className="input-icons">
                 <svg
                   viewBox="0 0 24 24"
                   width="24"
@@ -620,7 +620,7 @@ const PersonalInfoForm = () => {
                 placeholder="Mối quan hệ với người thân"
                 className="form-input"
               />
-              <div className="input-icon list-icon">
+              <div className="input-icons list-icon">
                 <svg
                   viewBox="0 0 24 24"
                   width="24"

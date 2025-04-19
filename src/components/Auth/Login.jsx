@@ -151,7 +151,7 @@ const Login = () => {
           type="tel"
           name="phone"
           placeholder="Số điện thoại"
-          className="form-input"
+          className="form-inputs"
           value={formData.phone}
           onChange={handleChange}
         />
@@ -160,7 +160,7 @@ const Login = () => {
           type="password"
           name="password"
           placeholder="Mật khẩu"
-          className="form-input"
+          className="form-inputs"
           value={formData.password}
           onChange={handleChange}
         />

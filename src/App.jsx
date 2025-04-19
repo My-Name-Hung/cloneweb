@@ -10,6 +10,7 @@ import Login from "./components/Auth/Login";
 import RequireAuth from "./components/Auth/RequireAuth";
 import SignUp from "./components/Auth/SignUp";
 import Home from "./components/Home";
+import LoanConfirmation from "./components/Loan/LoanConfirmation";
 import LoanScreen from "./components/Loan/LoanScreen";
 import NotificationScreen from "./components/Notification/NotificationScreen";
 import BankInfoForm from "./components/Verification/BankInfoForm";
@@ -213,6 +214,7 @@ function App() {
                 </RequireAuth>
               }
             />
+            <Route path="/loan-confirmation" element={<LoanConfirmation />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>

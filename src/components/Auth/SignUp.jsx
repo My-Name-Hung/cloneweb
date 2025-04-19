@@ -206,7 +206,7 @@ const SignUp = () => {
           type="tel"
           name="phone"
           placeholder="Nhập số điện thoại"
-          className="form-input"
+          className="form-inputs"
           value={formData.phone}
           onChange={handleChange}
         />
@@ -215,7 +215,7 @@ const SignUp = () => {
           type="password"
           name="password"
           placeholder="Mật khẩu"
-          className="form-input"
+          className="form-inputs"
           value={formData.password}
           onChange={handleChange}
         />
@@ -224,7 +224,7 @@ const SignUp = () => {
           type="password"
           name="confirmPassword"
           placeholder="Nhập lại mật khẩu"
-          className="form-input"
+          className="form-inputs"
           value={formData.confirmPassword}
           onChange={handleChange}
         />

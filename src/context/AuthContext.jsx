@@ -25,8 +25,38 @@ export const AuthProvider = ({ children }) => {
       }
 
       // Set user from localStorage
-      setUser(JSON.parse(userData));
-      console.log("User loaded from localStorage:", JSON.parse(userData));
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      console.log("User loaded from localStorage:", parsedUser);
+
+      // Fetch latest bank info if user is logged in
+      if (parsedUser && parsedUser.id) {
+        try {
+          const bankInfoRes = await axios.get(
+            `${API_BASE_URL}/api/users/${parsedUser.id}/bank-info`
+          );
+
+          if (bankInfoRes.data.success && bankInfoRes.data.bankInfo) {
+            console.log(
+              "Retrieved bank info from API:",
+              bankInfoRes.data.bankInfo
+            );
+
+            // Update user with latest bank info
+            const updatedUser = {
+              ...parsedUser,
+              bankInfo: bankInfoRes.data.bankInfo,
+            };
+
+            // Update both state and localStorage
+            setUser(updatedUser);
+            localStorage.setItem("userData", JSON.stringify(updatedUser));
+            console.log("User updated with bank info:", updatedUser);
+          }
+        } catch (bankInfoError) {
+          console.error("Could not fetch bank info:", bankInfoError);
+        }
+      }
     } catch (error) {
       console.error("Authentication check failed:", error);
       setUser(null);
@@ -66,6 +96,24 @@ export const AuthProvider = ({ children }) => {
 
       // Server returns { message: "Đăng nhập thành công", user: {...} }
       const userData = response.data.user;
+
+      // Fetch bank info immediately after login
+      try {
+        if (userData.id) {
+          const bankInfoRes = await axios.get(
+            `${API_BASE_URL}/api/users/${userData.id}/bank-info`
+          );
+
+          if (bankInfoRes.data.success && bankInfoRes.data.bankInfo) {
+            // Include bank info in user data
+            userData.bankInfo = bankInfoRes.data.bankInfo;
+            console.log("Fetched bank info after login:", userData.bankInfo);
+          }
+        }
+      } catch (bankInfoError) {
+        console.error("Could not fetch bank info after login:", bankInfoError);
+      }
+
       localStorage.setItem("userData", JSON.stringify(userData));
       setUser(userData);
       return { success: true, message: response.data.message };
@@ -134,6 +182,125 @@ export const AuthProvider = ({ children }) => {
     return { success: true, user: updatedUser };
   };
 
+  // Thêm hàm mới để cập nhật thông tin ngân hàng
+  const updateBankInfo = async () => {
+    if (!user || !user.id) {
+      console.log(
+        "Không thể cập nhật thông tin ngân hàng: Không có người dùng đăng nhập"
+      );
+      return { success: false, message: "Không có người dùng đăng nhập" };
+    }
+
+    try {
+      console.log("Đang lấy thông tin ngân hàng từ server cho user:", user.id);
+      const bankInfoRes = await axios.get(
+        `${API_BASE_URL}/api/users/${user.id}/bank-info`
+      );
+
+      if (bankInfoRes.data.success && bankInfoRes.data.bankInfo) {
+        // Cập nhật thông tin ngân hàng cho user
+        const updatedUser = {
+          ...user,
+          bankInfo: bankInfoRes.data.bankInfo,
+        };
+
+        // Cập nhật cả state và localStorage
+        localStorage.setItem("userData", JSON.stringify(updatedUser));
+        setUser(updatedUser);
+
+        console.log("Đã cập nhật thông tin ngân hàng:", updatedUser.bankInfo);
+        return {
+          success: true,
+          message: "Cập nhật thông tin ngân hàng thành công",
+          bankInfo: bankInfoRes.data.bankInfo,
+        };
+      }
+
+      return {
+        success: false,
+        message: "Không tìm thấy thông tin ngân hàng",
+      };
+    } catch (error) {
+      console.error("Lỗi khi cập nhật thông tin ngân hàng:", error);
+      return {
+        success: false,
+        message: "Có lỗi khi lấy thông tin ngân hàng từ server",
+      };
+    }
+  };
+
+  const saveUserContract = async (contractData) => {
+    if (!user || !user.id) {
+      console.log("Không thể lưu hợp đồng: Không có người dùng đăng nhập");
+      return { success: false, message: "Không có người dùng đăng nhập" };
+    }
+
+    try {
+      console.log("Đang lưu hợp đồng cho user:", user.id);
+
+      // Tạo mã hợp đồng ngẫu nhiên
+      const contractIdRes = await axios.get(
+        `${API_BASE_URL}/api/contracts/generate-id`
+      );
+
+      if (!contractIdRes.data.success) {
+        throw new Error("Không thể tạo mã hợp đồng");
+      }
+
+      const contractId = contractIdRes.data.contractId;
+
+      // Lưu hợp đồng
+      const response = await axios.post(`${API_BASE_URL}/api/contracts`, {
+        userId: user.id,
+        contractId,
+        ...contractData,
+      });
+
+      if (response.data.success) {
+        console.log("Lưu hợp đồng thành công:", response.data.contract);
+        return response.data;
+      }
+
+      return { success: false, message: "Lưu hợp đồng thất bại" };
+    } catch (error) {
+      console.error("Lỗi khi lưu hợp đồng:", error);
+      return {
+        success: false,
+        message: error.message || "Có lỗi khi lưu hợp đồng",
+      };
+    }
+  };
+
+  const getUserContracts = async () => {
+    if (!user || !user.id) {
+      console.log("Không thể lấy hợp đồng: Không có người dùng đăng nhập");
+      return { success: false, message: "Không có người dùng đăng nhập" };
+    }
+
+    try {
+      console.log("Đang lấy danh sách hợp đồng cho user:", user.id);
+      const response = await axios.get(
+        `${API_BASE_URL}/api/users/${user.id}/contracts`
+      );
+
+      if (response.data.success) {
+        console.log(
+          "Lấy danh sách hợp đồng thành công:",
+          response.data.contracts
+        );
+        return response.data;
+      }
+
+      return { success: false, message: "Lấy danh sách hợp đồng thất bại" };
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách hợp đồng:", error);
+      return {
+        success: false,
+        message: error.message || "Có lỗi khi lấy danh sách hợp đồng",
+      };
+    }
+  };
+
   const value = {
     user,
     setUser,
@@ -143,6 +310,9 @@ export const AuthProvider = ({ children }) => {
     checkAuth,
     checkVerificationStatus,
     updateUser,
+    updateBankInfo,
+    saveUserContract,
+    getUserContracts,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

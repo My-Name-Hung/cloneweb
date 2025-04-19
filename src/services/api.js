@@ -63,4 +63,28 @@ export const authApi = {
   },
 };
 
+export const contractApi = {
+  // Tạo mã hợp đồng ngẫu nhiên
+  generateContractId: () => {
+    return apiCall("/api/contracts/generate-id", {
+      method: "GET",
+    });
+  },
+
+  // Lưu hợp đồng
+  saveContract: (contractData) => {
+    return apiCall("/api/contracts", {
+      method: "POST",
+      body: JSON.stringify(contractData),
+    });
+  },
+
+  // Lấy danh sách hợp đồng của user
+  getUserContracts: (userId) => {
+    return apiCall(`/api/users/${userId}/contracts`, {
+      method: "GET",
+    });
+  },
+};
+
 export default apiCall;

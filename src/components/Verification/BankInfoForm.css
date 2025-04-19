@@ -190,8 +190,9 @@
 /* Nút gửi yêu cầu */
 .submit-button {
   display: block;
-  min-width: 200px;
-  height: 56px;
+  min-width: 100px;
+  width: 20%;
+  height: 60px;
   background-color: #0000cc;
   color: white;
   border: none;
@@ -205,6 +206,10 @@
 .submit-button:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
+}
+
+.submit-button:hover {
+  background-color: #0000aa;
 }
 
 /* Dropdown styling */
@@ -308,34 +313,42 @@
   object-fit: contain;
 }
 
-/* Custom Bank Dropdown */
+/* Simplified Bank Dropdown */
 .bank-dropdown-container {
   position: relative;
   margin: 10px 0;
+  width: 100%;
   z-index: 100;
 }
 
-.bank-dropdown-selected {
+.bank-dropdown-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px 15px;
+  height: 50px;
+  background-color: #fff;
   border: 1px solid #d9d9d9;
   border-radius: 5px;
-  background-color: white;
   cursor: pointer;
-  min-height: 56px;
+}
+
+.bank-placeholder {
+  color: #aaa;
 }
 
 .selected-bank {
   display: flex;
   align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 90%;
 }
 
 .bank-dropdown-logo {
   height: 24px;
-  width: auto;
-  max-width: 100px;
+  max-width: 80px;
   margin-right: 10px;
   object-fit: contain;
 }
@@ -343,30 +356,21 @@
 .dropdown-arrow {
   color: #888;
   font-size: 12px;
-  transition: transform 0.3s;
 }
 
-.dropdown-arrow.open {
-  transform: rotate(180deg);
-}
-
-.placeholder {
-  color: #aaa;
-}
-
-.bank-dropdown-options {
+.bank-dropdown-menu {
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
-  background-color: white;
+  width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: #fff;
   border: 1px solid #d9d9d9;
   border-top: none;
   border-radius: 0 0 5px 5px;
-  max-height: 300px;
-  overflow-y: auto;
-  z-index: 100;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 101;
 }
 
 .bank-option {
@@ -385,153 +389,87 @@
   background-color: #f5f5f5;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .bank-dropdown-logo {
-    height: 20px;
-  }
-}
-
-/* Ant Design Select Styles */
-.ant-select {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  color: rgba(0, 0, 0, 0.85);
-  font-size: 14px;
-  font-variant: tabular-nums;
-  line-height: 1.5715;
-  list-style: none;
-  font-feature-settings: "tnum", "tnum";
-  position: relative;
-  display: inline-block;
-  cursor: pointer;
-}
-
-.select-bank {
-  width: 100% !important;
-  margin: 10px 0px !important;
-  border-radius: 5px !important;
-  font-size: 18px !important;
-}
-
-.ant-select:not(.ant-select-customize-input) .ant-select-selector {
-  position: relative;
-  background-color: #fff;
-  border: 1px solid #d9d9d9;
-  border-radius: 2px;
-  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-}
-
-.ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-  width: 100%;
-  height: 48px;
-  padding: 0 11px;
-}
-
-.ant-select-single .ant-select-selector {
-  display: flex;
-  align-items: center;
-}
-
-.ant-select-selection-placeholder {
-  color: #aaa;
-  flex: 1;
-  opacity: 1;
-}
-
-.ant-select-selection-item {
-  flex: 1;
-  padding-right: 18px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.selected-bank {
-  display: flex;
-  align-items: center;
-}
-
-.bank-dropdown-logo {
-  height: 24px;
-  width: auto;
-  max-width: 100px;
-  margin-right: 10px;
-  object-fit: contain;
-}
-
-.ant-select-arrow {
-  display: inline-block;
-  color: inherit;
-  font-style: normal;
-  line-height: 0;
-  text-transform: none;
-  vertical-align: -0.125em;
-  text-rendering: optimizelegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  position: absolute;
-  top: 50%;
-  right: 11px;
-  display: flex;
-  align-items: center;
-  height: 12px;
-  margin-top: -6px;
-  color: rgba(0, 0, 0, 0.25);
-  font-size: 12px;
-  line-height: 1;
-  text-align: center;
-  pointer-events: none;
-}
-
-/* Dropdown Menu */
-.ant-select-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background-color: white;
-  border: 1px solid #d9d9d9;
-  border-radius: 2px;
-  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12),
-    0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
-  z-index: 1050;
-  margin-top: 4px;
-  padding: 4px 0;
-  max-height: 256px;
-  overflow-y: auto;
-}
-
-.ant-select-dropdown-content {
-  padding: 4px 0;
-}
-
-.ant-select-item {
-  position: relative;
-  display: block;
-  min-height: 32px;
-  padding: 8px 12px;
-  color: rgba(0, 0, 0, 0.85);
-  font-weight: normal;
-  font-size: 14px;
-  line-height: 22px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.ant-select-item-option-content {
-  display: flex;
-  align-items: center;
-}
-
-.ant-select-item:hover {
-  background-color: #f5f5f5;
-}
-
 /* Card Bank Logo */
 .card-bank-logo {
   height: 30px;
   max-width: 120px;
   object-fit: contain;
+}
+
+/* Success Message Styles */
+.success-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  height: calc(100vh - 60px);
+  text-align: center;
+}
+
+.success-image {
+  position: relative;
+  display: inline-block;
+  margin-top: 330px;
+}
+
+.success-illustration {
+  width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+
+.success-check {
+  margin: 20px 0;
+}
+
+.check-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid #4caf50;
+  margin: 0 auto;
+}
+
+.check-circle svg {
+  width: 40px;
+  height: 40px;
+}
+
+.success-message {
+  margin-bottom: 30px;
+}
+
+.success-message h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.success-message p {
+  font-size: 16px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.continue-button {
+  display: inline-block;
+  padding: 12px 50px;
+  background-color: #0000cc;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 20px;
+  min-width: 200px;
+}
+
+.continue-button:hover {
+  background-color: #0000aa;
 }

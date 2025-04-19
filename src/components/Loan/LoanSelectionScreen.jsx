@@ -1,3 +1,4 @@
+import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { checkVerificationStatus } from "../../database/storageService";
@@ -5,7 +6,7 @@ import "./LoanStyles.css";
 
 const LoanSelectionScreen = () => {
   const navigate = useNavigate();
-  const [loanAmount, setLoanAmount] = useState("");
+  const [loanAmount, setLoanAmount] = useState("0");
   const [loanTerm, setLoanTerm] = useState("6");
   const [loanDate] = useState("18/4/2025");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -100,6 +101,12 @@ const LoanSelectionScreen = () => {
     // Remove any non-digit characters
     const numericValue = value.replace(/\D/g, "");
 
+    // Set "0" if the input is empty
+    if (!numericValue) {
+      setLoanAmount("0");
+      return;
+    }
+
     // Format with dots for thousands separator
     const formattedValue = formatCurrency(numericValue);
 
@@ -114,8 +121,8 @@ const LoanSelectionScreen = () => {
   // Calculate the first payment
   const calculateFirstPayment = () => {
     try {
-      // Get loan amount (use default if not provided)
-      const amount = loanAmount ? loanAmount.replace(/\./g, "") : "222222222";
+      // Get loan amount (use 0 as default instead of 222222222)
+      const amount = loanAmount ? loanAmount.replace(/\./g, "") : "0";
       const principal = parseFloat(amount);
 
       // Term in months
@@ -145,9 +152,7 @@ const LoanSelectionScreen = () => {
     const payments = [];
 
     // Get loan details
-    const amount = loanAmount
-      ? parseFloat(loanAmount.replace(/\./g, ""))
-      : 222222222;
+    const amount = loanAmount ? parseFloat(loanAmount.replace(/\./g, "")) : 0;
     const termMonths = parseInt(loanTerm);
     const annualInterestRate = 0.12; // 1%
     const monthlyInterestRate = annualInterestRate / 12;
@@ -213,7 +218,7 @@ const LoanSelectionScreen = () => {
   };
 
   const getDisplayAmount = () => {
-    return loanAmount ? formatCurrency(loanAmount) : "222.222.222";
+    return loanAmount ? formatCurrency(loanAmount) : "0";
   };
 
   const toggleDropdown = () => {
@@ -273,21 +278,157 @@ const LoanSelectionScreen = () => {
     setShowConfirmModal(false);
   };
 
-  const handleLoanConfirmation = () => {
-    // Checking if user has already filled personal info
-    const userData = JSON.parse(localStorage.getItem("user")) || {};
+  const handleLoanConfirmation = async () => {
+    try {
+      // Get loanAmount and loanTerm để truyền vào state
+      const loanAmount = getDisplayAmount();
 
-    // Check if personalInfo exists and has required fields
+      // Lưu thông tin khoản vay vào localStorage để có thể truy cập từ các trang khác
+      localStorage.setItem(
+        "loanData",
+        JSON.stringify({
+          loanAmount: loanAmount === "0" ? "0" : loanAmount,
+          loanTerm: loanTerm,
+          loanDate: loanDate,
+        })
+      );
+
+      // Sửa cách lấy thông tin user từ localStorage
+      const userData = JSON.parse(localStorage.getItem("userData")) || {};
+
+      // Kiểm tra đăng nhập với key chính xác
+      const userId = userData.id || userData._id;
+
+      if (!userId) {
+        console.log("Không tìm thấy ID người dùng trong userData:", userData);
+        navigate("/login");
+        return;
+      }
+
+      // Get API URL - Thêm dòng này vì bị thiếu khai báo API_URL
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+      try {
+        // Kiểm tra thông tin xác minh của user từ API
+        console.log("Đang kiểm tra API với userId:", userId);
+
+        const [profileRes, bankInfoRes] = await Promise.all([
+          axios.get(`${API_URL}/api/users/${userId}/profile`),
+          axios.get(`${API_URL}/api/users/${userId}/bank-info`),
+        ]);
+
+        console.log("Kết quả từ API - profile:", profileRes.data);
+        console.log("Kết quả từ API - bankInfo:", bankInfoRes.data);
+
+        // Kiểm tra xem user đã có đầy đủ thông tin chưa
+        const hasPersonalInfo =
+          profileRes.data.success &&
+          profileRes.data.user?.personalInfo?.idNumber &&
+          profileRes.data.user?.fullName;
+
+        const hasBankInfo =
+          bankInfoRes.data.success &&
+          bankInfoRes.data.bankInfo?.accountNumber &&
+          bankInfoRes.data.bankInfo?.bank;
+
+        // CẬP NHẬT THÔNG TIN NGƯỜI DÙNG VỚI BANKINFO TỪ SERVER
+        if (bankInfoRes.data.success && bankInfoRes.data.bankInfo) {
+          // Cập nhật userData trong localStorage với thông tin ngân hàng mới nhất
+          const updatedUserData = {
+            ...userData,
+            bankInfo: bankInfoRes.data.bankInfo,
+          };
+
+          console.log("Cập nhật userData vào localStorage:", updatedUserData);
+          localStorage.setItem("userData", JSON.stringify(updatedUserData));
+        }
+
+        if (hasPersonalInfo && hasBankInfo) {
+          // Nếu đã có đầy đủ thông tin, điều hướng trực tiếp đến trang xác nhận khoản vay
+          console.log(
+            "Đã xác minh đầy đủ, chuyển đến trang xác nhận khoản vay"
+          );
+          navigate("/loan-confirmation", {
+            state: {
+              loanAmount: loanAmount,
+              loanTerm: loanTerm,
+              loanDate: loanDate,
+            },
+          });
+        } else if (hasPersonalInfo) {
+          // Có thông tin cá nhân nhưng chưa có thông tin ngân hàng
+          console.log(
+            "Chưa có thông tin ngân hàng, chuyển đến trang thông tin ngân hàng"
+          );
+          navigate("/bank-info");
+        } else {
+          // Chưa có thông tin cá nhân
+          console.log(
+            "Chưa có thông tin cá nhân, chuyển đến trang thông tin cá nhân"
+          );
+          navigate("/personal-info");
+        }
+      } catch (apiError) {
+        console.error("Lỗi khi kiểm tra thông tin xác minh API:", apiError);
+
+        // Force kiểm tra lại từ API nếu nhận thấy có bankInfo
+        if (apiError.response?.status === 404) {
+          console.log("API báo không tìm thấy user, kiểm tra từ localStorage");
+        }
+
+        // Kiểm tra từ localStorage nếu API fails
+        checkUserVerificationFromLocalStorage();
+      }
+    } catch (error) {
+      console.error("Lỗi chung:", error);
+
+      // Fallback nếu có lỗi
+      checkUserVerificationFromLocalStorage();
+    }
+  };
+
+  // Tương tự, cập nhật hàm checkUserVerificationFromLocalStorage
+  const checkUserVerificationFromLocalStorage = () => {
+    const userData = JSON.parse(localStorage.getItem("userData")) || {};
+    console.log("Kiểm tra thông tin từ localStorage:", userData);
+
+    // Sửa ĐIỀU KIỆN KIỂM TRA - LỖI ở đây!
+    // ⚠️ Trong dữ liệu của bạn, fullName nằm ở userData.fullName (ngoài personalInfo)
+    // Không phải userData.personalInfo.fullName
     const hasPersonalInfo =
       userData.personalInfo &&
-      userData.personalInfo.fullName &&
-      userData.personalInfo.idNumber;
+      userData.personalInfo.idNumber &&
+      userData.fullName; // Sửa từ userData.personalInfo.fullName -> userData.fullName
 
-    if (hasPersonalInfo) {
-      // User has already filled personal info, go directly to bank info
+    // Check if bankInfo exists
+    const hasBankInfo =
+      userData.bankInfo &&
+      userData.bankInfo.accountNumber &&
+      userData.bankInfo.bank;
+
+    if (hasPersonalInfo && hasBankInfo) {
+      // Đã có đầy đủ thông tin, điều hướng trực tiếp đến trang xác nhận khoản vay
+      console.log(
+        "Đã xác minh đầy đủ (từ localStorage), chuyển đến trang xác nhận khoản vay"
+      );
+      navigate("/loan-confirmation", {
+        state: {
+          loanAmount: getDisplayAmount(),
+          loanTerm: loanTerm,
+          loanDate: loanDate,
+        },
+      });
+    } else if (hasPersonalInfo) {
+      // User has already filled personal info, go to bank info
+      console.log(
+        "Chưa có thông tin ngân hàng (từ localStorage), chuyển đến trang thông tin ngân hàng"
+      );
       navigate("/bank-info");
     } else {
       // User needs to fill personal info first
+      console.log(
+        "Chưa có thông tin cá nhân (từ localStorage), chuyển đến trang thông tin cá nhân"
+      );
       navigate("/personal-info");
     }
   };

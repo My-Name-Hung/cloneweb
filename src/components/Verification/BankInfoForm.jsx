@@ -6,7 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useLoading } from "../../context/LoadingContext";
 import "./BankInfoForm.css";
 
-// Logo imports - bạn cần tạo thư mục assets/banks và thêm các logo tương ứng
+// Import các logo ngân hàng
 import acbLogo from "../../assets/banks/acb.png";
 import bidvLogo from "../../assets/banks/bidv.png";
 import mbLogo from "../../assets/banks/mb.png";
@@ -15,6 +15,7 @@ import techcombankLogo from "../../assets/banks/techcombank.png";
 import tpbankLogo from "../../assets/banks/tpbank.png";
 import vietcombankLogo from "../../assets/banks/vietcombank.png";
 import vpbankLogo from "../../assets/banks/vpbank.png";
+import done from "../../assets/xacminh/done.png";
 
 const BankInfoForm = () => {
   const navigate = useNavigate();
@@ -26,14 +27,16 @@ const BankInfoForm = () => {
     accountNumber: "",
     accountName: "",
     bank: "",
-    bankLogo: null, // Thêm trường lưu logo ngân hàng
+    bankLogo: null,
+    bankId: "",
   });
 
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [errors, setErrors] = useState({});
   const [isFormValid, setIsFormValid] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
-  // List of banks with logos
+  // Danh sách ngân hàng với logo
   const banks = [
     {
       id: "bidv",
@@ -72,10 +75,6 @@ const BankInfoForm = () => {
     return visiblePart + "****";
   };
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -89,14 +88,28 @@ const BankInfoForm = () => {
       ...formData,
       bank: bank.name,
       bankLogo: bank.logo,
+      bankId: bank.id,
     });
-    setDropdownOpen(false);
+    setShowDropdown(false);
     validateField("bank", bank.name);
   };
 
-  const toggleDropdown = () => {
-    setDropdownOpen(!dropdownOpen);
-  };
+  // Xử lý click outside để đóng dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        event.target.closest(".bank-dropdown-container") === null &&
+        showDropdown
+      ) {
+        setShowDropdown(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showDropdown]);
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
@@ -140,19 +153,16 @@ const BankInfoForm = () => {
   const validateForm = () => {
     let formErrors = {};
 
-    // Validate account number
     if (!formData.accountNumber.trim()) {
       formErrors.accountNumber = "Vui lòng nhập số tài khoản";
     } else if (!/^\d+$/.test(formData.accountNumber)) {
       formErrors.accountNumber = "Số tài khoản chỉ bao gồm số";
     }
 
-    // Validate account name
     if (!formData.accountName.trim()) {
       formErrors.accountName = "Vui lòng nhập tên chủ tài khoản";
     }
 
-    // Validate bank
     if (!formData.bank) {
       formErrors.bank = "Vui lòng chọn ngân hàng thụ hưởng";
     }
@@ -174,36 +184,42 @@ const BankInfoForm = () => {
       // Get API URL from environment or use default
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-      // Update user profile with bank information
+      // Update user profile with bank information including logo
       const response = await axios.post(
         `${API_URL}/api/users/${user.id}/bank-info`,
-        formData
+        {
+          accountNumber: formData.accountNumber,
+          accountName: formData.accountName,
+          bank: formData.bank,
+          bankLogo: formData.bankLogo,
+          bankId: formData.bankId,
+        }
       );
 
+      hideLoading();
+
       if (response.data.success) {
-        // Navigate to loan page
-        navigate("/loan", {
-          state: {
-            message: "Thông tin ngân hàng đã được cập nhật thành công!",
-            success: true,
-            ...location.state,
-          },
-        });
+        // Hiển thị thông báo thành công thay vì chuyển hướng ngay lập tức
+        setShowSuccessMessage(true);
       }
     } catch (error) {
       console.error("Error saving bank information:", error);
-
-      // For demo purposes, still navigate to loan page
-      navigate("/loan", {
-        state: {
-          message: "Thông tin ngân hàng đã được cập nhật thành công!",
-          success: true,
-          ...location.state,
-        },
-      });
-    } finally {
       hideLoading();
+
+      // Cho mục đích demo, vẫn hiển thị thông báo thành công
+      setShowSuccessMessage(true);
     }
+  };
+
+  const handleContinue = () => {
+    // Khi người dùng bấm nút "Tiếp tục", chuyển hướng đến trang /loan
+    navigate("/loan", {
+      state: {
+        message: "Thông tin ngân hàng đã được cập nhật thành công!",
+        success: true,
+        ...location.state,
+      },
+    });
   };
 
   // Update form validity when formData or errors change
@@ -217,6 +233,49 @@ const BankInfoForm = () => {
 
     setIsFormValid(isValid);
   }, [formData, errors]);
+
+  if (showSuccessMessage) {
+    return (
+      <div className="verification-container">
+        <div className="verification-header">
+          <h1 className="header-title">Xác minh</h1>
+        </div>
+
+        <div className="success-container">
+          <div className="success-image">
+            {/* Illustration hiển thị hình ảnh những người giơ sao */}
+            <img src={done} alt="Success" className="success-illustration" />
+          </div>
+
+          <div className="success-check">
+            <div className="check-circle">
+              <svg
+                viewBox="0 0 24 24"
+                width="24"
+                height="24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"
+                  fill="#4CAF50"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <div className="success-message">
+            <h2>Chúc mừng</h2>
+            <p>Hoàn thành xác minh danh tính. Vui lòng tiếp tục</p>
+          </div>
+
+          <button onClick={handleContinue} className="continue-button">
+            Tiếp tục
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="verification-container">
@@ -280,9 +339,9 @@ const BankInfoForm = () => {
               className="ant-input ant-input-lg"
             />
           </span>
-          {/* {errors.accountNumber && (
+          {errors.accountNumber && (
             <div className="error-text">{errors.accountNumber}</div>
-          )} */}
+          )}
 
           <span className="ant-input-affix-wrapper bank-input ant-input-affix-wrapper-lg">
             <span className="ant-input-prefix">
@@ -314,98 +373,56 @@ const BankInfoForm = () => {
               className="ant-input ant-input-lg"
             />
           </span>
-          {/* {errors.accountName && (
+          {errors.accountName && (
             <div className="error-text">{errors.accountName}</div>
-          )} */}
+          )}
 
-          {/* Custom Bank Dropdown with Ant Design style */}
-          <div
-            className="ant-select select-bank ant-select-single ant-select-show-arrow"
-            onClick={toggleDropdown}
-          >
-            <div className="ant-select-selector">
-              <span className="ant-select-selection-search">
-                <input
-                  type="search"
-                  autoComplete="off"
-                  className="ant-select-selection-search-input"
-                  role="combobox"
-                  aria-haspopup="listbox"
-                  readOnly
-                  unselectable="on"
-                  value=""
-                  style={{ opacity: 0 }}
-                  aria-expanded={dropdownOpen ? "true" : "false"}
-                />
-              </span>
+          {/* Simplified Bank Dropdown */}
+          <div className="bank-dropdown-container">
+            <div
+              className="bank-dropdown-header"
+              onClick={() => setShowDropdown(!showDropdown)}
+            >
               {formData.bank ? (
-                <span className="ant-select-selection-item">
-                  <div className="selected-bank">
-                    {banks.find((b) => b.name === formData.bank)?.logo && (
-                      <img
-                        src={banks.find((b) => b.name === formData.bank)?.logo}
-                        alt="Bank Logo"
-                        className="bank-dropdown-logo"
-                      />
-                    )}
-                    <span>{formData.bank}</span>
-                  </div>
-                </span>
+                <div className="selected-bank">
+                  {formData.bankLogo && (
+                    <img
+                      src={formData.bankLogo}
+                      alt="Bank Logo"
+                      className="bank-dropdown-logo"
+                    />
+                  )}
+                  <span>{formData.bank}</span>
+                </div>
               ) : (
-                <span className="ant-select-selection-placeholder">
+                <span className="bank-placeholder">
                   Chọn ngân hàng thụ hưởng
                 </span>
               )}
+              <span className="dropdown-arrow">▼</span>
             </div>
-            <span
-              className="ant-select-arrow"
-              unselectable="on"
-              aria-hidden="true"
-              style={{ userSelect: "none" }}
-            >
-              <span
-                role="img"
-                aria-label="down"
-                className="anticon anticon-down ant-select-suffix"
-              >
-                <svg
-                  viewBox="64 64 896 896"
-                  focusable="false"
-                  data-icon="down"
-                  width="1em"
-                  height="1em"
-                  fill="currentColor"
-                  aria-hidden="true"
-                >
-                  <path d="M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z"></path>
-                </svg>
-              </span>
-            </span>
 
-            {dropdownOpen && (
-              <div className="ant-select-dropdown">
-                <div className="ant-select-dropdown-content">
-                  {banks.map((bank) => (
-                    <div
-                      key={bank.id}
-                      className="ant-select-item ant-select-item-option"
-                      onClick={() => handleSelectBank(bank)}
-                    >
-                      <div className="ant-select-item-option-content">
-                        <img
-                          src={bank.logo}
-                          alt={bank.name}
-                          className="bank-dropdown-logo"
-                        />
-                        <span>{bank.name}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            {showDropdown && (
+              <div className="bank-dropdown-menu">
+                {banks.map((bank) => (
+                  <div
+                    key={bank.id}
+                    className="bank-option"
+                    onClick={() => handleSelectBank(bank)}
+                  >
+                    <img
+                      src={bank.logo}
+                      alt={bank.name}
+                      className="bank-dropdown-logo"
+                    />
+                    <span>{bank.name}</span>
+                  </div>
+                ))}
               </div>
             )}
+
+            {errors.bank && <div className="error-text">{errors.bank}</div>}
           </div>
-          {/* {errors.bank && <div className="error-text">{errors.bank}</div>} */}
 
           <button
             type="submit"

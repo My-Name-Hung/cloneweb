@@ -180,6 +180,46 @@ const documentSchema = new mongoose.Schema({
 
 const Document = mongoose.model("Document", documentSchema);
 
+// Contract Schema
+const contractSchema = new mongoose.Schema({
+  contractId: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  loanAmount: {
+    type: String,
+    required: true,
+  },
+  loanTerm: {
+    type: String,
+    required: true,
+  },
+  signatureImage: {
+    type: String,
+    required: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  createdTime: {
+    type: String,
+    required: true,
+  },
+  createdDate: {
+    type: String,
+    required: true,
+  },
+});
+
+const Contract = mongoose.model("Contract", contractSchema);
+
 // API Routes
 // Sign Up
 app.post("/api/auth/signup", async (req, res) => {
@@ -574,6 +614,131 @@ app.get("*", (req, res) => {
 
   // Send the index.html file
   res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
+
+// Thêm API endpoint để tạo mã hợp đồng ngẫu nhiên
+app.get("/api/contracts/generate-id", async (req, res) => {
+  try {
+    // Hàm tạo mã hợp đồng ngẫu nhiên 8 chữ số
+    const generateContractId = () => {
+      return Math.floor(10000000 + Math.random() * 90000000).toString();
+    };
+
+    // Kiểm tra tính duy nhất của mã hợp đồng
+    let contractId;
+    let isUnique = false;
+
+    while (!isUnique) {
+      contractId = generateContractId();
+      // Kiểm tra xem mã này đã tồn tại chưa
+      const existingContract = await Contract.findOne({ contractId });
+      if (!existingContract) {
+        isUnique = true;
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      contractId,
+    });
+  } catch (error) {
+    console.error("Error generating contract ID:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+});
+
+// Thêm API endpoint để lưu hợp đồng
+app.post("/api/contracts", async (req, res) => {
+  try {
+    const { userId, contractId, loanAmount, loanTerm, signatureImage } =
+      req.body;
+
+    if (!userId || !contractId || !loanAmount || !loanTerm || !signatureImage) {
+      return res.status(400).json({ message: "Thiếu thông tin hợp đồng" });
+    }
+
+    // Tạo ngày giờ hiện tại
+    const now = new Date();
+    const createdTime = now.toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const createdDate = now.toLocaleDateString("vi-VN");
+
+    // Lưu ảnh chữ ký
+    const base64Data = signatureImage.replace(/^data:image\/\w+;base64,/, "");
+    const buffer = Buffer.from(base64Data, "base64");
+
+    // Tạo filename cho ảnh chữ ký
+    const filename = `signature_${userId}_${contractId}_${Date.now()}.png`;
+    const filePath = path.join(documentsDir, filename);
+
+    // Lưu file
+    fs.writeFileSync(filePath, buffer);
+    const signatureUrl = `/uploads/documents/${filename}`;
+
+    // Tạo hợp đồng mới
+    const contract = new Contract({
+      contractId,
+      userId,
+      loanAmount,
+      loanTerm,
+      signatureImage: signatureUrl,
+      createdTime,
+      createdDate,
+    });
+
+    await contract.save();
+
+    // Cập nhật thông tin user nếu cần
+    const user = await User.findById(userId);
+    if (user) {
+      // Có thể thêm trường hasContract hoặc activeContracts vào User schema nếu cần
+      // user.hasContract = true;
+      // user.activeContracts = [...(user.activeContracts || []), contract._id];
+      // await user.save();
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Hợp đồng đã được lưu thành công",
+      contract: {
+        id: contract._id,
+        contractId: contract.contractId,
+        createdTime: contract.createdTime,
+        createdDate: contract.createdDate,
+        signatureUrl: contract.signatureImage,
+      },
+    });
+  } catch (error) {
+    console.error("Contract creation error:", error);
+    res.status(500).json({ message: "Lỗi server khi lưu hợp đồng" });
+  }
+});
+
+// Thêm API endpoint để lấy thông tin hợp đồng của user
+app.get("/api/users/:userId/contracts", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const contracts = await Contract.find({ userId }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      contracts: contracts.map((contract) => ({
+        id: contract._id,
+        contractId: contract.contractId,
+        loanAmount: contract.loanAmount,
+        loanTerm: contract.loanTerm,
+        createdTime: contract.createdTime,
+        createdDate: contract.createdDate,
+        signatureUrl: contract.signatureImage,
+      })),
+    });
+  } catch (error) {
+    console.error("Get contracts error:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
 });
 
 app.listen(PORT, () => {
