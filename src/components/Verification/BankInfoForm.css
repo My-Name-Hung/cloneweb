@@ -1,0 +1,222 @@
+/* Reuse base form styles from PersonalInfoForm.css */
+.verification-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  background-color: #fff;
+}
+
+.verification-header {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  position: relative;
+  background-color: #0000a0;
+  color: white;
+  height: 60px;
+  z-index: 10;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.header-title {
+  font-size: 24px;
+  font-weight: 700;
+  flex-grow: 1;
+  text-align: center;
+  margin-right: 30px;
+}
+
+.personal-info-main {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.personal-info-title {
+  font-size: 20px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 24px;
+  color: #333;
+}
+
+.bank-card-container {
+  position: relative;
+  width: 100%;
+  margin-bottom: 30px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  background-color: #0066cc;
+  aspect-ratio: 1.6/1;
+}
+
+.bank-card-image {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.3;
+}
+
+.bank-card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.chip-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.chip-image {
+  width: 50px;
+  height: 40px;
+  background-color: #ffd700;
+  border-radius: 5px;
+  margin-right: 15px;
+}
+
+.chip-signal {
+  width: 25px;
+  height: 25px;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  margin-top: 10px;
+}
+
+.card-numbers {
+  margin-top: auto;
+  margin-bottom: 10px;
+}
+
+.bank-card-account-number {
+  font-size: 18px;
+  color: white;
+  letter-spacing: 3px;
+  margin-bottom: 5px;
+}
+
+.bank-card-account-name {
+  font-size: 16px;
+  color: white;
+  text-transform: uppercase;
+}
+
+.form-field {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.form-input {
+  width: 100%;
+  height: 50px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  padding: 0 15px;
+  font-size: 16px;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #0000a0;
+}
+
+.form-select {
+  width: 100%;
+  height: 50px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  padding: 0 15px;
+  font-size: 16px;
+  appearance: none;
+  background-color: white;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23000' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: #0000a0;
+}
+
+.submit-button {
+  margin: 30px auto;
+  display: block;
+  width: 180px;
+  height: 50px;
+  background-color: #0000a0;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.submit-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Dropdown styling */
+.dropdown-container {
+  position: relative;
+  cursor: pointer;
+}
+
+.dropdown-container .form-input {
+  cursor: pointer;
+}
+
+.dropdown-container .dropdown-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: transform 0.3s ease;
+  color: #777;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+/* Responsive adjustments */
+@media (min-width: 1028px) {
+  .personal-info-main {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .bank-card-container {
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

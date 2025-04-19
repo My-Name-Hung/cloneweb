@@ -141,6 +141,11 @@ const userSchema = new mongoose.Schema({
     contactPerson: String,
     relationship: String,
   },
+  bankInfo: {
+    accountNumber: String,
+    accountName: String,
+    bank: String,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -474,6 +479,70 @@ app.get("/api/users/:userId/avatar", async (req, res) => {
     res.status(200).json({ avatarUrl: user.avatarUrl });
   } catch (error) {
     console.error("Get avatar error:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+});
+
+// Update user bank information
+app.post("/api/users/:userId/bank-info", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const bankData = req.body;
+
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update user with bank information
+    user.bankInfo = {
+      accountNumber: bankData.accountNumber,
+      accountName: bankData.accountName,
+      bank: bankData.bank,
+    };
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Bank information updated successfully",
+      user: {
+        id: user._id,
+        phone: user.phone,
+        fullName: user.fullName,
+        hasVerifiedDocuments: user.hasVerifiedDocuments,
+        avatarUrl: user.avatarUrl,
+        personalInfo: user.personalInfo,
+        bankInfo: user.bankInfo,
+      },
+    });
+  } catch (error) {
+    console.error("Bank information update error:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+});
+
+// Get user bank information
+app.get("/api/users/:userId/bank-info", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      bankInfo: user.bankInfo || {
+        accountNumber: "",
+        accountName: "",
+        bank: "",
+      },
+    });
+  } catch (error) {
+    console.error("Get bank information error:", error);
     res.status(500).json({ message: "Lỗi server" });
   }
 });

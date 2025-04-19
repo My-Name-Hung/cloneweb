@@ -273,21 +273,22 @@ const LoanSelectionScreen = () => {
     setShowConfirmModal(false);
   };
 
-  const handleConfirmLoan = () => {
-    // Close the confirmation modal
-    closeConfirmModal();
+  const handleLoanConfirmation = () => {
+    // Checking if user has already filled personal info
+    const userData = JSON.parse(localStorage.getItem("user")) || {};
 
-    // Check if the required documents are uploaded
-    if (!documentsUploaded) {
-      // If documents are not uploaded, redirect to the verification page
-      console.log("Documents not uploaded, redirecting to verification page");
-      navigate("/verification");
+    // Check if personalInfo exists and has required fields
+    const hasPersonalInfo =
+      userData.personalInfo &&
+      userData.personalInfo.fullName &&
+      userData.personalInfo.idNumber;
+
+    if (hasPersonalInfo) {
+      // User has already filled personal info, go directly to bank info
+      navigate("/bank-info");
     } else {
-      // If documents are uploaded, proceed with loan confirmation
-      console.log(
-        "Documents already uploaded, proceeding with loan confirmation"
-      );
-      // Add code here to confirm the loan and proceed to the next step
+      // User needs to fill personal info first
+      navigate("/personal-info");
     }
   };
 
@@ -490,7 +491,7 @@ const LoanSelectionScreen = () => {
                     </button>
                     <button
                       className="confirm-button"
-                      onClick={handleConfirmLoan}
+                      onClick={handleLoanConfirmation}
                     >
                       OK
                     </button>

@@ -1,98 +1,704 @@
-.personal-info-form {
-  padding: 0 16px 30px;
-}
-
-.personal-info-form .form-group {
-  margin-bottom: 20px;
-  position: relative;
-}
-
-.personal-info-form label {
-  display: block;
-  font-size: 14px;
-  margin-bottom: 8px;
-  color: #333;
-  font-weight: 500;
-}
-
-.personal-info-form .form-control {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 16px;
+.verification-container {
+  display: flex;
+  flex-direction: column;
   background-color: #fff;
+  min-height: 100vh;
+  width: 100%;
 }
 
-.personal-info-form .form-control.error {
-  border-color: #e74c3c;
+.verification-header {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  position: relative;
+  background-color: #0404b4;
+  color: white;
+  height: 60px;
+  z-index: 10;
 }
 
-.personal-info-form .error-text {
-  color: #e74c3c;
-  font-size: 12px;
-  margin-top: 4px;
+.back-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
 }
 
-.personal-info-form select.form-control {
+.header-title {
+  font-size: 24px;
+  font-weight: 700;
+  flex-grow: 1;
+  text-align: center;
+  margin-right: 30px; /* To offset the back button and center the title */
+}
+
+.personal-info-main {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.personal-info-title {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 24px;
+  color: #333;
+}
+
+.personal-info-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 5px;
+}
+
+.input-container {
+  position: relative;
+  width: 100%;
+  height: 48px;
+  border-radius: 10px;
+  border: 1px solid #d9d9d9;
+  background-color: #fff;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.input-container:focus-within {
+  border-color: #0066ff;
+}
+
+.form-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  padding: 0 40px 0 15px;
+  font-size: 16px;
+  background: transparent;
+  color: #333;
+}
+
+.form-input::placeholder {
+  color: #999;
+}
+
+.form-input:focus {
+  outline: none;
+}
+
+select.form-input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
-}
-
-.personal-info-form .date-input-container {
+  padding-right: 40px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: transparent;
+  z-index: 3;
   position: relative;
 }
 
-.personal-info-form .calendar-icon {
+.input-icon {
   position: absolute;
-  right: 12px;
+  right: 15px;
   top: 50%;
   transform: translateY(-50%);
   color: #777;
+  font-size: 16px;
   pointer-events: none;
 }
 
-.personal-info-form .continue-button {
-  background-color: #0039a6;
-  color: white;
-  border: none;
-  border-radius: 25px;
-  padding: 14px;
-  font-size: 16px;
+.text-icon {
   font-weight: bold;
-  width: 80%;
-  margin: 30px auto 0;
-  display: block;
+  font-size: 14px;
+}
+
+.dropdown-icon {
+  font-size: 12px;
+}
+
+.error-text {
+  color: #ff3b30;
+  font-size: 14px;
+  margin-top: 5px;
+  padding-left: 5px;
+}
+
+.form-input.error {
+  border-color: #ff3b30;
+}
+
+.continue-button {
+  margin-top: 20px;
+  height: 54px;
+  border-radius: 24px;
+  background-color: #0404b4;
+  color: white;
+  font-weight: 500;
+  font-size: 16px;
+  border: none;
   cursor: pointer;
-  transition: background-color 0.3s;
+  width: 100%;
+  max-width: 110px;
+  font-size: 19px;
+  align-self: center;
 }
 
-.personal-info-form .continue-button:hover {
-  background-color: #002d80;
+.continue-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
-/* Dropdown styling for gender input */
-.personal-info-form select.form-control {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  padding-right: 30px;
+/* Date input styling to match text inputs */
+input[type="date"] {
+  position: relative;
 }
 
-/* For select dropdown arrow */
-.personal-info-form select.form-control::-ms-expand {
-  display: none;
-}
-
-/* Specific styling for different form fields */
-.personal-info-form input[type="date"]::-webkit-calendar-picker-indicator {
+input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   opacity: 0;
   width: 100%;
   height: 100%;
+  cursor: pointer;
+}
+
+/* SVG icon styling */
+.input-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* List icon styling */
+.list-icon svg {
+  stroke: #777;
+}
+
+/* Dropdown container specific styling */
+.dropdown-container {
+  position: relative;
+  cursor: pointer;
+}
+
+.dropdown-container .form-input {
+  cursor: pointer; /* Ensure cursor is pointer throughout */
+}
+
+.dropdown-container .dropdown-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: transform 0.3s ease;
+  color: #777;
+  pointer-events: auto; /* Allow icon to be clickable */
+  z-index: 2; /* Ensure icon is above the select element */
+}
+
+/* Make click area extend to entire container */
+.dropdown-container:before {
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Smooth opening animation */
+select.form-input option {
+  padding: 14px;
+  border-bottom: 1px solid #f5f5f5;
+  animation: smoothAppear 0.3s ease;
+  transition: background-color 0.2s ease;
+  font-size: 16px;
+}
+
+@keyframes smoothAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced animation for dropdown opening */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-container:focus-within .dropdown-icon {
+  transform: translateY(-50%) rotate(180deg);
+  color: #1890ff;
+}
+
+/* Slightly fade selected option when dropdown is open */
+select.form-input:focus option:checked,
+select.hidden-select:focus option:checked {
+  font-weight: 500;
+  background-color: #e6f7ff !important;
+  color: #1890ff;
+}
+
+/* Style selected option when dropdown isn't open */
+select.hidden-select option:checked {
+  font-weight: 700;
+  background-color: #e6f7ff;
+}
+
+/* When dropdown is focused, style the visible selected item */
+.dropdown-container:focus-within .ant-select-selection-item {
+  color: #333;
+  font-weight: 600;
+}
+
+/* Mobile browser specific dropdown enhancement */
+@supports (-webkit-touch-callout: none) {
+  select.form-input {
+    background-color: transparent; /* Override default iOS styling */
+    border-radius: 10px;
+  }
+
+  select.form-input:focus {
+    border-color: #0066ff;
+  }
+}
+
+/* Hide default dropdown arrow in IE */
+select::-ms-expand {
+  display: none;
+}
+
+/* Add styling for the dropdown menu to match example */
+select.form-input:focus {
+  border-color: #0404b4;
+  box-shadow: 0 0 0 2px rgba(4, 4, 180, 0.1);
+  color: rgba(51, 51, 51, 0.7);
+}
+
+/* Ensure the icon visually responds to hover */
+/* .dropdown-container:hover .dropdown-icon {
+  color: #0404b4;
+} */
+
+/* Ensure the dropdown menu appears properly */
+.dropdown-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 100%;
+  pointer-events: none;
   cursor: pointer;
+  z-index: 2;
+}
+
+/* For mobile compatibility */
+@media (max-width: 1028px) {
+  /* Improve tap target size for better mobile experience */
+  .dropdown-container .dropdown-icon {
+    padding: 10px;
+    right: 5px;
+  }
+
+  /* Adjust font size for better readability on mobile */
+  select.form-input {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* Ant Design select styling */
+.ant-select-selector {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0 11px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.ant-select-selection-search {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.ant-select-selection-search-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ant-select-selection-item {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #333;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Hide the actual select element but keep it functional */
+.hidden-select {
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  z-index: 5;
+}
+
+/* Dropdown animation and styling */
+.dropdown-container {
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.3s ease;
+}
+
+.dropdown-container:hover {
+  border-color: #d9d9d9;
+}
+
+.dropdown-container:focus-within {
+  border-color: #0404b4;
+  box-shadow: 0 0 0 2px rgba(4, 4, 180, 0.1);
+}
+
+.dropdown-container .dropdown-icon {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: transform 0.3s ease;
+  color: rgba(0, 0, 0, 0.25);
+  font-size: 12px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.dropdown-container:focus-within .dropdown-icon {
+  transform: translateY(-50%) rotate(180deg);
+  color: #1890ff;
+}
+
+/* Dropdown options animation */
+@keyframes dropdownOpen {
+  from {
+    opacity: 0;
+    transform: scaleY(0.8);
+    transform-origin: top center;
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+    transform-origin: top center;
+  }
+}
+
+/* Style for dropdown options */
+select.hidden-select option {
+  padding: 10px 12px;
+  background-color: white;
+  color: rgba(0, 0, 0, 0.85);
+  min-height: 32px;
+  line-height: 22px;
+  display: block;
+  border: none;
+  animation: dropdownOpen 0.2s ease-out;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Dropdown style when focused */
+.dropdown-container:focus-within {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+/* Fix styling for selected option */
+select.form-input:focus option:checked,
+select.hidden-select:focus option:checked {
+  font-weight: 500;
+  background-color: #e6f7ff !important;
+  color: black;
+  font-weight: 700;
+}
+
+/* Fix dropdown icon color when focused */
+.dropdown-container:focus-within .dropdown-icon {
+  transform: translateY(-50%) rotate(180deg);
+  color: #1890ff;
+}
+
+/* Fix dropdown hover effect */
+select.hidden-select option:hover,
+select.form-input option:hover {
+  background-color: #f5f5f5 !important;
+  color: black !important;
+  cursor: pointer !important;
+  font-weight: 500;
+}
+
+/* Remove the subtle indicator for hover state */
+select.hidden-select option:hover::before,
+select.form-input option:hover::before {
+  content: none;
+}
+
+/* Slow down dropdown animation to 2s */
+@keyframes smoothAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateY(-7px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dropdownOpen {
+  0% {
+    opacity: 0;
+    transform: scaleY(0);
+    transform-origin: top center;
+  }
+  30% {
+    opacity: 0.3;
+    transform: scaleY(0.3);
+  }
+  70% {
+    opacity: 0.7;
+    transform: scaleY(0.7);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+    transform-origin: top center;
+  }
+}
+
+/* Apply slower animation */
+select.form-input option,
+select.hidden-select option {
+  animation: smoothAppear 2s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Make dropdown options appear one by one with slight delay */
+select.form-input option:nth-child(1),
+select.hidden-select option:nth-child(1) {
+  animation-delay: 0s;
+}
+select.form-input option:nth-child(2),
+select.hidden-select option:nth-child(2) {
+  animation-delay: 0.2s;
+}
+select.form-input option:nth-child(3),
+select.hidden-select option:nth-child(3) {
+  animation-delay: 0.4s;
+}
+select.form-input option:nth-child(4),
+select.hidden-select option:nth-child(4) {
+  animation-delay: 0.6s;
+}
+select.form-input option:nth-child(5),
+select.hidden-select option:nth-child(5) {
+  animation-delay: 0.8s;
+}
+
+/* Background style for dropdown */
+.input-container.dropdown-container {
+  background-color: white;
+}
+
+/* Add light blue background for the selected option matching the sample */
+.ant-select-selector {
+  background-color: transparent;
+}
+
+/* Mobile styling adjustments */
+@media (max-width: 1028px) {
+  select.hidden-select option {
+    font-size: 16px;
+    padding: 10px 12px;
+  }
+}
+
+/* Style for the active selection in the dropdown selector */
+.ant-select-selection-item {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #333;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* When dropdown is focused, style the visible selected item */
+.dropdown-container:focus-within .ant-select-selection-item {
+  color: gray;
+  font-weight: 500;
+}
+
+/* Add a light blue background matching Ant Design's selection */
+select.hidden-select option:checked,
+select.form-input option:checked {
+  background-color: #e6f7ff !important;
+  color: #1890ff;
+  font-weight: 500;
+}
+
+/* Change color when dropdown is open */
+.dropdown-container:focus-within .dropdown-icon {
+  color: #1890ff;
+}
+
+/* Mobile optimization */
+@media (max-width: 1028px) {
+  .ant-select-selection-item {
+    font-size: 16px;
+  }
+}
+
+/* Create custom hover effect for dropdown items */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  select.hidden-select option:hover,
+  select.form-input option:hover {
+    background-color: #f5f5f5;
+    cursor: pointer;
+  }
+
+  select.hidden-select option,
+  select.form-input option {
+    cursor: pointer !important;
+    padding: 12px 16px !important;
+  }
+}
+
+/* Add Firefox-specific styling */
+@-moz-document url-prefix() {
+  select.hidden-select option,
+  select.form-input option {
+    background-color: white;
+    cursor: pointer;
+  }
+
+  select.hidden-select option:hover,
+  select.form-input option:hover {
+    background-color: #f5f5f5;
+    color: rgba(0, 0, 0, 0.85);
+  }
+}
+
+/* Enhance dropdown option styling for better hover experience */
+select.hidden-select option,
+select.form-input option {
+  transition: background-color 0.15s ease, color 0.15s ease;
+  position: relative;
+  z-index: 1;
+}
+
+/* Make hover effect more prominent */
+select.hidden-select option:hover,
+select.form-input option:hover {
+  background-color: #f0f0f0 !important;
+  color: #000 !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+/* Create a subtle indicator for the hover state */
+select.hidden-select option:hover::before,
+select.form-input option:hover::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background-color: #f0f0f0;
+  opacity: 1;
+}
+
+/* Date input specific styling */
+input[name="birthDate"] {
+  letter-spacing: 1px;
+  caret-color: #1890ff;
+}
+
+input[name="birthDate"]::placeholder {
+  letter-spacing: 2px;
+  color: #999;
+  font-weight: normal;
+}
+
+/* Add blinking cursor style for active state */
+input[name="birthDate"]:focus {
+  outline: none;
+  caret-color: #1890ff;
+}
+
+input[name="birthDate"]:focus::placeholder {
+  color: black;
+}
+
+/* Remove input number spinner buttons */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Custom calendar icon styling */
+.input-container svg {
+  color: #777;
+}
+
+.form-group input[name="birthDate"] + .input-icon svg {
+  color: #777;
+  opacity: 0.7;
 }

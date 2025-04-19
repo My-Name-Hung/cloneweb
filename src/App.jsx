@@ -12,6 +12,7 @@ import SignUp from "./components/Auth/SignUp";
 import Home from "./components/Home";
 import LoanScreen from "./components/Loan/LoanScreen";
 import NotificationScreen from "./components/Notification/NotificationScreen";
+import BankInfoForm from "./components/Verification/BankInfoForm";
 import PersonalInfoForm from "./components/Verification/PersonalInfoForm";
 import VerificationScreen from "./components/Verification/VerificationScreen";
 import { AuthProvider } from "./context/AuthContext";
@@ -142,7 +143,7 @@ function App() {
         /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
           userAgent
         );
-      const isMobileViewport = window.innerWidth <= 1020; // Common breakpoint for mobile devices
+      const isMobileViewport = window.innerWidth <= 1028; // Common breakpoint for mobile devices
 
       // In dev environment, allow content to display on mobile viewport sizes even on desktop
       setIsMobileView(isMobileUserAgent || isMobileViewport);
@@ -193,6 +194,14 @@ function App() {
               element={
                 <RequireAuth>
                   <PersonalInfoForm />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/bank-info"
+              element={
+                <RequireAuth>
+                  <BankInfoForm />
                 </RequireAuth>
               }
             />
