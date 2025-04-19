@@ -200,6 +200,14 @@ const contractSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  bankName: {
+    type: String,
+    default: "",
+  },
+  contractContent: {
+    type: String,
+    default: "",
+  },
   signatureImage: {
     type: String,
     required: true,
