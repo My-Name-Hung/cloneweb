@@ -7,32 +7,107 @@
 }
 
 .profile-detail-header {
-  background-color: #075e54;
-  padding: 15px;
   display: flex;
+  justify-content: space-between;
   align-items: center;
+  background-color: #0039a6; /* MB Bank blue */
+  color: white;
+  padding: 15px 20px;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 10;
 }
 
-.profile-detail-header .back-button {
+.header-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  text-align: center;
+  flex-grow: 1;
+}
+
+.back-button {
   background: none;
   border: none;
+  padding: 8px;
+  cursor: pointer;
   color: white;
-  font-size: 20px;
   display: flex;
   align-items: center;
-  cursor: pointer;
-  padding: 0;
-  margin-right: 15px;
+  justify-content: center;
 }
 
-.profile-detail-header .header-title {
+.refresh-button {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
   color: white;
-  font-size: 20px;
-  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.refresh-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.refresh-button .spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.refresh-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background-color: #f0f8ff;
+  border-radius: 4px;
+  margin: 8px;
+}
+
+.refresh-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 57, 166, 0.3);
+  border-top-color: #0039a6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+.refresh-indicator p {
   margin: 0;
+  font-size: 14px;
+  color: #0039a6;
+}
+
+.view-password-icon {
+  color: #999;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  margin: -8px;
+  border-radius: 50%;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.view-password-icon:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #075e54;
+}
+
+.view-password-icon svg {
+  width: 20px;
+  height: 20px;
 }
 
 .profile-detail-loading {
@@ -71,6 +146,26 @@
   padding: 20px 0;
   background-color: white;
   margin-bottom: 10px;
+}
+
+.avatar-section {
+  padding: 25px 0;
+}
+
+.avatar-container {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 15px;
+  border: 3px solid rgba(0, 0, 170, 0.2);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.user-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .id-card-image {
@@ -133,16 +228,4 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.view-password-icon {
-  color: #999;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-}
-
-.view-password-icon svg {
-  width: 18px;
-  height: 18px;
 }

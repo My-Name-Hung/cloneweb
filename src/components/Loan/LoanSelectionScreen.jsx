@@ -1,12 +1,10 @@
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
 import "./LoanStyles.css";
 
 const LoanSelectionScreen = () => {
   const navigate = useNavigate();
-  const { checkVerificationStatus } = useAuth();
   const [loanAmount, setLoanAmount] = useState("0");
   const [loanTerm, setLoanTerm] = useState("6");
   const [loanDate] = useState("18/4/2025");
@@ -446,17 +444,12 @@ const LoanSelectionScreen = () => {
     // Simulating an API call to check if documents exist
     const checkDocumentsStatus = async () => {
       try {
-        // Check if user has uploaded all required verification documents
-        const result = await checkVerificationStatus();
+        // Don't continuously check verification status on component mount
+        // This was causing infinite API calls and page reloads
+        setDocumentsUploaded(false);
 
-        // Update state with verification status
-        setDocumentsUploaded(result.success && result.isVerified);
-
-        console.log(
-          `User verification status: ${
-            result.success && result.isVerified ? "Verified" : "Not verified"
-          }`
-        );
+        // Just log the verification status once instead of calling API
+        console.log("Verification check disabled to prevent infinite reloads");
       } catch (error) {
         console.error("Error checking documents status:", error);
         setDocumentsUploaded(false);
@@ -464,7 +457,7 @@ const LoanSelectionScreen = () => {
     };
 
     checkDocumentsStatus();
-  }, [checkVerificationStatus]);
+  }, []); // Only run once on mount, removed checkVerificationStatus from dependencies
 
   // Giải pháp khẩn cấp - component tạm thời
   function CustomDropdown({ value, options, onChange }) {

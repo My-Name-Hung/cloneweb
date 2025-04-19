@@ -225,28 +225,36 @@ export const AuthProvider = ({ children }) => {
     return { success: true, user: updatedUser };
   };
 
-  // Update the updateUserAvatar function
-  const updateUserAvatar = (avatarUrl) => {
-    if (!user) return { success: false, message: "No user logged in" };
+  // Update user avatar
+  const updateUserAvatar = async (avatarUrl) => {
+    if (!user) {
+      console.error("Cannot update avatar: No user logged in");
+      return false;
+    }
 
-    console.log("updateUserAvatar called with:", avatarUrl);
+    try {
+      // Import the userService here to avoid circular dependencies
+      const { updateUserAvatar: updateAvatar } = await import(
+        "../database/userService"
+      );
 
-    // Ensure avatarUrl is a full URL
-    const fullAvatarUrl = ensureFullUrl(avatarUrl);
-    console.log("Full avatar URL:", fullAvatarUrl);
+      const success = await updateAvatar(user.id, avatarUrl);
 
-    // Update user with new avatar
-    const updatedUser = {
-      ...user,
-      avatarUrl: fullAvatarUrl,
-    };
+      if (success) {
+        // Update user state with new avatar URL
+        setUser((prevUser) => ({
+          ...prevUser,
+          avatarUrl: avatarUrl,
+        }));
 
-    // Update localStorage and state
-    localStorage.setItem("userData", JSON.stringify(updatedUser));
-    setUser(updatedUser);
-
-    console.log("Avatar updated successfully:", fullAvatarUrl);
-    return { success: true, user: updatedUser };
+        console.log("Avatar updated successfully in AuthContext");
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error in updateUserAvatar:", error);
+      return false;
+    }
   };
 
   // Thêm hàm mới để cập nhật thông tin ngân hàng
@@ -547,18 +555,51 @@ export const AuthProvider = ({ children }) => {
   };
 
   const checkUserVerificationStatus = async () => {
-    if (!user || !user.id) {
-      return { verified: false, hasPersonalInfo: false, hasBankInfo: false };
-    }
-
     try {
-      // Thử lấy dữ liệu từ API trước
+      // If there's no user logged in, return immediately
+      if (!user || !user.id) {
+        console.log("No user to check verification status for");
+        return { success: false, isVerified: false };
+      }
+
+      // Use a local storage flag to prevent repeated checks in the same session
+      const lastCheckedTime = localStorage.getItem(
+        `verification_check_time_${user.id}`
+      );
+      const currentTime = new Date().getTime();
+
+      // Only check once every 5 minutes (300000 ms) unless forced
+      if (lastCheckedTime && currentTime - parseInt(lastCheckedTime) < 300000) {
+        console.log("Using cached verification status to prevent API spam");
+        const cachedStatus = localStorage.getItem(
+          `verification_status_${user.id}`
+        );
+        if (cachedStatus) {
+          return JSON.parse(cachedStatus);
+        }
+      }
+
+      console.log(`Checking verification status for user: ${user.id}`);
+
+      // Create a timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(
+          () => reject(new Error("Verification check timed out")),
+          5000
+        );
+      });
+
       try {
-        const [profileRes, bankInfoRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/users/${user.id}/profile`),
-          axios.get(`${API_BASE_URL}/api/users/${user.id}/bank-info`),
+        // Race the API calls with a timeout
+        const [profileRes, bankInfoRes] = await Promise.race([
+          Promise.all([
+            axios.get(`${API_BASE_URL}/api/users/${user.id}/profile`),
+            axios.get(`${API_BASE_URL}/api/users/${user.id}/bank-info`),
+          ]),
+          timeoutPromise,
         ]);
 
+        // After successful API calls, parse the results
         const hasPersonalInfo =
           profileRes.data.success &&
           profileRes.data.user?.personalInfo?.idNumber &&
@@ -569,75 +610,82 @@ export const AuthProvider = ({ children }) => {
           bankInfoRes.data.bankInfo?.accountNumber &&
           bankInfoRes.data.bankInfo?.bank;
 
-        // Nếu đã xác minh trước đó thông qua localStorage (từ saveUserContract)
-        const isAlreadyVerified = user.hasVerifiedDocuments === true;
-        const verified = isAlreadyVerified || (hasPersonalInfo && hasBankInfo);
+        // Update user data with latest info
+        const updatedUserData = {
+          ...user,
+          fullName: profileRes.data.user?.fullName || user.fullName,
+          personalInfo: {
+            ...(user.personalInfo || {}),
+            ...(profileRes.data.user?.personalInfo || {}),
+          },
+          bankInfo: {
+            ...(user.bankInfo || {}),
+            ...(bankInfoRes.data.bankInfo || {}),
+          },
+        };
 
-        // Cập nhật thông tin người dùng trong state và localStorage
-        if (
-          profileRes.data.success ||
-          bankInfoRes.data.success ||
-          isAlreadyVerified
-        ) {
-          const updatedUser = { ...user };
+        // Save all the updated data to localStorage
+        localStorage.setItem("userData", JSON.stringify(updatedUserData));
+        setUser(updatedUserData);
 
-          if (profileRes.data.success) {
-            updatedUser.fullName = profileRes.data.user.fullName;
-            updatedUser.personalInfo = profileRes.data.user.personalInfo;
-          }
-
-          if (bankInfoRes.data.success) {
-            updatedUser.bankInfo = bankInfoRes.data.bankInfo;
-          }
-
-          if (verified) {
-            updatedUser.hasVerifiedDocuments = true;
-          }
-
-          setUser(updatedUser);
-          localStorage.setItem("userData", JSON.stringify(updatedUser));
-        }
-
-        return {
-          verified: verified,
+        // Save verification status and timestamp to localStorage
+        const verificationStatus = {
+          success: true,
+          isVerified: hasPersonalInfo && hasBankInfo,
           hasPersonalInfo,
           hasBankInfo,
-          success: true,
         };
+
+        localStorage.setItem(
+          `verification_status_${user.id}`,
+          JSON.stringify(verificationStatus)
+        );
+        localStorage.setItem(
+          `verification_check_time_${user.id}`,
+          currentTime.toString()
+        );
+
+        console.log("Verification status saved:", verificationStatus);
+        return verificationStatus;
       } catch (apiError) {
-        console.log("API error, falling back to localStorage:", apiError);
+        console.error("Error checking verification status with API:", apiError);
 
-        // Nếu API thất bại, sử dụng dữ liệu từ localStorage
-        const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+        // If API fails, try to load from localStorage
+        const userData = JSON.parse(localStorage.getItem("userData")) || {};
 
-        // Kiểm tra hasVerifiedDocuments từ localStorage
-        const isVerified = userData.hasVerifiedDocuments === true;
-        const hasPersonalInfoFromLocalStorage =
+        // Check what info we have locally
+        const hasPersonalInfo =
           userData.personalInfo &&
           userData.personalInfo.idNumber &&
           userData.fullName;
-        const hasBankInfoFromLocalStorage =
+
+        const hasBankInfo =
           userData.bankInfo &&
           userData.bankInfo.accountNumber &&
           userData.bankInfo.bank;
 
-        return {
-          verified:
-            isVerified ||
-            (hasPersonalInfoFromLocalStorage && hasBankInfoFromLocalStorage),
-          hasPersonalInfo: hasPersonalInfoFromLocalStorage,
-          hasBankInfo: hasBankInfoFromLocalStorage,
+        const verificationStatus = {
           success: true,
+          isVerified: hasPersonalInfo && hasBankInfo,
+          hasPersonalInfo,
+          hasBankInfo,
         };
+
+        // Save the status with current timestamp
+        localStorage.setItem(
+          `verification_status_${user.id}`,
+          JSON.stringify(verificationStatus)
+        );
+        localStorage.setItem(
+          `verification_check_time_${user.id}`,
+          currentTime.toString()
+        );
+
+        return verificationStatus;
       }
     } catch (error) {
-      console.error("Error checking verification status:", error);
-      return {
-        verified: false,
-        hasPersonalInfo: false,
-        hasBankInfo: false,
-        success: false,
-      };
+      console.error("Error in checkUserVerificationStatus:", error);
+      return { success: false, isVerified: false };
     }
   };
 

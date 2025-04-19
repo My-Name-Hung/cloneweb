@@ -19,6 +19,8 @@ import ProfileScreen from "./components/Profile/ProfileScreen";
 import BankInfoForm from "./components/Verification/BankInfoForm";
 import PersonalInfoForm from "./components/Verification/PersonalInfoForm";
 import VerificationScreen from "./components/Verification/VerificationScreen";
+import TransactionHistory from "./components/Wallet/TransactionHistory";
+import WalletScreen from "./components/Wallet/WalletScreen";
 import { AuthProvider } from "./context/AuthContext";
 import { LoadingProvider } from "./context/LoadingContext";
 
@@ -234,6 +236,18 @@ function App() {
                   <ProfileDetail />
                 </RequireAuth>
               }
+            />
+            <Route
+              path="/wallet"
+              element={
+                <RequireAuth>
+                  <WalletScreen />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/transaction-history"
+              element={<TransactionHistory />}
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

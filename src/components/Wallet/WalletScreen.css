@@ -1,0 +1,459 @@
+.wallet-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding-bottom: 60px; /* Space for bottom nav */
+}
+
+.wallet-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  padding: 15px 20px;
+  background-color: #0404b4;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: 60px;
+}
+
+.wallet-header h1 {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.wallet-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #0039a6;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Bank card styles */
+.bank-card-containers {
+  padding: 10px;
+}
+
+.bank-card {
+  position: relative;
+  width: 100%;
+  height: 190px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.bank-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bank-card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.card-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: white;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+
+.card-bank-logo {
+  height: 30px;
+  max-width: 120px;
+  object-fit: contain;
+}
+
+.bank-card-account-number {
+  font-size: 20px;
+  color: white;
+  letter-spacing: 2px;
+  position: absolute;
+  bottom: 45px;
+  left: 20px;
+}
+
+.bank-card-account-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: white;
+  text-transform: uppercase;
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+}
+
+/* Balance container styles */
+.balance-container {
+  background-color: #f6f6f6;
+  border-radius: 10px;
+  padding: 15px;
+  margin: 15px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.balance-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+}
+
+.balance-label {
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+}
+
+.balance-value-container {
+  display: flex;
+  align-items: center;
+}
+
+.balance-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #222;
+  margin-right: 10px;
+}
+
+.eye-toggle-button {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  transition: color 0.2s;
+}
+
+.eye-toggle-button:hover {
+  color: #333;
+}
+
+.eye-toggle-button svg {
+  width: 22px;
+  height: 22px;
+}
+
+.balance-history-link {
+  margin-top: 10px;
+}
+
+.balance-history-link a {
+  color: #0066cc;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.balance-history-link a:hover {
+  text-decoration: underline;
+}
+
+/* Withdraw button */
+.withdraw-section {
+  padding: 0 20px;
+  margin-bottom: 30px;
+}
+
+.withdraw-button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 15px 20px;
+  background-color: #ff7043;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(255, 112, 67, 0.3);
+}
+
+.withdraw-icon {
+  display: flex;
+  align-items: center;
+}
+
+.withdraw-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Linked banks section */
+.linked-banks-section {
+  padding: 20px;
+  text-align: center;
+}
+
+.linked-banks-title {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: normal;
+}
+
+.linked-banks-image-container {
+  width: 100%;
+  margin: 0 auto;
+}
+
+.linked-banks-image {
+  width: 100%;
+  display: block;
+  border-radius: 8px;
+}
+
+/* Error notification styles */
+.error-notification {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: #0033a0;
+  color: white;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  font-size: 14px;
+}
+
+.error-icon {
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.modal-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.withdraw-modal {
+  width: 90%;
+  max-width: 400px;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: #999;
+  display: flex;
+  align-items: center;
+}
+
+.modal-content {
+  padding: 20px;
+}
+
+.withdraw-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  font-size: 16px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.continue-button {
+  width: 100%;
+  padding: 14px;
+  background-color: #0000cc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Centered error notification styles */
+.centered-error-notification {
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  color: #333;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  font-size: 14px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  max-width: 90%;
+  width: auto;
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+@keyframes slideDown {
+  from {
+    top: 0;
+    opacity: 0;
+  }
+  to {
+    top: 50px;
+    opacity: 1;
+  }
+}
+
+.error-icon {
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  color: #1890ff;
+}
+
+.error-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Notification banner styles */
+.notification-banner {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  font-size: 14px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  max-width: 90%;
+  animation: fadeIn 0.3s ease;
+  color: #333;
+}
+
+.info-notification {
+  background-color: white;
+  color: #333;
+}
+
+.error-notification {
+  background-color: white;
+  color: #333;
+}
+
+.info-icon {
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  color: #1890ff;
+}
+
+.error-icon-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background-color: #ff4d4f;
+  border-radius: 50%;
+  margin-right: 10px;
+  color: white;
+}
+
+.error-icon-circle svg {
+  width: 14px;
+  height: 14px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}

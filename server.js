@@ -61,17 +61,15 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Middleware
+// More permissive CORS configuration
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:3000",
-      "https://mbbankvay.netlify.app/",
-    ],
+    origin: true, // Allow any origin - be cautious with this in production
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   })
 );
 app.use(express.json({ limit: "50mb" })); // Increase limit for base64 images

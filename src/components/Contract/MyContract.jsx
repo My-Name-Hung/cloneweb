@@ -24,19 +24,19 @@ const MyContract = () => {
   const API_BASE_URL =
     import.meta.env.VITE_API_URL || "https://cloneweb-uhw9.onrender.com";
 
-  // Hàm xử lý đường dẫn ảnh
+  // Helper function to get full image URL
   const getFullImageUrl = (url) => {
     if (!url) return null;
 
-    // Nếu đã là URL đầy đủ, trả về nguyên bản
+    // If already a full URL, return as is
     if (url.startsWith("http")) {
       return url;
     }
 
-    // Đảm bảo có dấu / đúng
+    // Ensure proper path formatting
     const normalizedPath = url.startsWith("/") ? url : `/${url}`;
 
-    // Kết hợp với API_URL
+    // Combine with API URL
     return `${API_BASE_URL}${normalizedPath}`;
   };
 
@@ -46,43 +46,39 @@ const MyContract = () => {
       setError(null);
 
       try {
-        // Sử dụng getUserContracts từ AuthContext
+        // Use getUserContracts from AuthContext
         const response = await getUserContracts();
-        console.log("Kết quả lấy hợp đồng:", response);
+        console.log("Contract fetch result:", response);
 
         if (response && response.success && response.contracts) {
-          // Đảm bảo URL hình ảnh chữ ký đầy đủ
+          // Ensure full URLs for signature images
           const contractsWithFormattedUrls = response.contracts.map(
-            (contract) => {
-              // Xử lý URL chữ ký
-              if (
-                contract.signatureUrl &&
-                !contract.signatureUrl.startsWith("http")
-              ) {
-                contract.signatureUrl = getFullImageUrl(contract.signatureUrl);
-              }
-              return contract;
-            }
+            (contract) => ({
+              ...contract,
+              signatureUrl: getFullImageUrl(contract.signatureUrl),
+            })
           );
 
           console.log(
-            "Danh sách hợp đồng đã xử lý:",
+            "Processed contracts with full URLs:",
             contractsWithFormattedUrls
           );
           setContracts(contractsWithFormattedUrls);
         } else {
-          console.error("Lỗi khi lấy hợp đồng:", response);
-          setError("Không thể lấy danh sách hợp đồng. Vui lòng thử lại sau.");
+          console.error("Error fetching contracts:", response);
+          setError("Could not load contract list. Please try again later.");
         }
       } catch (error) {
         console.error("Error fetching contracts:", error);
-        setError("Có lỗi xảy ra khi tải hợp đồng. Vui lòng thử lại sau.");
+        setError(
+          "An error occurred while loading contracts. Please try again later."
+        );
       } finally {
         setIsLoading(false);
       }
     };
 
-    // Chỉ fetch khi có user
+    // Only fetch when user is available
     if (user && user.id) {
       fetchContracts();
     } else {
@@ -122,39 +118,19 @@ const MyContract = () => {
 
     if (!contract) return;
 
-    // Đảm bảo signatureUrl đã được xử lý trước khi hiển thị contract
-    const processedContract = {
-      ...contract,
-      signatureUrl: processSignatureUrl(contract.signatureUrl),
-    };
-    console.log(
-      "Processed contract with correct signature URL:",
-      processedContract
-    );
+    try {
+      // Process contract with corrected signature URL
+      const processedContract = {
+        ...contract,
+        signatureUrl: getFullImageUrl(contract.signatureUrl),
+      };
 
-    setSelectedContract(processedContract);
-    setShowContractModal(true);
-  };
-
-  // Hàm xử lý URL ảnh chữ ký để đảm bảo luôn đúng
-  const processSignatureUrl = (url) => {
-    if (!url) {
-      console.log("No signature URL provided");
-      return null;
+      console.log("Processed contract with signature URL:", processedContract);
+      setSelectedContract(processedContract);
+      setShowContractModal(true);
+    } catch (error) {
+      console.error("Error processing contract for display:", error);
     }
-
-    // Nếu URL đã đầy đủ, trả về nguyên bản
-    if (url.startsWith("http")) {
-      console.log("Using full signature URL:", url);
-      return url;
-    }
-
-    // Đảm bảo có dấu / đúng
-    const normalizedPath = url.startsWith("/") ? url : `/${url}`;
-    const fullUrl = `${API_BASE_URL}${normalizedPath}`;
-
-    console.log("Constructed full signature URL:", fullUrl);
-    return fullUrl;
   };
 
   const handleCloseContract = () => {

@@ -2,9 +2,26 @@
 const API_URL =
   import.meta.env.VITE_API_URL || "https://cloneweb-uhw9.onrender.com";
 
+// Tracking for recurring API calls to prevent loops
+const pendingRequests = new Map();
+const MAX_CONSECUTIVE_FAILURES = 2;
+
 // Hàm helper để thực hiện các API call
 async function apiCall(endpoint, options = {}) {
   const url = `${API_URL}${endpoint}`;
+  const requestKey = `${options.method || "GET"}-${url}`;
+
+  // Check if this is a repeated failing request
+  if (pendingRequests.has(requestKey)) {
+    const failureCount = pendingRequests.get(requestKey);
+    if (failureCount >= MAX_CONSECUTIVE_FAILURES) {
+      console.warn(`Preventing repeated failing request to: ${url}`);
+      pendingRequests.delete(requestKey); // Reset after preventing
+      return Promise.reject(
+        new Error("Request prevented due to repeated failures")
+      );
+    }
+  }
 
   try {
     console.log(`Calling API: ${url} with method: ${options.method || "GET"}`);
@@ -19,10 +36,18 @@ async function apiCall(endpoint, options = {}) {
     // Log response status
     console.log(`API response status: ${response.status} for ${url}`);
 
+    // Reset pending request tracking on success
+    pendingRequests.delete(requestKey);
+
     // Kiểm tra nếu response không ok, throw error
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.error(`API error data:`, errorData);
+
+      // Track failures
+      const currentFailures = pendingRequests.get(requestKey) || 0;
+      pendingRequests.set(requestKey, currentFailures + 1);
+
       throw new Error(
         errorData.message || `API call failed with status: ${response.status}`
       );
@@ -32,6 +57,11 @@ async function apiCall(endpoint, options = {}) {
     return response.json().catch(() => ({}));
   } catch (error) {
     console.error(`API Error (${url}):`, error);
+
+    // Track failures for this endpoint
+    const currentFailures = pendingRequests.get(requestKey) || 0;
+    pendingRequests.set(requestKey, currentFailures + 1);
+
     throw error;
   }
 }
@@ -93,6 +123,19 @@ export const contractApi = {
 };
 
 export const uploadImage = async (imageData, userId, type) => {
+  // Prevent duplicate upload attempts
+  const uploadKey = `upload-${userId}-${type}`;
+  if (pendingRequests.has(uploadKey)) {
+    const failureCount = pendingRequests.get(uploadKey);
+    if (failureCount >= MAX_CONSECUTIVE_FAILURES) {
+      console.warn(`Preventing repeated failing upload for user ${userId}`);
+      pendingRequests.delete(uploadKey); // Reset after preventing
+      return Promise.reject(
+        new Error("Upload prevented due to repeated failures")
+      );
+    }
+  }
+
   try {
     console.log(`Uploading image of type ${type} for user ${userId}`);
 
@@ -113,11 +156,19 @@ export const uploadImage = async (imageData, userId, type) => {
         }
       );
 
+      // Reset on success
+      pendingRequests.delete(uploadKey);
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error(
           `Upload failed: ${errorData.message || response.statusText}`
         );
+
+        // Track failures
+        const currentFailures = pendingRequests.get(uploadKey) || 0;
+        pendingRequests.set(uploadKey, currentFailures + 1);
+
         throw new Error(
           `Upload failed: ${errorData.message || response.statusText}`
         );
@@ -143,11 +194,19 @@ export const uploadImage = async (imageData, userId, type) => {
         }
       );
 
+      // Reset on success
+      pendingRequests.delete(uploadKey);
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error(
           `Upload failed: ${errorData.message || response.statusText}`
         );
+
+        // Track failures
+        const currentFailures = pendingRequests.get(uploadKey) || 0;
+        pendingRequests.set(uploadKey, currentFailures + 1);
+
         throw new Error(
           `Upload failed: ${errorData.message || response.statusText}`
         );
@@ -162,6 +221,11 @@ export const uploadImage = async (imageData, userId, type) => {
     }
   } catch (error) {
     console.error(`Error uploading ${type} image:`, error);
+
+    // Track failures
+    const currentFailures = pendingRequests.get(uploadKey) || 0;
+    pendingRequests.set(uploadKey, currentFailures + 1);
+
     throw error;
   }
 };
@@ -199,12 +263,68 @@ export const imageApi = {
       return null;
     }
 
+    const avatarKey = `avatar-${userId}`;
+    if (pendingRequests.has(avatarKey)) {
+      const failureCount = pendingRequests.get(avatarKey);
+      if (failureCount >= MAX_CONSECUTIVE_FAILURES) {
+        console.warn(
+          `Preventing repeated failing avatar fetch for user ${userId}`
+        );
+        pendingRequests.delete(avatarKey); // Reset after preventing
+        return null;
+      }
+    }
+
+    // Check if we have a recently cached avatar result
+    const cachedAvatarTime = localStorage.getItem(
+      `avatar_fetch_time_${userId}`
+    );
+    const currentTime = new Date().getTime();
+
+    // Only try to fetch once every 5 minutes (300000 ms)
+    if (cachedAvatarTime && currentTime - parseInt(cachedAvatarTime) < 300000) {
+      console.log("Using cached avatar result to prevent API spam");
+      const cachedAvatarUrl = localStorage.getItem(`avatar_url_${userId}`);
+      return cachedAvatarUrl === "null" ? null : cachedAvatarUrl;
+    }
+
     try {
       console.log(`Fetching avatar for user ${userId}`);
-      const response = await fetch(`${API_URL}/api/users/${userId}/avatar`);
+
+      // Create a timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Avatar fetch timed out")), 3000);
+      });
+
+      const response = await Promise.race([
+        fetch(`${API_URL}/api/users/${userId}/avatar`),
+        timeoutPromise,
+      ]);
+
+      // Reset on success
+      pendingRequests.delete(avatarKey);
+
+      // Cache the fetch time regardless of outcome
+      localStorage.setItem(
+        `avatar_fetch_time_${userId}`,
+        currentTime.toString()
+      );
+
+      // Handle 404 specifically - it's an expected response if no avatar exists
+      if (response.status === 404) {
+        console.log("No avatar found (404 response)");
+        localStorage.setItem(`avatar_url_${userId}`, "null");
+        return null;
+      }
 
       if (!response.ok) {
         console.error(`Failed to get avatar: ${response.statusText}`);
+
+        // Track failures
+        const currentFailures = pendingRequests.get(avatarKey) || 0;
+        pendingRequests.set(avatarKey, currentFailures + 1);
+
+        localStorage.setItem(`avatar_url_${userId}`, "null");
         return null;
       }
 
@@ -212,13 +332,22 @@ export const imageApi = {
 
       if (data.success && data.fullAvatarUrl) {
         console.log("Avatar found:", data.fullAvatarUrl);
+        localStorage.setItem(`avatar_url_${userId}`, data.fullAvatarUrl);
         return data.fullAvatarUrl;
       }
 
       console.log("No avatar found for user");
+      localStorage.setItem(`avatar_url_${userId}`, "null");
       return null;
     } catch (error) {
       console.error("Error getting user avatar:", error);
+
+      // Track failures
+      const currentFailures = pendingRequests.get(avatarKey) || 0;
+      pendingRequests.set(avatarKey, currentFailures + 1);
+
+      // Cache the negative result to avoid repeated requests
+      localStorage.setItem(`avatar_url_${userId}`, "null");
       return null;
     }
   },

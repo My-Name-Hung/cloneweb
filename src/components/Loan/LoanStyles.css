@@ -726,3 +726,49 @@
     opacity: 0;
   }
 }
+
+/* Add styles for error view */
+.loan-error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  padding: 20px;
+  text-align: center;
+  background-color: #f9f9f9;
+}
+
+.loan-error-container h2 {
+  color: #d9534f;
+  font-size: 22px;
+  margin-bottom: 16px;
+}
+
+.loan-error-container p {
+  color: #666;
+  margin-bottom: 24px;
+  font-size: 16px;
+}
+
+.retry-button {
+  background-color: #0039a6;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.retry-button:hover {
+  background-color: #002d80;
+  transform: translateY(-2px);
+}
+
+.retry-button:active {
+  transform: translateY(0);
+}

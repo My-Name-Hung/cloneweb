@@ -14,7 +14,13 @@ const requiresVerification = (pathname) => {
 };
 
 const RequireAuth = ({ children }) => {
-  const { user, loading, setUser, checkUserVerificationStatus } = useAuth();
+  const {
+    user,
+    loading,
+    setUser,
+    checkUserVerificationStatus,
+    updateUserAvatar,
+  } = useAuth();
   const [authChecked, setAuthChecked] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -32,12 +38,16 @@ const RequireAuth = ({ children }) => {
 
           const parsedUser = JSON.parse(userData);
 
-          // Try to get the latest avatar
+          // Always try to get the latest avatar - important after verification
           if (parsedUser.id) {
             try {
               const avatarUrl = await imageApi.getUserAvatar(parsedUser.id);
               if (avatarUrl) {
+                console.log("Found updated avatar in RequireAuth:", avatarUrl);
                 parsedUser.avatarUrl = avatarUrl;
+
+                // Save updated avatar to localStorage as well
+                localStorage.setItem("userData", JSON.stringify(parsedUser));
               }
             } catch (error) {
               console.error("Error fetching avatar:", error);
@@ -45,6 +55,23 @@ const RequireAuth = ({ children }) => {
           }
 
           setUser(parsedUser);
+        } else if (user.id) {
+          // If user is already set, we might be coming from verification
+          // Check if we need to refresh avatar (especially for profile page)
+          if (
+            location.pathname === "/profile" ||
+            location.pathname === "/profile-detail"
+          ) {
+            try {
+              const avatarUrl = await imageApi.getUserAvatar(user.id);
+              if (avatarUrl && avatarUrl !== user.avatarUrl) {
+                console.log("Refreshing avatar after navigation:", avatarUrl);
+                updateUserAvatar(avatarUrl);
+              }
+            } catch (error) {
+              console.error("Error refreshing avatar:", error);
+            }
+          }
         }
 
         // Nếu route hiện tại yêu cầu xác minh, kiểm tra trạng thái xác minh

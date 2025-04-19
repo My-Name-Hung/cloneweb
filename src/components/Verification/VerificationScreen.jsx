@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { saveImage } from "../../database/storageService";
+import { imageApi } from "../../services/api";
 import "./VerificationStyles.css";
 
 // Thêm API_BASE_URL
@@ -75,9 +76,7 @@ const VerificationScreen = () => {
       reader.onload = (e) => {
         const imageData = e.target.result;
         setImageFunction(imageData);
-
-        // In a real app, we might want to upload immediately or wait for user confirmation
-        console.log(`${imageType} image selected, ready for upload`);
+        console.log(`${imageType} image selected and ready for upload`);
       };
       reader.readAsDataURL(file);
     }
@@ -88,9 +87,9 @@ const VerificationScreen = () => {
       setIsUploading(true);
       setStatusMessage("Đang xử lý...");
 
-      console.log("Bắt đầu upload ảnh với userId:", userId);
+      console.log("Starting document uploads for user:", userId);
 
-      // Lưu tất cả ảnh - đảm bảo portrait cuối cùng
+      // Upload ID front
       const frontIdResult = await saveImage(
         userId,
         "document",
@@ -99,6 +98,7 @@ const VerificationScreen = () => {
       );
       console.log("Front ID upload result:", frontIdResult);
 
+      // Upload ID back
       const backIdResult = await saveImage(
         userId,
         "document",
@@ -107,7 +107,7 @@ const VerificationScreen = () => {
       );
       console.log("Back ID upload result:", backIdResult);
 
-      // Upload portrait cuối cùng để đảm bảo nó được sử dụng làm avatar
+      // Upload portrait last to ensure it's used as avatar
       console.log("Uploading portrait image...");
       const portraitResult = await saveImage(
         userId,
@@ -117,49 +117,41 @@ const VerificationScreen = () => {
       );
       console.log("Portrait upload result:", portraitResult);
 
-      // Xử lý kết quả portrait upload
+      // Process portrait URL for avatar
       let portraitUrl = null;
 
-      // Xử lý các trường hợp khác nhau của kết quả
       if (typeof portraitResult === "string") {
-        // Nếu kết quả là string URL trực tiếp
+        // If result is a direct URL string
         portraitUrl = portraitResult;
-        console.log("Portrait result is a direct URL:", portraitUrl);
       } else if (portraitResult && typeof portraitResult === "object") {
-        // Nếu kết quả là object
-        if (portraitResult.fullUrl) {
-          portraitUrl = portraitResult.fullUrl;
-        } else if (portraitResult.fileUrl) {
-          portraitUrl = portraitResult.fileUrl;
-        } else if (portraitResult.filePath) {
-          portraitUrl =
-            API_BASE_URL +
-            (portraitResult.filePath.startsWith("/")
-              ? portraitResult.filePath
-              : `/${portraitResult.filePath}`);
-        }
-        console.log("Extracted portrait URL from object:", portraitUrl);
+        // If result is an object with URL properties
+        portraitUrl = portraitResult.fullUrl || portraitResult.fileUrl;
       }
 
-      // Nếu có URL, cập nhật avatar
+      // Update avatar with portrait URL
       if (portraitUrl) {
         console.log("Updating user avatar with URL:", portraitUrl);
         updateUserAvatar(portraitUrl);
         setStatusMessage("Đã cập nhật avatar thành công!");
       } else {
-        console.error(
-          "Không thể lấy được URL portrait từ kết quả:",
-          portraitResult
-        );
+        // As a fallback, try to get avatar directly from API
+        const avatarUrl = await imageApi.getUserAvatar(userId);
+        if (avatarUrl) {
+          console.log("Using fallback avatar URL:", avatarUrl);
+          updateUserAvatar(avatarUrl);
+          setStatusMessage("Đã cập nhật avatar thành công!");
+        } else {
+          console.error("Could not get portrait/avatar URL");
+        }
       }
 
-      // Force reload user data from server to get latest status
+      // Reload user verification status
       console.log("Reloading user verification status...");
       await checkUserVerificationStatus();
 
-      // Đợi một chút để người dùng thấy thông báo thành công
+      // Wait a moment to show success message
       setTimeout(() => {
-        // Navigate to the personal information form after successful verification
+        // Navigate to the personal information form
         navigate("/personal-info", {
           state: {
             verificationComplete: true,

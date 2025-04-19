@@ -4,7 +4,6 @@
  * In a real application, this would interface with a backend API
  * For this demo, we're simulating with localStorage
  */
-import { getUserAvatar } from "./storageService";
 
 // Simulated user database
 const userDatabase = {};
@@ -72,28 +71,48 @@ export const updateUserProfile = async (userId, userData) => {
 /**
  * Updates a user's avatar with the portrait image from verification
  * @param {string} userId - User identifier
+ * @param {string} avatarUrl - URL of the new avatar image
  * @returns {Promise<boolean>} - Promise resolving to success status
  */
-export const updateUserAvatar = async (userId) => {
+export const updateUserAvatar = async (userId, avatarUrl) => {
   try {
-    // Get the portrait image from storage
-    const portraitImage = await getUserAvatar(userId);
-
-    if (!portraitImage) {
-      console.error("No portrait image found for user");
+    // First, update the user data in memory
+    const user = await getUserProfile(userId);
+    if (!user) {
+      console.error(`User with ID ${userId} not found`);
       return false;
     }
 
-    // Update user profile with the avatar
-    await updateUserProfile(userId, {
-      avatar: portraitImage,
-      hasVerifiedAvatar: true,
-    });
+    // Update avatar URL
+    user.avatarUrl = avatarUrl;
 
-    console.log(`Avatar updated for user ${userId}`);
-    return true;
+    // Update in localStorage to ensure consistency across app
+    const userData = localStorage.getItem("userData");
+    if (userData) {
+      const parsedUserData = JSON.parse(userData);
+
+      // Only update if this is the current logged-in user
+      if (parsedUserData.id === userId) {
+        parsedUserData.avatarUrl = avatarUrl;
+        localStorage.setItem("userData", JSON.stringify(parsedUserData));
+        console.log("Updated avatar in localStorage:", avatarUrl);
+      }
+    }
+
+    // Save to server (if we had an endpoint for this)
+    // This is a placeholder for actual API implementation
+    try {
+      // Simulate API call to update user avatar
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // Return success
+      return true;
+    } catch (error) {
+      console.error("Error updating avatar on server:", error);
+      return false;
+    }
   } catch (error) {
-    console.error("Error updating user avatar:", error);
+    console.error("Error updating avatar:", error);
     return false;
   }
 };
