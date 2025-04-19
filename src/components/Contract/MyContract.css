@@ -2,7 +2,8 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: #f0f2f5;
+  font-family: "Roboto", Arial, sans-serif;
 }
 
 .contract-header {
@@ -12,6 +13,7 @@
   background-color: #0052cc;
   color: white;
   position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .back-button {
@@ -25,11 +27,16 @@
   justify-content: center;
   padding: 0;
   margin-right: 16px;
+  transition: transform 0.2s ease;
+}
+
+.back-button:hover {
+  transform: translateX(-3px);
 }
 
 .header-title {
   font-size: 20px;
-  font-weight: 500;
+  font-weight: 600;
   margin: 0;
   flex-grow: 1;
   text-align: center;
@@ -42,21 +49,27 @@
   justify-content: center;
   padding: 40px 20px;
   flex-grow: 1;
+  background: white;
+  border-radius: 8px;
+  margin: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .empty-icon {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .empty-icon img {
-  width: 100%;
-  height: 100%;
+  width: 120px;
+  height: 120px;
+  opacity: 0.8;
 }
 
 .empty-text {
-  font-size: 16px;
+  font-size: 18px;
   color: #333;
   margin-bottom: 40px;
+  text-align: center;
 }
 
 .register-button {
@@ -64,12 +77,23 @@
   color: white;
   border: none;
   border-radius: 4px;
-  padding: 14px 20px;
+  padding: 14px 24px;
   font-size: 16px;
   width: 100%;
-  max-width: 400px;
+  max-width: 300px;
   cursor: pointer;
   font-weight: 500;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 82, 204, 0.3);
+}
+
+.register-button:hover {
+  background-color: #003d99;
+  transform: translateY(-2px);
+}
+
+.register-button:active {
+  transform: translateY(0);
 }
 
 .contract-loading {
@@ -99,14 +123,391 @@
   }
 }
 
-.contract-list {
-  padding: 16px;
+.contract-content {
+  padding: 0 16px;
+  margin-bottom: 24px;
 }
 
-.contract-item {
+.contract-subtitle {
+  font-size: 18px;
+  color: #333;
+  text-align: center;
+  margin: 20px 0;
+  font-weight: 500;
+}
+
+.loan-detail-card {
   background-color: white;
   border-radius: 8px;
   padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.loan-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.loan-detail-row:last-of-type {
+  border-bottom: none;
+}
+
+.loan-detail-label {
+  color: #666;
+  font-size: 16px;
+}
+
+.loan-detail-value {
+  color: #333;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.loan-details-link {
+  margin-top: 16px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.loan-details-link a {
+  color: #0066cc;
+  text-decoration: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.loan-details-link a:hover {
+  text-decoration: underline;
+}
+
+.view-contract-button-container {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.view-contract-button {
+  background-color: #ff7a00;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  width: 100%;
+  max-width: 180px;
+}
+
+.contract-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.contract-modal {
+  background-color: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.contract-modal-header {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  text-align: right;
+}
+
+.close-button {
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.contract-modal-content {
+  padding: 16px;
+}
+
+.contract-title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.contract-title h2 {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.contract-title p {
+  font-size: 14px;
+  margin-top: 0;
+}
+
+.contract-main-title {
+  font-size: 22px;
+  text-align: center;
+  margin: 16px 0;
+}
+
+.contract-parties {
+  margin-bottom: 20px;
+}
+
+.contract-parties p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.title {
+  font-weight: bold;
+  margin-right: 4px;
+}
+
+.laisuatvay {
+  color: #ff0000;
+  font-weight: bold;
+}
+
+.contract-terms {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.contract-terms ol {
+  padding-left: 20px;
+}
+
+.contract-terms li {
+  margin-bottom: 10px;
+}
+
+.contract-signatures {
+  margin-top: 30px;
+}
+
+.signature-columns {
+  display: flex;
+  justify-content: space-between;
+}
+
+.signature-column {
+  flex: 1;
+  text-align: center;
+  padding: 0 10px;
+}
+
+.signature-column h3 {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.signature-placeholder {
+  height: 80px;
+  border: 1px dashed #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-signature {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.signature-bank {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bank-signature img {
+  max-width: 90%;
+  max-height: 90%;
+}
+
+.contract-modal-footer {
+  padding: 12px;
+  border-top: 1px solid #eee;
+  text-align: center;
+}
+
+.ok-button {
+  background-color: #0052cc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 24px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* Thêm CSS cho modal chi tiết trả nợ */
+.payment-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.payment-modal-overlay.closing {
+  animation: fadeOut 0.3s ease-out;
+}
+
+.payment-modal {
+  background-color: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: zoomIn 0.3s ease-out;
+  transform-origin: var(--modal-origin-x, 50%) var(--modal-origin-y, 50%);
+}
+
+.payment-modal.closing {
+  animation: zoomOut 0.3s ease-out;
+}
+
+.payment-modal-content {
+  padding: 20px;
+}
+
+.payment-table-header {
+  display: grid;
+  grid-template-columns: 80px 1fr 110px;
+  background-color: #f5f5f5;
+  border-radius: 8px 8px 0 0;
+  padding: 12px 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+.header-cell {
+  text-align: center;
+}
+
+.payment-table-body {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.payment-table-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 110px;
+  padding: 12px 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.col1 {
+  font-weight: 500;
+  color: #333;
+}
+
+.table-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.payment-amount {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.payment-details {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  color: #666;
+}
+
+.principal,
+.interest {
+  margin: 1px 0;
+}
+
+.payment-modal-footer {
+  padding: 15px 20px;
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid #eee;
+}
+
+.ok-button {
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 24px;
+  padding: 10px 30px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.ok-button:hover {
+  background-color: #1565c0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes zoomOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.8);
+  }
 }

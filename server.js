@@ -404,6 +404,7 @@ app.post(
         // Return both the relative path (for database storage) and full URL (for frontend)
         const fullUrl = `${SERVER_URL}${filePath}`;
         res.status(200).json({
+          success: true,
           message: "File uploaded successfully",
           filePath,
           fileUrl: fullUrl,

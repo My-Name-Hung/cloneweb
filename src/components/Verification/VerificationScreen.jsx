@@ -1,17 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import {
-  checkVerificationStatus,
-  saveImage,
-} from "../../database/storageService";
+import { saveImage } from "../../database/storageService";
 import { updateUserAvatar } from "../../database/userService";
 import "./VerificationStyles.css";
 
 const VerificationScreen = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, checkVerificationStatus } = useAuth();
   const [frontIdImage, setFrontIdImage] = useState(null);
   const [backIdImage, setBackIdImage] = useState(null);
   const [portraitImage, setPortraitImage] = useState(null);
@@ -35,8 +32,8 @@ const VerificationScreen = () => {
   useEffect(() => {
     const checkUserDocuments = async () => {
       try {
-        const isVerified = await checkVerificationStatus(userId);
-        if (isVerified) {
+        const result = await checkVerificationStatus();
+        if (result.success && result.isVerified) {
           // User is already verified, could show a message
           setStatusMessage("Tài khoản đã được xác minh trước đó!");
         }
@@ -46,7 +43,7 @@ const VerificationScreen = () => {
     };
 
     checkUserDocuments();
-  }, [userId]);
+  }, [checkVerificationStatus]);
 
   const handleBackClick = () => {
     navigate(-1);
@@ -73,9 +70,9 @@ const VerificationScreen = () => {
 
       // Save all images to our storage
       const uploadPromises = [
-        saveImage(frontIdImage, userId, "frontId"),
-        saveImage(backIdImage, userId, "backId"),
-        saveImage(portraitImage, userId, "portrait"),
+        saveImage(userId, "document", frontIdImage, "frontId"),
+        saveImage(userId, "document", backIdImage, "backId"),
+        saveImage(userId, "avatar", portraitImage),
       ];
 
       // Wait for all uploads to complete

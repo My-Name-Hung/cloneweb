@@ -1,11 +1,12 @@
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { checkVerificationStatus } from "../../database/storageService";
+import { useAuth } from "../../context/AuthContext";
 import "./LoanStyles.css";
 
 const LoanSelectionScreen = () => {
   const navigate = useNavigate();
+  const { checkVerificationStatus } = useAuth();
   const [loanAmount, setLoanAmount] = useState("0");
   const [loanTerm, setLoanTerm] = useState("6");
   const [loanDate] = useState("18/4/2025");
@@ -18,7 +19,7 @@ const LoanSelectionScreen = () => {
   const detailsLinkRef = useRef(null);
   const modalRef = useRef(null);
   const overlayRef = useRef(null);
-  const [documentsUploaded, setDocumentsUploaded] = useState(false);
+  const [_documentsUploaded, setDocumentsUploaded] = useState(false);
   const dropdownRef = useRef(null);
 
   // Calculate the first payment based on correct formula
@@ -219,28 +220,32 @@ const LoanSelectionScreen = () => {
   };
 
   const getDisplayAmount = () => {
-    return loanAmount ? formatCurrency(loanAmount) : "0";
+    return loanAmount === "0" ? "0 ₫" : `${loanAmount} ₫`;
   };
 
-  const toggleDropdown = (e) => {
-    // Ngăn sự kiện lan tỏa đến các phần tử cha
-    if (e) e.stopPropagation();
-
-    console.log("Toggle dropdown called, current state:", dropdownOpen);
-
-    // Sử dụng functional update để đảm bảo luôn có giá trị state mới nhất
-    setDropdownOpen((prevState) => {
-      console.log("Setting dropdown to:", !prevState);
-      return !prevState;
-    });
+  const _toggleDropdown = (e) => {
+    e.stopPropagation();
+    setDropdownOpen(!dropdownOpen);
   };
 
-  const selectTerm = (term) => {
-    console.log("Selecting term:", term);
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target) &&
+        dropdownOpen
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [dropdownOpen]);
+
+  const _selectTerm = (term) => {
     setLoanTerm(term);
-    setTimeout(() => {
-      setDropdownOpen(false);
-    }, 10);
+    setDropdownOpen(false);
   };
 
   const openPaymentModal = () => {
@@ -441,18 +446,15 @@ const LoanSelectionScreen = () => {
     // Simulating an API call to check if documents exist
     const checkDocumentsStatus = async () => {
       try {
-        // Get a default userId (in a real app this would come from authentication)
-        const userId = "user123";
-
         // Check if user has uploaded all required verification documents
-        const isVerified = await checkVerificationStatus(userId);
+        const result = await checkVerificationStatus();
 
         // Update state with verification status
-        setDocumentsUploaded(isVerified);
+        setDocumentsUploaded(result.success && result.isVerified);
 
         console.log(
           `User verification status: ${
-            isVerified ? "Verified" : "Not verified"
+            result.success && result.isVerified ? "Verified" : "Not verified"
           }`
         );
       } catch (error) {
@@ -462,25 +464,7 @@ const LoanSelectionScreen = () => {
     };
 
     checkDocumentsStatus();
-  }, []);
-
-  // Thêm useEffect để xử lý click bên ngoài dropdown
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      // Nếu click ra ngoài dropdown-container, đóng dropdown
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setDropdownOpen(false);
-      }
-    };
-
-    // Thêm event listener vào document
-    document.addEventListener("mousedown", handleClickOutside);
-
-    // Cleanup event listener khi component unmount
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  }, [checkVerificationStatus]);
 
   // Giải pháp khẩn cấp - component tạm thời
   function CustomDropdown({ value, options, onChange }) {
@@ -636,7 +620,7 @@ const LoanSelectionScreen = () => {
             <CustomDropdown
               value={loanTerm}
               options={["6", "12", "18", "24", "36", "48", "60"]}
-              onChange={setLoanTerm}
+              onChange={_selectTerm}
             />
           </div>
         </div>
@@ -648,7 +632,7 @@ const LoanSelectionScreen = () => {
 
           <div className="loan-info-row">
             <span className="loan-info-label">Số tiền</span>
-            <span className="loan-info-value">{getDisplayAmount()} đ</span>
+            <span className="loan-info-value">{getDisplayAmount()}</span>
           </div>
 
           <div className="loan-info-row">
