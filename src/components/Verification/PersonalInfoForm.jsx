@@ -76,9 +76,56 @@ const PersonalInfoForm = () => {
             formatted = parts[0] + "/" + parts[1] + "/";
           }
 
-          // Year part (allow 2 or 4 digits)
-          if (parts.length > 2 && parts[2].length > 4) {
-            parts[2] = parts[2].substring(0, 4);
+          // Year part - kiểm tra tuổi ngay khi nhập đủ 4 chữ số
+          if (parts.length > 2) {
+            // Giới hạn độ dài tối đa là 4 chữ số cho năm
+            if (parts[2].length > 4) {
+              parts[2] = parts[2].substring(0, 4);
+            }
+
+            // Nếu người dùng đã nhập đủ 4 chữ số cho năm, kiểm tra tuổi
+            if (parts[2].length === 4) {
+              const day = parseInt(parts[0], 10);
+              const month = parseInt(parts[1], 10) - 1; // month is 0-indexed in JS Date
+              const year = parseInt(parts[2], 10);
+
+              if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+                const birthDate = new Date(year, month, day);
+
+                // Đảm bảo ngày hợp lệ
+                if (
+                  birthDate.getDate() === day &&
+                  birthDate.getMonth() === month
+                ) {
+                  // Tính tuổi
+                  const today = new Date();
+                  let age = today.getFullYear() - birthDate.getFullYear();
+                  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+                  if (
+                    monthDiff < 0 ||
+                    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+                  ) {
+                    age--;
+                  }
+
+                  // Hiển thị lỗi ngay nếu tuổi < 18
+                  if (age < 18) {
+                    setErrors((prev) => ({
+                      ...prev,
+                      birthDate: "Bạn phải đủ 18 tuổi trở lên",
+                    }));
+                  } else {
+                    // Xóa lỗi nếu tuổi hợp lệ
+                    setErrors((prev) => ({
+                      ...prev,
+                      birthDate: "",
+                    }));
+                  }
+                }
+              }
+            }
+
             formatted = parts[0] + "/" + parts[1] + "/" + parts[2];
           }
         }
@@ -95,8 +142,8 @@ const PersonalInfoForm = () => {
       }));
     }
 
-    // Clear error when field is changed
-    if (errors[name]) {
+    // Clear error when field is changed (chỉ xóa lỗi cho các trường khác, không xóa cho birthDate)
+    if (errors[name] && name !== "birthDate") {
       setErrors((prev) => ({
         ...prev,
         [name]: "",
