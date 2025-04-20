@@ -51,16 +51,12 @@ const MyContract = () => {
         console.log("Contract fetch result:", response);
 
         if (response && response.success && response.contracts) {
-          // Ensure full URLs for signature images and format contract time
+          // Ensure full URLs for signature images
           const contractsWithFormattedUrls = response.contracts.map(
             (contract) => ({
               ...contract,
               signatureUrl: getFullImageUrl(contract.signatureUrl),
-              // Nếu không có createdTime hoặc cần đảm bảo thời gian chính xác
-              createdTime:
-                contract.createdTime || new Date().toLocaleTimeString("vi-VN"),
-              createdDate:
-                contract.createdDate || new Date().toLocaleDateString("vi-VN"),
+              // Không cần xử lý thời gian tại đây, sử dụng thời gian từ server
             })
           );
 

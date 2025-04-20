@@ -804,14 +804,13 @@ app.post("/api/contracts", async (req, res) => {
 
     // Tạo ngày giờ hiện tại
     const now = new Date();
-    // Đảm bảo định dạng thời gian đúng chuẩn Việt Nam
-    const createdTime = now.toLocaleTimeString("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    });
-    const createdDate = now.toLocaleDateString("vi-VN");
+    // Đảm bảo lấy thời gian địa phương bằng cách sử dụng các phương thức locale
+    const createdTime = `${String(now.getHours()).padStart(2, "0")}:${String(
+      now.getMinutes()
+    ).padStart(2, "0")}`;
+    const createdDate = `${String(now.getDate()).padStart(2, "0")}/${String(
+      now.getMonth() + 1
+    ).padStart(2, "0")}/${now.getFullYear()}`;
 
     // Lưu ảnh chữ ký
     const base64Data = signatureImage.replace(/^data:image\/\w+;base64,/, "");

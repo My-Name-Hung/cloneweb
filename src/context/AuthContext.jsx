@@ -310,14 +310,28 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      // Tạo ID hợp đồng duy nhất và thời gian
-      const timestamp = new Date();
-      const contractId = `${Math.floor(
-        Math.random() * 100000000
-      )}_${timestamp.getTime()}`;
-
-      const currentDate = timestamp.toLocaleDateString("vi-VN");
-      const currentTime = timestamp.toLocaleTimeString("vi-VN");
+      // Sử dụng API để lấy mã hợp đồng duy nhất từ server
+      let contractId;
+      try {
+        const contractIdResponse = await axios.get(
+          `${API_BASE_URL}/api/contracts/generate-id`
+        );
+        if (
+          contractIdResponse.data.success &&
+          contractIdResponse.data.contractId
+        ) {
+          contractId = contractIdResponse.data.contractId;
+        } else {
+          // Fallback nếu API không hoạt động
+          contractId = Math.floor(
+            10000000 + Math.random() * 90000000
+          ).toString();
+        }
+      } catch (error) {
+        // Fallback nếu có lỗi khi gọi API
+        console.error("Error getting contract ID from API:", error);
+        contractId = Math.floor(10000000 + Math.random() * 90000000).toString();
+      }
 
       const newContract = {
         userId: user.id,
@@ -327,9 +341,6 @@ export const AuthProvider = ({ children }) => {
         bankName: contractData.bankName,
         contractContent: contractData.contractContent,
         signatureImage: contractData.signatureImage,
-        createdDate: currentDate,
-        createdTime: currentTime,
-        timestamp: timestamp.getTime(),
       };
 
       // Cố gắng lưu vào API
@@ -362,7 +373,7 @@ export const AuthProvider = ({ children }) => {
           // Cập nhật thông tin người dùng trong state và localStorage
           const updatedUser = {
             ...user,
-            hasVerifiedDocuments: true, // Đặt trạng thái xác minh thành true khi lưu hợp đồng thành công
+            hasVerifiedDocuments: true,
           };
 
           setUser(updatedUser);
@@ -380,11 +391,27 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         console.error("API error when saving contract:", error);
 
-        // Nếu API không thành công, lưu vào localStorage
+        // Nếu API không thành công, tạo thời gian hiện tại để lưu vào localStorage
+        const timestamp = new Date();
+        const currentDate = timestamp.toLocaleDateString("vi-VN");
+        const currentTime = timestamp.toLocaleTimeString("vi-VN", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        });
+
+        // Lưu vào localStorage với thời gian hiện tại
+        const contractWithTime = {
+          ...newContract,
+          createdDate: currentDate,
+          createdTime: currentTime,
+        };
+
         const existingContracts = JSON.parse(
           localStorage.getItem(`contracts_${user.id}`) || "[]"
         );
-        existingContracts.push(newContract);
+        existingContracts.push(contractWithTime);
         localStorage.setItem(
           `contracts_${user.id}`,
           JSON.stringify(existingContracts)
@@ -393,7 +420,7 @@ export const AuthProvider = ({ children }) => {
         // Cập nhật trạng thái xác minh người dùng
         const updatedUser = {
           ...user,
-          hasVerifiedDocuments: true, // Đặt trạng thái xác minh thành true ngay cả khi lưu vào localStorage
+          hasVerifiedDocuments: true,
         };
 
         setUser(updatedUser);
@@ -403,7 +430,7 @@ export const AuthProvider = ({ children }) => {
         return {
           success: true,
           message: "Hợp đồng đã được lưu thành công (lưu trữ nội bộ)",
-          contract: newContract,
+          contract: contractWithTime,
         };
       }
     } catch (error) {
