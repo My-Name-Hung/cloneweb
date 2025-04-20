@@ -76,54 +76,11 @@ const PersonalInfoForm = () => {
             formatted = parts[0] + "/" + parts[1] + "/";
           }
 
-          // Year part - kiểm tra tuổi ngay khi nhập đủ 4 chữ số
+          // Year part - removed age validation
           if (parts.length > 2) {
             // Giới hạn độ dài tối đa là 4 chữ số cho năm
             if (parts[2].length > 4) {
               parts[2] = parts[2].substring(0, 4);
-            }
-
-            // Nếu người dùng đã nhập đủ 4 chữ số cho năm, kiểm tra tuổi
-            if (parts[2].length === 4) {
-              const day = parseInt(parts[0], 10);
-              const month = parseInt(parts[1], 10) - 1; // month is 0-indexed in JS Date
-              const year = parseInt(parts[2], 10);
-
-              if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
-                const birthDate = new Date(year, month, day);
-
-                // Đảm bảo ngày hợp lệ
-                if (
-                  birthDate.getDate() === day &&
-                  birthDate.getMonth() === month
-                ) {
-                  // Tính tuổi
-                  const today = new Date();
-                  let age = today.getFullYear() - birthDate.getFullYear();
-                  const monthDiff = today.getMonth() - birthDate.getMonth();
-
-                  if (
-                    monthDiff < 0 ||
-                    (monthDiff === 0 && today.getDate() < birthDate.getDate())
-                  ) {
-                    age--;
-                  }
-
-                  // Hiển thị lỗi ngay nếu tuổi < 18
-                  if (age < 18) {
-                    setErrors((prev) => ({
-                      ...prev,
-                      birthDate: "Bạn phải đủ 18 tuổi trở lên",
-                    }));
-                  } else {
-                    // Xóa lỗi nếu tuổi hợp lệ
-                    setErrors((prev) => ({
-                      ...prev,
-                      birthDate: "",
-                    }));
-                  }
-                }
-              }
             }
 
             formatted = parts[0] + "/" + parts[1] + "/" + parts[2];
@@ -179,7 +136,7 @@ const PersonalInfoForm = () => {
         if (!value.trim()) {
           error = "Nhập ngày sinh của bạn";
         } else {
-          // Parse the date and check age
+          // Parse the date and check format only
           const parts = value.split("/");
           if (parts.length === 3) {
             const day = parseInt(parts[0], 10);
@@ -206,24 +163,8 @@ const PersonalInfoForm = () => {
               isNaN(birthDate.getTime())
             ) {
               error = "Ngày sinh không hợp lệ";
-            } else {
-              // Calculate age
-              const today = new Date();
-              let age = today.getFullYear() - birthDate.getFullYear();
-              const monthDiff = today.getMonth() - birthDate.getMonth();
-
-              if (
-                monthDiff < 0 ||
-                (monthDiff === 0 && today.getDate() < birthDate.getDate())
-              ) {
-                age--;
-              }
-
-              // Check if at least 18 years old
-              if (age < 18) {
-                error = "Bạn phải đủ 18 tuổi trở lên";
-              }
             }
+            // Removed age validation check
           } else {
             error = "Nhập đúng định dạng ngày/tháng/năm";
           }
