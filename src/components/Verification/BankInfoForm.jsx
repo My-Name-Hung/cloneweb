@@ -7,28 +7,36 @@ import { useLoading } from "../../context/LoadingContext";
 import "./BankInfoForm.css";
 
 // Import các logo ngân hàng
+import abbankLogo from "../../assets/banks/abbank.png";
 import acbLogo from "../../assets/banks/acb.png";
+import agribankLogo from "../../assets/banks/agribank.png";
+import bacabankLogo from "../../assets/banks/bacabank.png";
+import baovietLogo from "../../assets/banks/baovietbank.png";
 import bidvLogo from "../../assets/banks/bidv.png";
+import cimbLogo from "../../assets/banks/cimb.png";
+import dongabankLogo from "../../assets/banks/dongabank.png";
+import eximbankLogo from "../../assets/banks/eximbank.png";
+import gbbankLogo from "../../assets/banks/gbbank.png";
+import hdbankLogo from "../../assets/banks/hdbankLogo.png";
+import kienlongLogo from "../../assets/banks/Kienlongbank.png";
+import lpbLogo from "../../assets/banks/LienVietPostBank.png";
+import viettinbankLogo from "../../assets/banks/logo-vietinbank.png";
 import mbLogo from "../../assets/banks/mb.png";
+import msbLogo from "../../assets/banks/msb.png";
+import namaLogo from "../../assets/banks/namabank.png";
+import ncbLogo from "../../assets/banks/ncb.png";
+import ocbLogo from "../../assets/banks/ocb.png";
+import oceanBankLogo from "../../assets/banks/oceanbank.png";
+import pgbankLogo from "../../assets/banks/pgbank.png";
+import pvcombankLogo from "../../assets/banks/pvcombank.png";
 import sacomLogo from "../../assets/banks/sacombank.png";
+import seabankLogo from "../../assets/banks/seabank.png";
+import shbLogo from "../../assets/banks/shb.png";
 import techcombankLogo from "../../assets/banks/techcombank.png";
 import tpbankLogo from "../../assets/banks/tpbank.png";
+import vibLogo from "../../assets/banks/vib.png";
 import vietcombankLogo from "../../assets/banks/vietcombank.png";
 import vpbankLogo from "../../assets/banks/vpbank.png";
-import hdbankLogo from "../../assets/banks/hdbankLogo.png";
-import shbLogo from "../../assets/banks/shb.png";
-import lpbLogo from "../../assets/banks/LienVietPostBank.png";
-import vibLogo from "../../assets/banks/vib.png";
-import ocbLogo from "../../assets/banks/ocb.png";
-import abbankLogo from "../../assets/banks/abbank.png";
-import pgbankLogo from "../../assets/banks/pgbank.png";
-import seabankLogo from "../../assets/banks/seabank.png";
-import baovietLogo from "../../assets/banks/baovietbank.png";
-import namaLogo from "../../assets/banks/namabank.png";
-import eximbankLogo from "../../assets/banks/eximbank.png";
-import pvcombankLogo from "../../assets/banks/pvcombank.png";
-import bacabankLogo from "../../assets/banks/bacabank.png";
-
 
 
 import done from "../../assets/xacminh/done.png";
@@ -53,102 +61,281 @@ const BankInfoForm = () => {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   // Danh sách ngân hàng với logo
- const banks = [
-   {
-     id: "bidv",
-     name: "Ngân hàng Đầu tư và Phát triển Việt Nam ( BIDV )",
-     logo: bidvLogo,
-   },
-   { id: "acb", name: "ACB - Ngân hàng Á Châu", logo: acbLogo },
-   { id: "mb", name: "MB - Ngân hàng Quân Đội", logo: mbLogo },
-   {
-     id: "vcb",
-     name: "Vietcombank - Ngân hàng Ngoại thương Việt Nam",
-     logo: vietcombankLogo,
-   },
-   {
-     id: "tcb",
-     name: "Techcombank - Ngân hàng Kỹ thương Việt Nam",
-     logo: techcombankLogo,
-   },
-   {
-     id: "vpb",
-     name: "VPBank - Ngân hàng Việt Nam Thịnh Vượng",
-     logo: vpbankLogo,
-   },
-   {
-     id: "stb",
-     name: "Sacombank - Ngân hàng Sài Gòn Thương Tín",
-     logo: sacomLogo,
-   },
-   { id: "tpb", name: "TPBank - Ngân hàng Tiên Phong", logo: tpbankLogo },
-   {
-     id: "hdb",
-     name: "HDBank - Ngân hàng Phát triển TP Hồ Chí Minh",
-     logo: hdbankLogo,
-   },
-   {
-     id: "shb",
-     name: "SHB - Ngân hàng Sài Gòn - Hà Nội",
-     logo: shbLogo,
-   },
-   {
-     id: "lpb",
-     name: "LienVietPostBank - Ngân hàng Bưu điện Liên Việt",
-     logo: lpbLogo,
-   },
-   {
-     id: "vib",
-     name: "VIB - Ngân hàng Quốc tế",
-     logo: vibLogo,
-   },
-   {
-     id: "ocb",
-     name: "OCB - Ngân hàng Phương Đông",
-     logo: ocbLogo,
-   },
-   {
-     id: "abb",
-     name: "ABBANK - Ngân hàng An Bình",
-     logo: abbankLogo,
-   },
-   {
-     id: "pgb",
-     name: "PG Bank - Ngân hàng Xăng dầu Petrolimex",
-     logo: pgbankLogo,
-   },
-   {
-     id: "seab",
-     name: "SeABank - Ngân hàng Đông Nam Á",
-     logo: seabankLogo,
-   },
-   {
-     id: "baoviet",
-     name: "BAOVIET Bank - Ngân hàng Bảo Việt",
-     logo: baovietLogo,
-   },
-   {
-     id: "namabank",
-     name: "Nam A Bank - Ngân hàng Nam Á",
-     logo: namaLogo,
-   },
-   {
-     id: "eximbank",
-     name: "Eximbank - Ngân hàng Xuất Nhập Khẩu Việt Nam",
-     logo: eximbankLogo,
-   },
-   {
-     id: "pvcombank",
-     name: "PVcomBank - Ngân hàng Đại Chúng Việt Nam",
-     logo: pvcombankLogo,
-   },
-   {
-     id: "bacabank",
-     name: "Bac A Bank - Ngân hàng Bắc Á",
-     logo: bacabankLogo,
-   },
- ];
-
+  const banks = [
+    {
+      id: "bidv",
+      name: "Ngân hàng Đầu tư và Phát triển Việt Nam ( BIDV )",
+      logo: bidvLogo,
+    },
+    { id: "acb", name: "ACB - Ngân hàng Á Châu", logo: acbLogo },
+    { id: "mb", name: "MB - Ngân hàng Quân Đội", logo: mbLogo },
+    {
+      id: "vcb",
+      name: "Vietcombank - Ngân hàng Ngoại thương Việt Nam",
+      logo: vietcombankLogo,
+    },
+    {
+      id: "tcb",
+      name: "Techcombank - Ngân hàng Kỹ thương Việt Nam",
+      logo: techcombankLogo,
+    },
+    {
+      id: "vpb",
+      name: "VPBank - Ngân hàng Việt Nam Thịnh Vượng",
+      logo: vpbankLogo,
+    },
+    {
+      id: "stb",
+      name: "Sacombank - Ngân hàng Sài Gòn Thương Tín",
+      logo: sacomLogo,
+    },
+    { id: "tpb", name: "TPBank - Ngân hàng Tiên Phong", logo: tpbankLogo },
+    {
+      id: "hdb",
+      name: "HDBank - Ngân hàng Phát triển TP Hồ Chí Minh",
+      logo: hdbankLogo,
+    },
+    {
+      id: "shb",
+      name: "SHB - Ngân hàng Sài Gòn - Hà Nội",
+      logo: shbLogo,
+    },
+    {
+      id: "lpb",
+      name: "LienVietPostBank - Ngân hàng Bưu điện Liên Việt",
+      logo: lpbLogo,
+    },
+    {
+      id: "vib",
+      name: "VIB - Ngân hàng Quốc tế",
+      logo: vibLogo,
+    },
+    {
+      id: "ocb",
+      name: "OCB - Ngân hàng Phương Đông",
+      logo: ocbLogo,
+    },
+    {
+      id: "abb",
+      name: "ABBANK - Ngân hàng An Bình",
+      logo: abbankLogo,
+    },
+    {
+      id: "pgb",
+      name: "PG Bank - Ngân hàng Xăng dầu Petrolimex",
+      logo: pgbankLogo,
+    },
+    {
+      id: "seab",
+      name: "SeABank - Ngân hàng Đông Nam Á",
+      logo: seabankLogo,
+    },
+    {
+      id: "baoviet",
+      name: "BAOVIET Bank - Ngân hàng Bảo Việt",
+      logo: baovietLogo,
+    },
+    {
+      id: "namabank",
+      name: "Nam A Bank - Ngân hàng Nam Á",
+      logo: namaLogo,
+    },
+    {
+      id: "eximbank",
+      name: "Eximbank - Ngân hàng Xuất Nhập Khẩu Việt Nam",
+      logo: eximbankLogo,
+    },
+    {
+      id: "pvcombank",
+      name: "PVcomBank - Ngân hàng Đại Chúng Việt Nam",
+      logo: pvcombankLogo,
+    },
+    {
+      id: "bacabank",
+      name: "Bac A Bank - Ngân hàng Bắc Á",
+      logo: bacabankLogo,
+    },
+    {
+      id: "vietinbank",
+      name: "Viettinbank - Ngân hàng công thương Việt nam",
+      logo: viettinbankLogo,
+    },
+    {
+      id: "Agribank",
+      name: "Agribank - Ngân hàng NN & PTNT VN",
+      logo: agribankLogo,
+    },
+    {
+      id: "CIMB",
+      name: "CIMB - Ngân hàng TNHH MTV CIMB Việt Nam",
+      logo: cimbLogo,
+    },
+    {
+      id: "Dongabank",
+      name: "Dong A Bank - Ngân hàng Đông Á",
+      logo: dongabankLogo,
+    },
+    {
+      id: "GBBANK",
+      name: "GB Bank - Ngân hàng Dầu khí Toàn cầu",
+      logo: gbbankLogo,
+    },
+    {
+      id: "HLO",
+      name: "HLO - Ngân hàng Hong Leong Viet Nam",
+      logo: "",
+    },
+    {
+      id: "Kienlongbank",
+      name: "Kienlongbank - Ngân hàng Kiên Long",
+      logo: kienlongLogo,
+    },
+    {
+      id: "MSB",
+      name: "MSB - Ngân hàng Hàng hải Việt Nam",
+      logo: msbLogo,
+    },
+    {
+      id: "NCB",
+      name: "NCB - Ngân hàng Quoc Dan",
+      logo: ncbLogo,
+    },
+    {
+      id: "OCBC",
+      name: "OCBC - Oversea - Chinese Bank",
+      logo: "",
+    },
+    {
+      id: "OceanBank",
+      name: "Ocean Bank - Ngân hàng Đại dương",
+      logo: oceanBankLogo,
+    },
+    {
+      id: "QTDCS",
+      name: "QTDCS - Quỹ tín dụng cơ sở",
+      logo: "",
+    },
+    {
+      id: "saigonbank",
+      name: "Saigonbank - Ngân hàng Sài Gòn Công Thương",
+      logo: SaigonLogo,
+    },
+    {
+      id: "SCB",
+      name: "SCB - Ngân hàng TMCP Sài gòn",
+      logo: SCBLogo,
+    },
+    {
+      id: "SCBank",
+      name: "SCBank - Ngân hàng Standard Chartered Bank Việt nam",
+      logo: "",
+    },
+    {
+      id: "SCBankHN",
+      name: "SCBank HN - Ngân hàng Standard Chartered Bank HN",
+      logo: "",
+    },
+    {
+      id: "SCSB",
+      name: "SCSB - The Shanghai Commercial & Savings Bank CN Đồng Nai",
+      logo: "",
+    },
+    {
+      id: "shinhanbank",
+      name: "Shinhan Bank - Ngân hàng TNHH MTV Shinhan Việt Nam",
+      logo: shinhabankLogo,
+    },
+    {
+      id: "SIAM",
+      name: "SIAM - Ngân hàng The Siam Commercial Public",
+      logo: "",
+    },
+    {
+      id: "SMBC",
+      name: "SMBC - Sumitomo Mitsui Banking Corporation HCM",
+      logo: "",
+    },
+    {
+      id: "SMBCHN",
+      name: "SMBC HN - Sumitomo Mitsui Banking Corporation HN",
+      logo: "",
+    },
+    {
+      id: "SPB",
+      name: "SPB - Ngân hàng SinoPac",
+      logo: "",
+    },
+    {
+      id: "TFCBHN",
+      name: "TFCBHN - Taipei Fubon Commercial Bank Ha Noi",
+      logo: "",
+    },
+    {
+      id: "TFCBHCM",
+      name: "TFCBHCM - Taipei Fubon Commercial Bank TP Ho Chi Minh",
+      logo: "",
+    },
+    {
+      id: "VPSP",
+      name: "VPSP - Ngân hàng Chính sách xã hội Việt Nam",
+      logo: "",
+    },
+    {
+      id: "VDB",
+      name: "VPSP - Ngân hàng Phát triển Việt Nam",
+      logo: "",
+    },
+    {
+      id: "VID",
+      name: "VID public - Ngân hàng VID Public",
+      logo: "",
+    },
+    {
+      id: "VHoaB",
+      name: "Viet Hoa Bank - Ngân hàng Việt Hoa",
+      logo: "",
+    },
+    {
+      id: "VietaBank",
+      name: "VietA Bank - Ngân hàng Việt Á",
+      logo: VietaBankLogo,
+    },
+    {
+      id: "VietBank",
+      name: "VietBank - Ngân hàng Việt Nam Thương Tín",
+      logo: VietBankLogo,
+    },
+    {
+      id: "vietcapitalbank",
+      name: "VietCapital Bank - NHTMCP Bản Việt",
+      logo: VietCapitalLogo,
+    },
+    {
+      id: "VNCB",
+      name: "VNCB - NH TMCP Xây dựng Việt Nam",
+      logo: "",
+    },
+    {
+      id: "VRB",
+      name: "VRB - Ngân hàng Liên doanh Việt Nga",
+      logo: "",
+    },
+    {
+      id: "VUNGTAU",
+      name: "Vung Tau - Ngân hàng Vũng Tàu",
+      logo: "",
+    },
+    {
+      id: "WHHCM",
+      name: "WHHCM - NH Woori HCM",
+      logo: "",
+    },
+    {
+      id: "WHHN",
+      name: "WHHN - WOORI BANK Hà Nội",
+      logo: "",
+    },
+  ];
 
   // Format account number for display on card
   const formatAccountNumber = (number) => {
@@ -376,7 +563,7 @@ const BankInfoForm = () => {
                   className="card-bank-logo"
                 />
               ) : (
-                "Chọn ngân hàng"
+                formData.bank || "Chọn ngân hàng"
               )}
             </div>
             <div className="bank-card-account-number">
@@ -474,7 +661,17 @@ const BankInfoForm = () => {
                       className="bank-dropdown-logo"
                     />
                   )}
-                  <span>{formData.bank}</span>
+                  {formData.bank.includes(" - ") ? (
+                    <span>
+                      <span style={{ fontWeight: 700 }}>
+                        {formData.bank.split(" - ")[0]}
+                      </span>
+                      {" - "}
+                      {formData.bank.split(" - ")[1]}
+                    </span>
+                  ) : (
+                    <span>{formData.bank}</span>
+                  )}
                 </div>
               ) : (
                 <span className="bank-placeholder">
@@ -492,12 +689,24 @@ const BankInfoForm = () => {
                     className="bank-option"
                     onClick={() => handleSelectBank(bank)}
                   >
-                    <img
-                      src={bank.logo}
-                      alt={bank.name}
-                      className="bank-dropdown-logo"
-                    />
-                    <span>{bank.name}</span>
+                    {bank.logo && (
+                      <img
+                        src={bank.logo}
+                        alt={bank.name}
+                        className="bank-dropdown-logo"
+                      />
+                    )}
+                    {bank.name.includes(" - ") ? (
+                      <span>
+                        <span style={{ fontWeight: 700 }}>
+                          {bank.name.split(" - ")[0]}
+                        </span>
+                        {" - "}
+                        {bank.name.split(" - ")[1]}
+                      </span>
+                    ) : (
+                      <span>{bank.name}</span>
+                    )}
                   </div>
                 ))}
               </div>
