@@ -160,25 +160,24 @@ const LoanSelectionScreen = () => {
     // Get loan details
     const amount = loanAmount ? parseFloat(loanAmount.replace(/\./g, "")) : 0;
     const termMonths = parseInt(loanTerm);
-    const annualInterestRate = 0.12; // 1%
+    const annualInterestRate = 0.12; // 12%
     const monthlyInterestRate = annualInterestRate / 12;
+
+    // Lấy ngày hiện tại
+    const today = new Date();
+    const currentDay = today.getDate();
+    const currentMonth = today.getMonth(); // 0-11
+    const currentYear = today.getFullYear();
 
     // Generate payment schedule
     for (let i = 1; i <= termMonths; i++) {
-      // Calculate month display
-      let monthDisplay;
-      if (i === 1) monthDisplay = "5";
-      else if (i === 2) monthDisplay = "6";
-      else if (i === 3) monthDisplay = "7";
-      else if (i === 4) monthDisplay = "8";
-      else if (i === 5) monthDisplay = "9";
-      else if (i === 6) monthDisplay = "10";
-      else {
-        // For months beyond what's shown in the image
-        const monthIndex = i % 12;
-        const month = monthIndex === 0 ? 12 : monthIndex + 4; // Start from May (5)
-        monthDisplay = month > 12 ? month - 12 : month;
-      }
+      // Tính toán ngày trả nợ kỳ này (ngày giữ nguyên, tháng tăng dần)
+      const paymentDate = new Date(currentYear, currentMonth + i, currentDay);
+      const paymentDay = paymentDate.getDate();
+      const paymentMonth = paymentDate.getMonth() + 1; // Chuyển về 1-12
+
+      // Định dạng ngày trả nợ
+      const dateDisplay = `${paymentDay} - ${paymentMonth}`;
 
       // Calculate remaining principal for this month
       const remainingPrincipal = amount - (amount / termMonths) * (i - 1);
@@ -195,7 +194,7 @@ const LoanSelectionScreen = () => {
       const payment = {
         ki: `Kì thứ ${i}`,
         amount: Math.round(totalPayment),
-        date: `18 - ${monthDisplay}`,
+        date: dateDisplay,
         principal: Math.round(principalPayment),
         interest: Math.round(interestPayment),
       };
