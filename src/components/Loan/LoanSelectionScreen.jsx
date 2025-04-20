@@ -5,7 +5,7 @@ import "./LoanStyles.css";
 
 const LoanSelectionScreen = () => {
   const navigate = useNavigate();
-  const [loanAmount, setLoanAmount] = useState("0");
+  const [loanAmount, setLoanAmount] = useState("");
   const [loanTerm, setLoanTerm] = useState("6");
   const [loanDate] = useState("18/4/2025");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -46,7 +46,7 @@ const LoanSelectionScreen = () => {
       return Math.round(totalMonthlyPayment);
     } catch (error) {
       console.error("Error calculating payment:", error);
-      return 0;
+      return "";
     }
   };
 
@@ -103,7 +103,7 @@ const LoanSelectionScreen = () => {
 
     // Set "0" if the input is empty
     if (!numericValue) {
-      setLoanAmount("0");
+      setLoanAmount("");
       return;
     }
 
@@ -483,7 +483,7 @@ const LoanSelectionScreen = () => {
       <div
         className="custom-dropdown"
         ref={dropdownRef}
-        style={{ position: "relative", width: "20%" }}
+        style={{ position: "relative", width: "40%" }}
       >
         <div
           className="custom-dropdown-header"

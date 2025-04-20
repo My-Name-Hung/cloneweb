@@ -428,6 +428,7 @@ const LoanConfirmation = () => {
             </div>
 
             <div className="signature-section">
+              <h3 className="signature-header">Ký vào khung bên dưới</h3>
               <div className="signature-canvas-container">
                 <SignatureCanvas
                   ref={sigCanvasRef}

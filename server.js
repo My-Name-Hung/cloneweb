@@ -61,15 +61,19 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// More permissive CORS configuration
+// Middleware
 app.use(
   cors({
-    origin: true, // Allow any origin - be cautious with this in production
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "https://mbbankvay.netlify.app",
+      "https://mbbankvay.netlify.app/",
+      "https://www.mbbankvay.netlify.app",
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 app.use(express.json({ limit: "50mb" })); // Increase limit for base64 images
@@ -115,12 +119,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    validate: {
-      validator: function (v) {
-        return /^\d{10}$/.test(v);
-      },
-      message: (props) => `${props.value} is not a valid phone number!`,
-    },
   },
   password: {
     type: String,

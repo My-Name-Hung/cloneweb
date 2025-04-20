@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { saveImage } from "../../database/storageService";
@@ -18,6 +18,12 @@ const VerificationScreen = () => {
   const [portraitImage, setPortraitImage] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
+  const [showOptions, setShowOptions] = useState(null); // To track which card's options are shown
+
+  // References to file inputs
+  const frontIdInputRef = useRef(null);
+  const backIdInputRef = useRef(null);
+  const portraitInputRef = useRef(null);
 
   // Use user ID from auth context or fallback to a default
   const userId = user?.id || "user123";
@@ -65,10 +71,44 @@ const VerificationScreen = () => {
     checkUserDocuments();
   }, [checkUserVerificationStatus, navigate]);
 
+  // Handle showing options menu for a specific card
+  const toggleOptions = (cardType) => {
+    if (showOptions === cardType) {
+      setShowOptions(null);
+    } else {
+      setShowOptions(cardType);
+    }
+  };
+
+  // Handle back button click
   const handleBackClick = () => {
     navigate(-1);
   };
 
+  // Simplified click handler - directly open file picker
+  const handleCardClick = (cardType) => {
+    if (cardType === "frontId" && !frontIdImage) {
+      frontIdInputRef.current.click();
+    } else if (cardType === "backId" && !backIdImage) {
+      backIdInputRef.current.click();
+    } else if (cardType === "portrait" && !portraitImage) {
+      portraitInputRef.current.click();
+    }
+  };
+
+  // Change image handler for cards that already have an image
+  const handleChangeImage = (e, cardType) => {
+    e.stopPropagation();
+    if (cardType === "frontId") {
+      frontIdInputRef.current.click();
+    } else if (cardType === "backId") {
+      backIdInputRef.current.click();
+    } else if (cardType === "portrait") {
+      portraitInputRef.current.click();
+    }
+  };
+
+  // Handle image selection/upload
   const handleImageUpload = (event, setImageFunction, imageType) => {
     const file = event.target.files[0];
     if (file) {
@@ -199,13 +239,22 @@ const VerificationScreen = () => {
       <div className="verification-content">
         <h2 className="verification-title">Chụp ảnh định danh KYC</h2>
 
-        <div className="upload-card">
+        {/* Front ID Card */}
+        <div className="upload-card" onClick={() => handleCardClick("frontId")}>
           {frontIdImage ? (
-            <img
-              src={frontIdImage}
-              alt="Mặt trước CMND / CCCD"
-              className="uploaded-image"
-            />
+            <div className="image-container">
+              <img
+                src={frontIdImage}
+                alt="Mặt trước CMND / CCCD"
+                className="uploaded-image"
+              />
+              <button
+                className="change-image-btn"
+                onClick={(e) => handleChangeImage(e, "frontId")}
+              >
+                Thay đổi
+              </button>
+            </div>
           ) : (
             <>
               <svg
@@ -223,22 +272,33 @@ const VerificationScreen = () => {
               <div className="upload-label">Mặt trước CMND / CCCD</div>
             </>
           )}
+
+          {/* Single input for front ID that allows both camera and gallery */}
           <input
             type="file"
             accept="image/*"
-            className="upload-input"
+            className="hidden-input"
+            ref={frontIdInputRef}
             onChange={(e) => handleImageUpload(e, setFrontIdImage, "frontId")}
-            capture="environment"
           />
         </div>
 
-        <div className="upload-card">
+        {/* Back ID Card */}
+        <div className="upload-card" onClick={() => handleCardClick("backId")}>
           {backIdImage ? (
-            <img
-              src={backIdImage}
-              alt="Mặt sau CMND / CCCD"
-              className="uploaded-image"
-            />
+            <div className="image-container">
+              <img
+                src={backIdImage}
+                alt="Mặt sau CMND / CCCD"
+                className="uploaded-image"
+              />
+              <button
+                className="change-image-btn"
+                onClick={(e) => handleChangeImage(e, "backId")}
+              >
+                Thay đổi
+              </button>
+            </div>
           ) : (
             <>
               <svg
@@ -256,22 +316,36 @@ const VerificationScreen = () => {
               <div className="upload-label">Mặt sau CMND / CCCD</div>
             </>
           )}
+
+          {/* Single input for back ID that allows both camera and gallery */}
           <input
             type="file"
             accept="image/*"
-            className="upload-input"
+            className="hidden-input"
+            ref={backIdInputRef}
             onChange={(e) => handleImageUpload(e, setBackIdImage, "backId")}
-            capture="environment"
           />
         </div>
 
-        <div className="upload-card">
+        {/* Portrait Photo */}
+        <div
+          className="upload-card"
+          onClick={() => handleCardClick("portrait")}
+        >
           {portraitImage ? (
-            <img
-              src={portraitImage}
-              alt="Ảnh chân dung"
-              className="uploaded-image"
-            />
+            <div className="image-container">
+              <img
+                src={portraitImage}
+                alt="Ảnh chân dung"
+                className="uploaded-image"
+              />
+              <button
+                className="change-image-btn"
+                onClick={(e) => handleChangeImage(e, "portrait")}
+              >
+                Thay đổi
+              </button>
+            </div>
           ) : (
             <>
               <svg
@@ -289,12 +363,14 @@ const VerificationScreen = () => {
               <div className="upload-label">Ảnh chân dung</div>
             </>
           )}
+
+          {/* Single input for portrait that allows both camera and gallery */}
           <input
             type="file"
             accept="image/*"
-            className="upload-input"
+            className="hidden-input"
+            ref={portraitInputRef}
             onChange={(e) => handleImageUpload(e, setPortraitImage, "portrait")}
-            capture="user"
           />
         </div>
 

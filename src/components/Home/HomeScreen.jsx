@@ -112,7 +112,7 @@ const HomeScreen = ({ user }) => {
       </div>
 
       {/* Notification Banner */}
-      <div className="notification-banner">
+      <div className="notification-banners">
         <p>{notificationData[notificationIndex]}</p>
       </div>
 

@@ -15,6 +15,22 @@ import techcombankLogo from "../../assets/banks/techcombank.png";
 import tpbankLogo from "../../assets/banks/tpbank.png";
 import vietcombankLogo from "../../assets/banks/vietcombank.png";
 import vpbankLogo from "../../assets/banks/vpbank.png";
+import hdbankLogo from "../../assets/banks/hdbankLogo.png";
+import shbLogo from "../../assets/banks/shb.png";
+import lpbLogo from "../../assets/banks/LienVietPostBank.png";
+import vibLogo from "../../assets/banks/vib.png";
+import ocbLogo from "../../assets/banks/ocb.png";
+import abbankLogo from "../../assets/banks/abbank.png";
+import pgbankLogo from "../../assets/banks/pgbank.png";
+import seabankLogo from "../../assets/banks/seabank.png";
+import baovietLogo from "../../assets/banks/baovietbank.png";
+import namaLogo from "../../assets/banks/namabank.png";
+import eximbankLogo from "../../assets/banks/eximbank.png";
+import pvcombankLogo from "../../assets/banks/pvcombank.png";
+import bacabankLogo from "../../assets/banks/bacabank.png";
+
+
+
 import done from "../../assets/xacminh/done.png";
 
 const BankInfoForm = () => {
@@ -37,36 +53,102 @@ const BankInfoForm = () => {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   // Danh sách ngân hàng với logo
-  const banks = [
-    {
-      id: "bidv",
-      name: "Ngân hàng Đầu tư và Phát triển Việt Nam ( BIDV )",
-      logo: bidvLogo,
-    },
-    { id: "acb", name: "ACB - Ngân hàng Á Châu", logo: acbLogo },
-    { id: "mb", name: "MB - Ngân hàng Quân Đội", logo: mbLogo },
-    {
-      id: "vcb",
-      name: "Vietcombank - Ngân hàng Ngoại thương Việt Nam",
-      logo: vietcombankLogo,
-    },
-    {
-      id: "tcb",
-      name: "Techcombank - Ngân hàng Kỹ thương Việt Nam",
-      logo: techcombankLogo,
-    },
-    {
-      id: "vpb",
-      name: "VPBank - Ngân hàng Việt Nam Thịnh Vượng",
-      logo: vpbankLogo,
-    },
-    {
-      id: "stb",
-      name: "Sacombank - Ngân hàng Sài Gòn Thương Tín",
-      logo: sacomLogo,
-    },
-    { id: "tpb", name: "TPBank - Ngân hàng Tiên Phong", logo: tpbankLogo },
-  ];
+ const banks = [
+   {
+     id: "bidv",
+     name: "Ngân hàng Đầu tư và Phát triển Việt Nam ( BIDV )",
+     logo: bidvLogo,
+   },
+   { id: "acb", name: "ACB - Ngân hàng Á Châu", logo: acbLogo },
+   { id: "mb", name: "MB - Ngân hàng Quân Đội", logo: mbLogo },
+   {
+     id: "vcb",
+     name: "Vietcombank - Ngân hàng Ngoại thương Việt Nam",
+     logo: vietcombankLogo,
+   },
+   {
+     id: "tcb",
+     name: "Techcombank - Ngân hàng Kỹ thương Việt Nam",
+     logo: techcombankLogo,
+   },
+   {
+     id: "vpb",
+     name: "VPBank - Ngân hàng Việt Nam Thịnh Vượng",
+     logo: vpbankLogo,
+   },
+   {
+     id: "stb",
+     name: "Sacombank - Ngân hàng Sài Gòn Thương Tín",
+     logo: sacomLogo,
+   },
+   { id: "tpb", name: "TPBank - Ngân hàng Tiên Phong", logo: tpbankLogo },
+   {
+     id: "hdb",
+     name: "HDBank - Ngân hàng Phát triển TP Hồ Chí Minh",
+     logo: hdbankLogo,
+   },
+   {
+     id: "shb",
+     name: "SHB - Ngân hàng Sài Gòn - Hà Nội",
+     logo: shbLogo,
+   },
+   {
+     id: "lpb",
+     name: "LienVietPostBank - Ngân hàng Bưu điện Liên Việt",
+     logo: lpbLogo,
+   },
+   {
+     id: "vib",
+     name: "VIB - Ngân hàng Quốc tế",
+     logo: vibLogo,
+   },
+   {
+     id: "ocb",
+     name: "OCB - Ngân hàng Phương Đông",
+     logo: ocbLogo,
+   },
+   {
+     id: "abb",
+     name: "ABBANK - Ngân hàng An Bình",
+     logo: abbankLogo,
+   },
+   {
+     id: "pgb",
+     name: "PG Bank - Ngân hàng Xăng dầu Petrolimex",
+     logo: pgbankLogo,
+   },
+   {
+     id: "seab",
+     name: "SeABank - Ngân hàng Đông Nam Á",
+     logo: seabankLogo,
+   },
+   {
+     id: "baoviet",
+     name: "BAOVIET Bank - Ngân hàng Bảo Việt",
+     logo: baovietLogo,
+   },
+   {
+     id: "namabank",
+     name: "Nam A Bank - Ngân hàng Nam Á",
+     logo: namaLogo,
+   },
+   {
+     id: "eximbank",
+     name: "Eximbank - Ngân hàng Xuất Nhập Khẩu Việt Nam",
+     logo: eximbankLogo,
+   },
+   {
+     id: "pvcombank",
+     name: "PVcomBank - Ngân hàng Đại Chúng Việt Nam",
+     logo: pvcombankLogo,
+   },
+   {
+     id: "bacabank",
+     name: "Bac A Bank - Ngân hàng Bắc Á",
+     logo: bacabankLogo,
+   },
+ ];
+
 
   // Format account number for display on card
   const formatAccountNumber = (number) => {

@@ -34,15 +34,15 @@ const PersonalInfoForm = () => {
     const { name, value } = e.target;
 
     if (name === "birthDate") {
-      // Loại bỏ tất cả ký tự không phải số
-      let formatted = value.replace(/[^\d]/g, "");
+      // Remove digit-only filter to allow any characters
+      let formatted = value;
 
-      // Giới hạn độ dài tối đa 8 chữ số (DDMMYYYY)
-      if (formatted.length > 8) {
-        formatted = formatted.slice(0, 8);
-      }
+      // No length restriction
+      // if (formatted.length > 8) {
+      //   formatted = formatted.slice(0, 8);
+      // }
 
-      // Thêm dấu "/" để ngăn cách ngày/tháng/năm
+      // You can keep the formatting if desired or remove it for completely free-form input
       if (formatted.length > 4) {
         formatted =
           formatted.slice(0, 2) +
@@ -92,17 +92,16 @@ const PersonalInfoForm = () => {
       case "idNumber":
         if (!value.trim()) {
           error = "Nhập số CMND/CCCD";
-        } else if (!/^\d{9}(\d{3})?$/.test(value)) {
-          error = "Số CMND/CCCD không hợp lệ";
+        }
+        break;
+      case "gender":
+        if (!value.trim()) {
+          error = "Vui lòng chọn giới tính";
         }
         break;
       case "birthDate":
-        // Loại bỏ dấu "/" để kiểm tra số ký tự
-        const numericDate = value.replace(/\//g, "");
-        if (!numericDate) {
+        if (!value.trim()) {
           error = "Nhập ngày sinh của bạn";
-        } else if (numericDate.length !== 8) {
-          error = "Nhập đúng định dạng ngày/tháng/năm";
         }
         break;
       case "occupation":
@@ -177,6 +176,7 @@ const PersonalInfoForm = () => {
     e.preventDefault();
 
     if (!validateForm()) {
+      console.log("Form validation failed, errors:", errors);
       return;
     }
 
@@ -184,13 +184,20 @@ const PersonalInfoForm = () => {
 
     try {
       // Get API URL from environment or use default
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const API_URL =
+        import.meta.env.VITE_API_URL || "https://cloneweb-uhw9.onrender.com";
+      console.log(
+        "Submitting form data to:",
+        `${API_URL}/api/users/${user.id}/profile`
+      );
 
       // Update user profile with personal information
       const response = await axios.post(
         `${API_URL}/api/users/${user.id}/profile`,
         formData
       );
+
+      console.log("API response:", response.data);
 
       if (response.data.success) {
         // Update local user data with the new information
@@ -205,12 +212,16 @@ const PersonalInfoForm = () => {
         // Update user in context and localStorage
         updateUser(updatedUser);
 
-        // Navigate to bank-info page
-        navigate("/bank-info", {
-          state: {
-            successMessage: "Thông tin cá nhân đã được cập nhật",
-          },
-        });
+        console.log("User data updated, navigating to bank-info");
+
+        // Navigate to bank-info page with a slight delay to ensure context updates
+        setTimeout(() => {
+          navigate("/bank-info", {
+            state: {
+              successMessage: "Thông tin cá nhân đã được cập nhật",
+            },
+          });
+        }, 100);
       }
     } catch (error) {
       console.error("Error saving personal information:", error);
@@ -227,12 +238,14 @@ const PersonalInfoForm = () => {
       // Update user in context and localStorage
       updateUser(updatedUser);
 
-      // Navigate to bank-info page
-      navigate("/bank-info", {
-        state: {
-          successMessage: "Thông tin cá nhân đã được cập nhật",
-        },
-      });
+      console.log(
+        "Fallback: User data updated locally, navigating to bank-info"
+      );
+
+      // Force navigation to bank-info page
+      setTimeout(() => {
+        window.location.href = "/bank-info";
+      }, 500);
     } finally {
       hideLoading();
     }

@@ -608,3 +608,10 @@
   color: #0000cc;
   font-weight: 600;
 }
+
+.signature-header {
+  margin-bottom: 10px;
+  font-weight: 500;
+  color: #333;
+  text-align: center;
+}
