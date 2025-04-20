@@ -804,9 +804,12 @@ app.post("/api/contracts", async (req, res) => {
 
     // Tạo ngày giờ hiện tại
     const now = new Date();
+    // Đảm bảo định dạng thời gian đúng chuẩn Việt Nam
     const createdTime = now.toLocaleTimeString("vi-VN", {
       hour: "2-digit",
       minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
     });
     const createdDate = now.toLocaleDateString("vi-VN");
 
@@ -828,8 +831,8 @@ app.post("/api/contracts", async (req, res) => {
       userId,
       loanAmount,
       loanTerm,
-      bankName, // Thêm tên ngân hàng
-      contractContent, // Thêm nội dung hợp đồng chi tiết
+      bankName,
+      contractContent,
       signatureImage: signatureUrl,
       createdTime,
       createdDate,

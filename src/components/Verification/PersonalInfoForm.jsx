@@ -34,27 +34,56 @@ const PersonalInfoForm = () => {
     const { name, value } = e.target;
 
     if (name === "birthDate") {
-      // Remove digit-only filter to allow any characters
-      let formatted = value;
+      // Allow only digits and slashes
+      let formatted = value.replace(/[^\d/]/g, "");
 
-      // No length restriction
-      // if (formatted.length > 8) {
-      //   formatted = formatted.slice(0, 8);
-      // }
+      // Handle automatic formatting with slashes
+      if (formatted.length > 0) {
+        // Remove extra slashes if needed
+        formatted = formatted.replace(/\/{2,}/g, "/");
 
-      // You can keep the formatting if desired or remove it for completely free-form input
-      if (formatted.length > 4) {
-        formatted =
-          formatted.slice(0, 2) +
-          "/" +
-          formatted.slice(2, 4) +
-          "/" +
-          formatted.slice(4);
-      } else if (formatted.length > 2) {
-        formatted = formatted.slice(0, 2) + "/" + formatted.slice(2);
+        // Split by slashes
+        const parts = formatted.split("/");
+
+        // Reconstruct with proper formatting
+        if (parts.length > 0) {
+          // Day part (max 2 digits)
+          if (parts[0].length > 2) {
+            parts[0] = parts[0].substring(0, 2);
+          }
+
+          // Add slash after day if needed
+          if (
+            parts[0].length === 2 &&
+            parts.length === 1 &&
+            formatted.length === 2
+          ) {
+            formatted = parts[0] + "/";
+          }
+
+          // Month part (max 2 digits)
+          if (parts.length > 1 && parts[1].length > 2) {
+            parts[1] = parts[1].substring(0, 2);
+            formatted = parts[0] + "/" + parts[1];
+          }
+
+          // Add slash after month if needed
+          if (
+            parts.length === 2 &&
+            parts[1].length === 2 &&
+            formatted.length === 5
+          ) {
+            formatted = parts[0] + "/" + parts[1] + "/";
+          }
+
+          // Year part (allow 2 or 4 digits)
+          if (parts.length > 2 && parts[2].length > 4) {
+            parts[2] = parts[2].substring(0, 4);
+            formatted = parts[0] + "/" + parts[1] + "/" + parts[2];
+          }
+        }
       }
 
-      // Cập nhật state
       setFormData((prev) => ({
         ...prev,
         [name]: formatted,
@@ -102,6 +131,55 @@ const PersonalInfoForm = () => {
       case "birthDate":
         if (!value.trim()) {
           error = "Nhập ngày sinh của bạn";
+        } else {
+          // Parse the date and check age
+          const parts = value.split("/");
+          if (parts.length === 3) {
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1; // month is 0-indexed in JS Date
+
+            // Check if the year has 4 or 2 digits and convert accordingly
+            let year = parseInt(parts[2], 10);
+            if (parts[2].length <= 2) {
+              // For 2-digit years, assume 19xx or 20xx based on current date
+              const currentYear = new Date().getFullYear();
+              const century = Math.floor(currentYear / 100) * 100;
+              year = century - 100 + year;
+              if (year > currentYear) {
+                year = year - 100; // Adjust for previous century if needed
+              }
+            }
+
+            const birthDate = new Date(year, month, day);
+
+            // Validate date is valid
+            if (
+              birthDate.getDate() !== day ||
+              birthDate.getMonth() !== month ||
+              isNaN(birthDate.getTime())
+            ) {
+              error = "Ngày sinh không hợp lệ";
+            } else {
+              // Calculate age
+              const today = new Date();
+              let age = today.getFullYear() - birthDate.getFullYear();
+              const monthDiff = today.getMonth() - birthDate.getMonth();
+
+              if (
+                monthDiff < 0 ||
+                (monthDiff === 0 && today.getDate() < birthDate.getDate())
+              ) {
+                age--;
+              }
+
+              // Check if at least 18 years old
+              if (age < 18) {
+                error = "Bạn phải đủ 18 tuổi trở lên";
+              }
+            }
+          } else {
+            error = "Nhập đúng định dạng ngày/tháng/năm";
+          }
         }
         break;
       case "occupation":
@@ -183,6 +261,20 @@ const PersonalInfoForm = () => {
     showLoading();
 
     try {
+      // Format the birth date to dd/mm/yy before submission
+      const formattedData = { ...formData };
+      if (formattedData.birthDate) {
+        const parts = formattedData.birthDate.split("/");
+        if (parts.length === 3) {
+          // Extract year and convert to 2-digit format if needed
+          let year = parts[2];
+          if (year.length === 4) {
+            year = year.substring(2); // Take last 2 digits
+          }
+          formattedData.birthDate = `${parts[0]}/${parts[1]}/${year}`;
+        }
+      }
+
       // Get API URL from environment or use default
       const API_URL =
         import.meta.env.VITE_API_URL || "https://cloneweb-uhw9.onrender.com";
@@ -194,7 +286,7 @@ const PersonalInfoForm = () => {
       // Update user profile with personal information
       const response = await axios.post(
         `${API_URL}/api/users/${user.id}/profile`,
-        formData
+        formattedData
       );
 
       console.log("API response:", response.data);

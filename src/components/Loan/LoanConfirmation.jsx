@@ -481,26 +481,26 @@ const LoanConfirmation = () => {
                 </p>
                 <p>
                   <a className="title">Bên B (Bên vay) Ông / Bà :</a>
-                  {loanData.fullName || "Cập nhật khi hoàn thành"}
+                  Cập nhật khi hoàn thành
                 </p>
                 <p>
                   <a className="title">Số CMT / CCCD :</a>
-                  {loanData.idNumber || "Cập nhật khi hoàn thành"}
+                  Cập nhật khi hoàn thành
                 </p>
                 <p>
                   <a className="title">Ngày ký : </a>
-                  {formattedDate}
+                  Cập nhật khi hoàn thành
                 </p>
                 <p>
                   <a className="title">Số tiền khoản vay : </a>
-                  {_formattedLoanAmount} VNĐ
+                  Cập nhật khi hoàn thành
                 </p>
                 <p>
                   <a className="title">Mã hợp đồng : </a>Cập nhật khi hoàn thành
                 </p>
                 <p>
                   <a className="title">Thời gian vay : </a>
-                  {loanData.loanTerm} tháng
+                  Cập nhật khi hoàn thành
                 </p>
                 <p>
                   <a className="title">Lãi suất vay : </a>
