@@ -802,15 +802,25 @@ app.post("/api/contracts", async (req, res) => {
       return res.status(400).json({ message: "Thiếu thông tin hợp đồng" });
     }
 
-    // Tạo ngày giờ hiện tại
+    // Tạo ngày giờ hiện tại theo múi giờ Việt Nam (GMT+7)
     const now = new Date();
-    // Đảm bảo lấy thời gian địa phương bằng cách sử dụng các phương thức locale
-    const createdTime = `${String(now.getHours()).padStart(2, "0")}:${String(
-      now.getMinutes()
-    ).padStart(2, "0")}`;
-    const createdDate = `${String(now.getDate()).padStart(2, "0")}/${String(
-      now.getMonth() + 1
-    ).padStart(2, "0")}/${now.getFullYear()}`;
+    // Lấy thời gian UTC
+    const utcTime = now.getTime();
+    // Chuyển sang múi giờ Việt Nam (UTC+7 = +7 giờ = +7*60*60*1000 mili giây)
+    const vietnamTime = new Date(utcTime + 7 * 60 * 60 * 1000);
+
+    // Định dạng giờ và ngày theo chuẩn Việt Nam
+    const createdTime = `${String(vietnamTime.getUTCHours()).padStart(
+      2,
+      "0"
+    )}:${String(vietnamTime.getUTCMinutes()).padStart(2, "0")}`;
+    const createdDate = `${String(vietnamTime.getUTCDate()).padStart(
+      2,
+      "0"
+    )}/${String(vietnamTime.getUTCMonth() + 1).padStart(
+      2,
+      "0"
+    )}/${vietnamTime.getUTCFullYear()}`;
 
     // Lưu ảnh chữ ký
     const base64Data = signatureImage.replace(/^data:image\/\w+;base64,/, "");
