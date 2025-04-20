@@ -30,14 +30,19 @@ import oceanBankLogo from "../../assets/banks/oceanbank.png";
 import pgbankLogo from "../../assets/banks/pgbank.png";
 import pvcombankLogo from "../../assets/banks/pvcombank.png";
 import sacomLogo from "../../assets/banks/sacombank.png";
+import SaigonLogo from "../../assets/banks/saigon.png";
+import SCBLogo from "../../assets/banks/scb.png";
 import seabankLogo from "../../assets/banks/seabank.png";
 import shbLogo from "../../assets/banks/shb.png";
+import shinhabankLogo from "../../assets/banks/shinhanbank.png";
 import techcombankLogo from "../../assets/banks/techcombank.png";
 import tpbankLogo from "../../assets/banks/tpbank.png";
 import vibLogo from "../../assets/banks/vib.png";
+import VietaBankLogo from "../../assets/banks/vietabank.png";
+import VietBankLogo from "../../assets/banks/vietbank.png";
+import VietCapitalLogo from "../../assets/banks/vietcapital.png";
 import vietcombankLogo from "../../assets/banks/vietcombank.png";
 import vpbankLogo from "../../assets/banks/vpbank.png";
-
 
 import done from "../../assets/xacminh/done.png";
 
