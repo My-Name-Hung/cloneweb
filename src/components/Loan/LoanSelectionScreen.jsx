@@ -7,7 +7,13 @@ const LoanSelectionScreen = () => {
   const navigate = useNavigate();
   const [loanAmount, setLoanAmount] = useState("");
   const [loanTerm, setLoanTerm] = useState("6");
-  const [loanDate] = useState("18/4/2025");
+  const [loanDate] = useState(() => {
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, "0");
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const year = today.getFullYear();
+    return `${day}/${month}/${year}`;
+  });
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
