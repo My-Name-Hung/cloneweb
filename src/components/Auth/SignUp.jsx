@@ -74,16 +74,6 @@ const SignUp = () => {
       return false;
     }
 
-    if (!/^\d{10}$/.test(formData.phone)) {
-      setError("Số điện thoại không hợp lệ");
-      return false;
-    }
-
-    if (formData.password.length < 6) {
-      setError("Mật khẩu phải có ít nhất 6 ký tự");
-      return false;
-    }
-
     if (formData.password !== formData.confirmPassword) {
       setError("Mật khẩu xác nhận không khớp");
       return false;
@@ -254,12 +244,6 @@ const SignUp = () => {
 
         {error && <p className="error-message">{error}</p>}
       </form>
-
-      <div className="password-hint">
-        <p>Độ dài mật khẩu từ 6 - 20 ký tự</p>
-        <p style={{ fontWeight: "600" }}>Ví dụ: </p>
-        <p>Mật khẩu: 123456</p>
-      </div>
 
       <div className="auth-footer">
         <p>

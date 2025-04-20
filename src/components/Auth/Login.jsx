@@ -57,11 +57,6 @@ const Login = () => {
       return false;
     }
 
-    if (!/^\d{10}$/.test(formData.phone)) {
-      setError("Số điện thoại không hợp lệ");
-      return false;
-    }
-
     return true;
   };
 
@@ -104,7 +99,7 @@ const Login = () => {
         setError("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
 
         // For demo or development purposes - auto login if server is not reachable
-        if (formData.phone.length === 10 && formData.password.length >= 6) {
+        if (formData.phone && formData.password) {
           hideLoading();
           console.log("Login: Using mock login for development");
 

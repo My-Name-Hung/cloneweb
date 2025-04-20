@@ -107,7 +107,7 @@
   text-decoration: none;
 }
 
-.submit-button {
+.submit-buttons {
   width: 90%;
   padding: 15px;
   background-color: #ff7f50;
@@ -121,7 +121,7 @@
   transition: background-color 0.3s;
 }
 
-.submit-button:hover {
+.submit-buttons:hover {
   background-color: #ff6b3d;
 }
 

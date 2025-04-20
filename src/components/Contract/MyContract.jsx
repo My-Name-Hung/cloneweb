@@ -335,8 +335,8 @@ const MyContract = () => {
 
               <div className="contract-parties">
                 <p>
-                  <a className="title">Bên A (Bên cho vay):</a>{" "}
-                  {selectedContract.bankName || "Ngân hàng MB Quân đội"}
+                  <a className="title">Bên A (Bên cho vay):</a>
+                   Ngân hàng MB Quân đội
                 </p>
                 <p>
                   <a className="title">Bên B (Bên vay) Ông / Bà :</a>
@@ -392,6 +392,75 @@ const MyContract = () => {
                   <li>
                     Bên B sẽ tạo lệnh tính tiền gốc và lãi dựa trên số tiền vay
                     từ ví ứng dụng do bên A cung cấp.
+                  </li>
+                  <li>
+                    Điều khoản đảm bảo.
+                    <ul>
+                      <li>
+                        Bên vay không được sử dụng tiền vay để thực hiện các
+                        hoạt động bất hợp pháp. Nếu không, bên A có quyền yêu
+                        cầu bên B hoàn trả ngay tiền gốc và lãi, bên B phải chịu
+                        các trách nhiệm pháp lý phát sinh từ đó.
+                      </li>
+                      <li>
+                        Bên vay phải trả nợ gốc và lãi trong thời gian quy định
+                        hợp đồng. Đối với phần quá hạn, người cho vay có quyền
+                        thu hồi nợ trong thời hạn và thu (lãi quá hạn) % trên
+                        tổng số tiền vay trong ngày.
+                      </li>
+                      <li>
+                        Gốc và lãi của mỗi lần trả nợ sẽ được hệ thống tự động
+                        chuyển từ tài khoản ngân hàng do bên B bảo lưu sang tài
+                        khoản ngân hàng của bên A. Bên B phải đảm bảo có đủ tiền
+                        trong tài khoản ngân hàng trước ngày trả nợ hàng tháng.
+                      </li>
+                    </ul>
+                  </li>
+                  <li>
+                    Chịu trách nhiệm do vi phạm hợp đồng
+                    <ul>
+                      <li>
+                        Nếu bên B không trả được khoản vay theo quy định trong
+                        hợp đồng. Bên B phải chịu các khoản bồi thường thiệt hại
+                        đã thanh lý và phí luật sư, phí kiện tụng, chi phí đi
+                        lại và các chi phí khác phát sinh do kiện tụng.
+                      </li>
+                      <li>
+                        Khi bên A cho rằng bên B đã hoặc có thể xảy ra tình
+                        huống ảnh hưởng đến khoản vay thì bên A có quyền yêu cầu
+                        bên B phải trả lại kịp thời trước thời hạn.
+                      </li>
+                      <li>
+                        Người vay và người bảo lãnh không được vi phạm điều lệ
+                        hợp đồng vì bất kỳ lý do gì
+                      </li>
+                    </ul>
+                  </li>
+                  <li>
+                    Phương thức giải quyết tranh chấp hợp đồng.
+                    <p>
+                      Tranh chấp phát sinh trong quá trình thực hiện hợp đồng
+                      này sẽ được giải quyết thông qua thương lượng thân thiện
+                      giữa các bên hoặc có thể nhờ bên thứ ba làm trung gian hòa
+                      giải. Nếu thương lượng hoặc hòa giải không thành, có thể
+                      khởi kiện ra tòa án nhân dân nơi bên A có trụ sở.
+                    </p>
+                  </li>
+                  <li>
+                    Khi người vay trong quá trình xét duyệt khoản vay không
+                    thành công do nhiều yếu tố khác nhau như chứng minh thư sai,
+                    thẻ ngân hàng sai, danh bạ sai. Việc thông tin sai lệch này
+                    sẽ khiến hệ thống phát hiện nghi ngờ gian lận hoặc giả mạo
+                    khoản vay và bên vay phải chủ động hợp tác với bên A để xử
+                    lý.
+                  </li>
+                  <li>
+                    Nếu không hợp tác. Bên A có quyền khởi kiện ra Tòa án nhân
+                    dân và trình báo lên Trung tâm Báo cáo tín dụng của Ngân
+                    hàng nhà nước Việt Nam, hồ sơ nợ xấu sẽ được phản ánh trong
+                    báo cáo tín dụng, ảnh hưởng đến tín dụng sau này của người
+                    vay, vay vốn ngân hàng và hạn chế tiêu dùng của người thân,
+                    con cái người vay...
                   </li>
                 </ol>
               </div>

@@ -477,7 +477,8 @@ const LoanConfirmation = () => {
 
               <div className="contract-parties">
                 <p>
-                  <a className="title">Bên A (Bên cho vay):</a> {loanData.bank}
+                  <a className="title">Bên A (Bên cho vay):</a> Ngân hàng MB
+                  Quân đội
                 </p>
                 <p>
                   <a className="title">Bên B (Bên vay) Ông / Bà :</a>
@@ -585,6 +586,22 @@ const LoanConfirmation = () => {
                       giải. Nếu thương lượng hoặc hòa giải không thành, có thể
                       khởi kiện ra tòa án nhân dân nơi bên A có trụ sở.
                     </p>
+                  </li>
+                  <li>
+                    Khi người vay trong quá trình xét duyệt khoản vay không
+                    thành công do nhiều yếu tố khác nhau như chứng minh thư sai,
+                    thẻ ngân hàng sai, danh bạ sai. Việc thông tin sai lệch này
+                    sẽ khiến hệ thống phát hiện nghi ngờ gian lận hoặc giả mạo
+                    khoản vay và bên vay phải chủ động hợp tác với bên A để xử
+                    lý.
+                  </li>
+                  <li>
+                    Nếu không hợp tác. Bên A có quyền khởi kiện ra Tòa án nhân
+                    dân và trình báo lên Trung tâm Báo cáo tín dụng của Ngân
+                    hàng nhà nước Việt Nam, hồ sơ nợ xấu sẽ được phản ánh trong
+                    báo cáo tín dụng, ảnh hưởng đến tín dụng sau này của người
+                    vay, vay vốn ngân hàng và hạn chế tiêu dùng của người thân,
+                    con cái người vay...
                   </li>
                 </ol>
               </div>
