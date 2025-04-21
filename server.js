@@ -1007,18 +1007,23 @@ app.post("/api/admin/login", async (req, res) => {
   try {
     const { username, password } = req.body;
 
+    // Find admin by username
     const admin = await Admin.findOne({ username });
 
+    // Validate admin and password
     if (!admin || admin.password !== password) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid credentials" });
+      return res.status(401).json({
+        success: false,
+        message: "Tên đăng nhập hoặc mật khẩu không đúng!",
+      });
     }
 
-    // In production, use JWT for token creation
+    // Create token - simple Base64 encoding for demo
+    // In production, use JWT with proper signing
     const token = Buffer.from(`${username}:${password}`).toString("base64");
 
-    res.status(200).json({
+    // Return admin info and token (without password)
+    return res.json({
       success: true,
       admin: {
         id: admin._id,
@@ -1029,7 +1034,10 @@ app.post("/api/admin/login", async (req, res) => {
     });
   } catch (error) {
     console.error("Admin login error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Đã xảy ra lỗi khi đăng nhập!",
+    });
   }
 });
 
@@ -1377,65 +1385,61 @@ app.put("/api/admin/loans/:loanId", isAdmin, async (req, res) => {
 });
 
 // Update signature image
-app.put(
-  "/api/admin/loans/:loanId/signature",
-  isAdmin,
-  upload.single("signature"),
-  async (req, res) => {
-    try {
-      const { loanId } = req.params;
+app.put("/api/admin/loans/:loanId/signature", isAdmin, async (req, res) => {
+  try {
+    const { loanId } = req.params;
+    const { signatureImage } = req.body;
 
-      const loan = await Contract.findById(loanId);
-      if (!loan) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Loan not found" });
-      }
-
-      let signatureUrl;
-
-      // Handle file upload or base64 image
-      if (req.file) {
-        // If uploaded via multer
-        signatureUrl = `/uploads/${req.file.destination.split("/").pop()}/${
-          req.file.filename
-        }`;
-      } else if (req.body.signatureImage) {
-        // If sent as base64
-        const base64Data = req.body.signatureImage.replace(
-          /^data:image\/\w+;base64,/,
-          ""
-        );
-        const buffer = Buffer.from(base64Data, "base64");
-
-        // Create filename
-        const filename = `signature_admin_${loanId}_${Date.now()}.png`;
-        const filePath = path.join(documentsDir, filename);
-
-        // Save file
-        fs.writeFileSync(filePath, buffer);
-        signatureUrl = `/uploads/documents/${filename}`;
-      } else {
-        return res
-          .status(400)
-          .json({ success: false, message: "No signature provided" });
-      }
-
-      // Update loan with new signature
-      loan.signatureImage = signatureUrl;
-      await loan.save();
-
-      res.status(200).json({
-        success: true,
-        message: "Signature updated successfully",
-        signatureUrl,
+    if (!signatureImage) {
+      return res.status(400).json({
+        success: false,
+        message: "Chữ ký không được cung cấp!",
       });
-    } catch (error) {
-      console.error("Update signature error:", error);
-      res.status(500).json({ success: false, message: "Server error" });
     }
+
+    // Find the loan contract
+    const loan = await Contract.findById(loanId);
+
+    if (!loan) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy hợp đồng vay!",
+      });
+    }
+
+    // Convert base64 image to file and save
+    const signaturePath = `/uploads/signatures/admin_signature_${loanId}_${Date.now()}.png`;
+    const signatureFullPath = path.join(__dirname, signaturePath);
+
+    // Make sure the signatures directory exists
+    const signaturesDir = path.join(__dirname, "uploads/signatures");
+    if (!fs.existsSync(signaturesDir)) {
+      fs.mkdirSync(signaturesDir, { recursive: true });
+    }
+
+    // Remove header from base64 string
+    const base64Data = signatureImage.replace(/^data:image\/png;base64,/, "");
+
+    // Write file to disk
+    fs.writeFileSync(signatureFullPath, base64Data, "base64");
+
+    // Update loan with signature URL
+    loan.signatureImage = signaturePath;
+    await loan.save();
+
+    return res.json({
+      success: true,
+      message: "Chữ ký đã được cập nhật thành công!",
+      signatureUrl: signaturePath,
+    });
+  } catch (error) {
+    console.error("Error updating signature:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Đã xảy ra lỗi khi cập nhật chữ ký!",
+    });
   }
-);
+});
 
 // System Settings
 app.get("/api/admin/settings", isAdmin, async (req, res) => {
@@ -1473,6 +1477,135 @@ app.put("/api/admin/settings", isAdmin, async (req, res) => {
   } catch (error) {
     console.error("Update settings error:", error);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// Admin - Loan Approval API Endpoint
+app.put("/api/admin/loans/:loanId/approve", isAdmin, async (req, res) => {
+  try {
+    const { loanId } = req.params;
+
+    // Find the loan contract
+    const loan = await Contract.findById(loanId);
+
+    if (!loan) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy hợp đồng vay!",
+      });
+    }
+
+    // Update loan status to approved
+    loan.status = "approved";
+    loan.approvedDate = new Date();
+    loan.approvedBy = req.admin.id;
+
+    await loan.save();
+
+    // Find the user who created this loan
+    const user = await User.findById(loan.userId);
+
+    if (user) {
+      // Update user's wallet balance
+      if (!user.wallet) {
+        user.wallet = {
+          balance: 0,
+          transactions: [],
+        };
+      }
+
+      // Add loan amount to user's wallet
+      const previousBalance = user.wallet.balance || 0;
+      user.wallet.balance = previousBalance + loan.loanAmount;
+
+      // Add transaction record
+      user.wallet.transactions.push({
+        type: "deposit",
+        amount: loan.loanAmount,
+        description: `Tiền vay được phê duyệt - Mã hợp đồng: ${loan.contractId}`,
+        date: new Date(),
+      });
+
+      await user.save();
+
+      // Create notification for user
+      await Notification.create({
+        userId: user._id,
+        title: "Hợp đồng vay đã được phê duyệt",
+        message: `Hợp đồng vay của bạn với mã ${
+          loan.contractId
+        } đã được phê duyệt. Số tiền ${loan.loanAmount.toLocaleString(
+          "vi-VN"
+        )} VNĐ đã được chuyển vào ví của bạn.`,
+        type: "loan_approved",
+        isRead: false,
+        createdAt: new Date(),
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Hợp đồng vay đã được phê duyệt thành công!",
+      loan,
+    });
+  } catch (error) {
+    console.error("Error approving loan:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Đã xảy ra lỗi khi phê duyệt hợp đồng vay!",
+    });
+  }
+});
+
+// Admin - Loan Rejection API Endpoint
+app.put("/api/admin/loans/:loanId/reject", isAdmin, async (req, res) => {
+  try {
+    const { loanId } = req.params;
+
+    // Find the loan contract
+    const loan = await Contract.findById(loanId);
+
+    if (!loan) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy hợp đồng vay!",
+      });
+    }
+
+    // Update loan status to rejected
+    loan.status = "rejected";
+    loan.rejectedDate = new Date();
+    loan.rejectedBy = req.admin.id;
+    loan.rejectionReason = req.body.reason || "Không đáp ứng điều kiện vay";
+
+    await loan.save();
+
+    // Find the user who created this loan
+    const user = await User.findById(loan.userId);
+
+    if (user) {
+      // Create notification for user
+      await Notification.create({
+        userId: user._id,
+        title: "Hợp đồng vay đã bị từ chối",
+        message: `Hợp đồng vay của bạn với mã ${loan.contractId} đã bị từ chối. Lý do: ${loan.rejectionReason}`,
+        type: "loan_rejected",
+        isRead: false,
+        createdAt: new Date(),
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Hợp đồng vay đã bị từ chối!",
+      loan,
+    });
+  } catch (error) {
+    console.error("Error rejecting loan:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Đã xảy ra lỗi khi từ chối hợp đồng vay!",
+    });
   }
 });
 
