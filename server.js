@@ -2020,6 +2020,110 @@ app.get("/api/users/:userId/id-card", async (req, res) => {
   }
 });
 
+// Thêm API endpoint cho thông báo
+app.get("/api/notifications", async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User ID is required" });
+    }
+
+    const notifications = await Notification.find({ userId }).sort({
+      createdAt: -1,
+    });
+
+    return res.json({
+      success: true,
+      notifications,
+    });
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// Đánh dấu thông báo đã đọc
+app.put("/api/notifications/:notificationId/read", async (req, res) => {
+  try {
+    const { notificationId } = req.params;
+    const notification = await Notification.findByIdAndUpdate(
+      notificationId,
+      { isRead: true },
+      { new: true }
+    );
+
+    if (!notification) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Notification not found" });
+    }
+
+    return res.json({
+      success: true,
+      notification,
+    });
+  } catch (error) {
+    console.error("Error marking notification as read:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// Lấy số dư ví
+app.get("/api/wallet/balance", async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User ID is required" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    return res.json({
+      success: true,
+      balance: user.wallet?.balance || 0,
+    });
+  } catch (error) {
+    console.error("Error fetching wallet balance:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// Lấy lịch sử giao dịch
+app.get("/api/wallet/transactions", async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User ID is required" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    return res.json({
+      success: true,
+      transactions: user.wallet?.transactions || [],
+    });
+  } catch (error) {
+    console.error("Error fetching transactions:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 // Cuối cùng là route catch-all
 app.get("*", (req, res) => {
   // Bỏ khai báo userAgent vì không cần thiết nữa
