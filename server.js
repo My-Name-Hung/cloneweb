@@ -1,7 +1,9 @@
 import { Buffer } from "buffer";
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import session from "express-session";
 import fs from "fs";
 import https from "https";
 import mongoose from "mongoose";
@@ -17,11 +19,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Access environment variables safely
-const PORT = process.env?.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 const SERVER_URL =
-  process.env?.SERVER_URL || "https://cloneweb-uhw9.onrender.com";
+  process.env.SERVER_URL || "https://cloneweb-uhw9.onrender.com";
 const MONGODB_URI =
-  process.env?.MONGODB_URI || "mongodb://localhost:27017/cloneapp";
+  process.env.MONGODB_URI ||
+  "mongodb+srv://khoa123:khoa123@cluster0.mviqmke.mongodb.net/LendingApp";
+
+// Đặt NODE_ENV thành 'development' mặc định nếu không được đặt
+const NODE_ENV = process.env.NODE_ENV || "development";
+console.log(`Server running in ${NODE_ENV} mode`);
 
 const app = express();
 
@@ -80,6 +87,17 @@ app.use(express.json({ limit: "50mb" })); // Increase limit for base64 images
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(express.static(path.join(__dirname, "dist")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(cookieParser()); // For parsing cookies
+
+// Session middleware
+app.use(
+  session({
+    secret: "admin-secret-key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false, maxAge: 86400000 }, // 24 hours
+  })
+);
 
 // Connect to MongoDB
 mongoose
@@ -283,40 +301,84 @@ const Admin = mongoose.model("Admin", adminSchema);
 // Middleware đảm bảo user là admin
 const isAdmin = async (req, res, next) => {
   try {
+    // Sử dụng cookie có sẵn
+    const adminCookie = req.cookies && req.cookies.adminToken;
+
     // Lấy bearer token từ header Authorization
     const authHeader = req.headers.authorization;
+    let token = null;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      // Nếu không có token, kiểm tra session
-      if (req.session && req.session.admin) {
-        req.admin = req.session.admin;
-        return next();
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    }
+
+    // Kiểm tra session admin
+    if (req.session && req.session.admin) {
+      console.log("Admin authenticated via session");
+      req.admin = req.session.admin;
+      return next();
+    }
+
+    // Kiểm tra cookie
+    if (adminCookie) {
+      try {
+        // Giả sử cookie chứa username
+        const admin = await Admin.findOne({ username: adminCookie });
+        if (admin) {
+          console.log("Admin authenticated via cookie");
+          req.admin = {
+            id: admin._id,
+            username: admin.username,
+            role: admin.role,
+          };
+          return next();
+        }
+      } catch (cookieErr) {
+        console.error("Cookie authentication error:", cookieErr);
       }
-
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized - No authentication token provided",
-      });
     }
 
-    const token = authHeader.split(" ")[1];
+    // Kiểm tra token từ username/password trong header
+    if (token) {
+      // Basic auth (cho trường hợp đơn giản)
+      try {
+        // Giải mã token base64 - Format: "username:password"
+        const credentials = Buffer.from(token, "base64").toString();
+        const [username, password] = credentials.split(":");
 
-    // Xác thực token và lấy thông tin admin
-    // Trong trường hợp này, chỉ cần kiểm tra session hoặc cơ chế xác thực bạn đang sử dụng
+        const admin = await Admin.findOne({ username });
 
-    // Tìm admin từ token - Đây là giải pháp đơn giản, trong production nên sử dụng JWT
-    const admin = await Admin.findById(token).select("-password");
-
-    if (!admin) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized - Invalid admin token",
-      });
+        if (admin && admin.password === password) {
+          console.log("Admin authenticated via basic auth token");
+          req.admin = {
+            id: admin._id,
+            username: admin.username,
+            role: admin.role,
+          };
+          return next();
+        }
+      } catch (tokenErr) {
+        console.error("Token auth error:", tokenErr);
+      }
     }
 
-    // Gán thông tin admin vào request
-    req.admin = admin;
-    next();
+    // Nếu không có xác thực nào thành công, cho phép truy cập nếu là môi trường phát triển
+    if (NODE_ENV === "development") {
+      console.log("Development mode: bypassing admin authentication");
+      req.admin = {
+        id: "dev-admin",
+        username: "dev-admin",
+        role: "superadmin",
+      };
+      return next();
+    }
+
+    // Nếu tất cả các phương thức xác thực đều thất bại, trả về lỗi 401
+    console.log("Admin authentication failed");
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized - Authentication failed",
+    });
   } catch (error) {
     console.error("Admin authentication error:", error);
     return res.status(500).json({
@@ -1219,105 +1281,123 @@ app.post("/api/admin/login", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Find admin by username
+    // Kiểm tra thông tin đăng nhập
     const admin = await Admin.findOne({ username });
 
-    // Validate admin and password
     if (!admin || admin.password !== password) {
+      console.log("Admin login failed for username:", username);
       return res.status(401).json({
         success: false,
-        message: "Tên đăng nhập hoặc mật khẩu không đúng!",
+        message: "Tên đăng nhập hoặc mật khẩu không chính xác",
       });
     }
 
-    // Create token - simple Base64 encoding for demo
-    // In production, use JWT with proper signing
-    const token = Buffer.from(`${username}:${password}`).toString("base64");
+    // Lưu thông tin admin vào session
+    req.session.admin = {
+      id: admin._id,
+      username: admin.username,
+      role: admin.role,
+    };
 
-    // Return admin info and token (without password)
+    // Tạo cookie với thông tin admin để dùng sau này
+    res.cookie("adminToken", admin.username, {
+      maxAge: 86400000, // 24 hours
+      httpOnly: true,
+      sameSite: "strict",
+      path: "/",
+    });
+
+    console.log("Admin login successful for:", username);
+
     return res.json({
       success: true,
+      message: "Đăng nhập thành công",
       admin: {
         id: admin._id,
         username: admin.username,
         role: admin.role,
       },
-      token,
     });
   } catch (error) {
     console.error("Admin login error:", error);
     return res.status(500).json({
       success: false,
-      message: "Đã xảy ra lỗi khi đăng nhập!",
+      message: "Lỗi server, vui lòng thử lại sau",
     });
   }
 });
 
-// Dashboard statistics
+// Admin Dashboard API
 app.get("/api/admin/dashboard", isAdmin, async (req, res) => {
   try {
-    // Get loan statistics
-    const totalLoans = await Contract.countDocuments();
-    const totalUsers = await User.countDocuments();
+    // Đếm tổng số người dùng
+    const userCount = await User.countDocuments();
 
-    // Calculate total loan amount
-    const contracts = await Contract.find();
+    // Đếm tổng số hợp đồng
+    const loanCount = await Contract.countDocuments();
+
+    // Đếm số hợp đồng theo trạng thái
+    const pendingLoans = await Contract.countDocuments({ status: "pending" });
+    const approvedLoans = await Contract.countDocuments({ status: "approved" });
+    const rejectedLoans = await Contract.countDocuments({ status: "rejected" });
+    const disbursedLoans = await Contract.countDocuments({
+      status: "disbursed",
+    });
+    const completedLoans = await Contract.countDocuments({
+      status: "completed",
+    });
+
+    // Tính tổng giá trị các hợp đồng
+    const loans = await Contract.find({}, "loanAmount");
     let totalLoanAmount = 0;
 
-    contracts.forEach((contract) => {
-      // Clean up the loan amount format (removing dots and commas)
-      const cleanAmount = contract.loanAmount
-        .replace(/\./g, "")
-        .replace(/,/g, "");
-      const amount = parseFloat(cleanAmount);
-      if (!isNaN(amount)) {
-        totalLoanAmount += amount;
+    loans.forEach((loan) => {
+      // Xử lý loanAmount có thể là chuỗi với định dạng như "500.000.000 đ"
+      if (loan.loanAmount) {
+        // Loại bỏ tất cả các ký tự không phải số
+        const numericValue = loan.loanAmount.replace(/[^\d]/g, "");
+        if (numericValue) {
+          totalLoanAmount += parseInt(numericValue, 10);
+        }
       }
     });
 
-    // Calculate interest based on 1% monthly (simplified)
-    const totalInterestAmount = contracts.reduce((sum, contract) => {
-      const cleanAmount = contract.loanAmount
-        .replace(/\./g, "")
-        .replace(/,/g, "");
-      const amount = parseFloat(cleanAmount);
-      const term = parseInt(contract.loanTerm);
-
-      if (!isNaN(amount) && !isNaN(term)) {
-        // Assuming 1% monthly interest
-        return sum + amount * 0.01 * term;
-      }
-      return sum;
-    }, 0);
-
-    // Recent loans (last 10)
-    const recentLoans = await Contract.find()
+    // Lấy 5 người dùng mới nhất
+    const recentUsers = await User.find()
+      .select("phone fullName hasVerifiedDocuments createdAt")
       .sort({ createdAt: -1 })
-      .limit(10)
-      .populate("userId", "phone fullName");
+      .limit(5);
 
-    res.status(200).json({
+    // Lấy 5 hợp đồng mới nhất
+    const recentLoans = await Contract.find()
+      .populate("userId", "phone fullName")
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    // Lấy cài đặt lãi suất hiện tại
+    const settings = await Settings.findOne();
+
+    return res.json({
       success: true,
       stats: {
-        totalLoans,
-        totalUsers,
+        userCount,
+        loanCount,
+        loanStats: {
+          pending: pendingLoans,
+          approved: approvedLoans,
+          rejected: rejectedLoans,
+          disbursed: disbursedLoans,
+          completed: completedLoans,
+        },
         totalLoanAmount,
-        totalInterestAmount,
-        recentLoans: recentLoans.map((loan) => ({
-          id: loan._id,
-          contractId: loan.contractId,
-          loanAmount: loan.loanAmount,
-          loanTerm: loan.loanTerm,
-          createdDate: loan.createdDate,
-          userName: loan.userId
-            ? loan.userId.fullName || loan.userId.phone
-            : "Unknown",
-        })),
+        currentInterestRate: settings ? settings.interestRate : 0.12,
       },
+      recentUsers,
+      recentLoans,
     });
   } catch (error) {
-    console.error("Dashboard stats error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Dashboard data fetch error:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
