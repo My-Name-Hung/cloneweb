@@ -1764,74 +1764,69 @@ app.put("/api/admin/loans/:loanId/approve", isAdmin, async (req, res) => {
   try {
     const { loanId } = req.params;
 
-    // Find the loan contract
+    // Tìm hợp đồng vay
     const loan = await Contract.findById(loanId);
-
     if (!loan) {
       return res.status(404).json({
         success: false,
-        message: "Không tìm thấy hợp đồng vay!",
+        message: "Không tìm thấy hợp đồng vay",
       });
     }
 
-    // Update loan status to approved
+    // Cập nhật trạng thái hợp đồng
     loan.status = "approved";
     loan.approvedDate = new Date();
     loan.approvedBy = req.admin.id;
-
     await loan.save();
 
-    // Find the user who created this loan
-    const user = await User.findById(loan.userId);
+    // Xử lý số tiền vay thành số
+    const loanAmount = parseFloat(loan.loanAmount.replace(/[^\d]/g, ""));
 
-    if (user) {
-      // Update user's wallet balance
-      if (!user.wallet) {
-        user.wallet = {
-          balance: 0,
-          transactions: [],
-        };
-      }
-
-      // Add loan amount to user's wallet
-      const previousBalance = user.wallet.balance || 0;
-      user.wallet.balance = previousBalance + loan.loanAmount;
-
-      // Add transaction record
-      user.wallet.transactions.push({
-        type: "deposit",
-        amount: loan.loanAmount,
-        description: `Tiền vay được phê duyệt - Mã hợp đồng: ${loan.contractId}`,
-        date: new Date(),
-      });
-
-      await user.save();
-
-      // Create notification for user
-      await Notification.create({
-        userId: user._id,
-        title: "Hợp đồng vay đã được phê duyệt",
-        message: `Hợp đồng vay của bạn với mã ${
-          loan.contractId
-        } đã được phê duyệt. Số tiền ${loan.loanAmount.toLocaleString(
-          "vi-VN"
-        )} VNĐ đã được chuyển vào ví của bạn.`,
-        type: "loan_approved",
-        isRead: false,
-        createdAt: new Date(),
-      });
+    // Tìm hoặc tạo ví cho user
+    let wallet = await Wallet.findOne({ userId: loan.userId });
+    if (!wallet) {
+      wallet = new Wallet({ userId: loan.userId, balance: 0 });
     }
+
+    // Cập nhật số dư ví
+    wallet.balance += loanAmount;
+
+    // Thêm giao dịch vào lịch sử
+    wallet.transactions.push({
+      type: "loan_approved",
+      amount: loanAmount,
+      description: `Khoản vay #${loan.contractId} được phê duyệt`,
+      createdAt: new Date(),
+    });
+
+    await wallet.save();
+
+    // Tạo thông báo cho user
+    const notification = new Notification({
+      userId: loan.userId,
+      title: "Khoản vay được phê duyệt",
+      message: `Khoản vay của bạn đã được phê duyệt với số tiền ${loanAmount.toLocaleString(
+        "vi-VN"
+      )} VNĐ`,
+      type: "loan_approved",
+      isRead: false,
+      createdAt: new Date(),
+    });
+
+    await notification.save();
 
     return res.json({
       success: true,
-      message: "Hợp đồng vay đã được phê duyệt thành công!",
+      message: "Hợp đồng vay đã được phê duyệt thành công",
       loan,
+      wallet,
+      notification,
     });
   } catch (error) {
     console.error("Error approving loan:", error);
     return res.status(500).json({
       success: false,
-      message: "Đã xảy ra lỗi khi phê duyệt hợp đồng vay!",
+      message: "Lỗi khi phê duyệt hợp đồng vay",
     });
   }
 });
@@ -2237,6 +2232,43 @@ app.delete("/api/admin/loans/:loanId", isAdmin, async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Lỗi khi xóa hợp đồng vay",
+    });
+  }
+});
+
+// Thêm endpoint tạo thông báo
+app.post("/api/notifications", async (req, res) => {
+  try {
+    const { userId, title, message, type } = req.body;
+
+    if (!userId || !title || !message) {
+      return res.status(400).json({
+        success: false,
+        message: "Thiếu thông tin cần thiết",
+      });
+    }
+
+    const notification = new Notification({
+      userId,
+      title,
+      message,
+      type,
+      isRead: false,
+      createdAt: new Date(),
+    });
+
+    await notification.save();
+
+    return res.json({
+      success: true,
+      message: "Đã tạo thông báo thành công",
+      notification,
+    });
+  } catch (error) {
+    console.error("Error creating notification:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi tạo thông báo",
     });
   }
 });
