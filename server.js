@@ -147,6 +147,8 @@ const userSchema = new mongoose.Schema({
     address: String,
     contactPerson: String,
     relationship: String,
+    idCardFrontImage: String,
+    idCardBackImage: String,
   },
   bankInfo: {
     accountNumber: String,
@@ -1209,33 +1211,67 @@ app.post("/api/admin/users", isAdmin, async (req, res) => {
 app.put("/api/admin/users/:userId", isAdmin, async (req, res) => {
   try {
     const { userId } = req.params;
-    const updateData = req.body;
+    const userData = req.body;
 
-    // Remove fields that shouldn't be updated directly
-    const safeUpdate = { ...updateData };
-    delete safeUpdate._id;
-    delete safeUpdate.createdAt;
-
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { $set: safeUpdate },
-      { new: true }
-    );
-
+    const user = await User.findById(userId);
     if (!user) {
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
     }
 
-    res.status(200).json({
+    // Cập nhật thông tin cơ bản
+    if (userData.fullName) user.fullName = userData.fullName;
+    if (userData.phone) user.phone = userData.phone;
+    if (userData.email) user.email = userData.email;
+
+    // Cập nhật thông tin cá nhân
+    if (userData.personalInfo) {
+      if (!user.personalInfo) user.personalInfo = {};
+
+      if (userData.personalInfo.idNumber)
+        user.personalInfo.idNumber = userData.personalInfo.idNumber;
+      if (userData.personalInfo.dob)
+        user.personalInfo.dob = userData.personalInfo.dob;
+      if (userData.personalInfo.gender)
+        user.personalInfo.gender = userData.personalInfo.gender;
+      if (userData.personalInfo.address)
+        user.personalInfo.address = userData.personalInfo.address;
+    }
+
+    // Cập nhật thông tin ngân hàng
+    if (userData.bankInfo) {
+      if (!user.bankInfo) user.bankInfo = {};
+
+      if (userData.bankInfo.bank) user.bankInfo.bank = userData.bankInfo.bank;
+      if (userData.bankInfo.accountNumber)
+        user.bankInfo.accountNumber = userData.bankInfo.accountNumber;
+      if (userData.bankInfo.accountName)
+        user.bankInfo.accountName = userData.bankInfo.accountName;
+    }
+
+    await user.save();
+
+    // Tạo thông báo cho người dùng
+    const notification = new Notification({
+      userId: user._id,
+      title: "Thông tin của bạn đã được cập nhật",
+      message:
+        "Quản trị viên đã cập nhật thông tin của bạn. Vui lòng kiểm tra lại thông tin cá nhân.",
+      isRead: false,
+      createdAt: new Date(),
+    });
+
+    await notification.save();
+
+    return res.json({
       success: true,
-      message: "User updated successfully",
+      message: "User information updated successfully",
       user,
     });
   } catch (error) {
-    console.error("Update user error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Error updating user information:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
@@ -1606,6 +1642,138 @@ app.put("/api/admin/loans/:loanId/reject", isAdmin, async (req, res) => {
       success: false,
       message: "Đã xảy ra lỗi khi từ chối hợp đồng vay!",
     });
+  }
+});
+
+// Upload CMND/CCCD mặt trước
+app.post(
+  "/api/verification/id-card/front",
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const { userId } = req.query;
+      if (!userId) {
+        return res
+          .status(400)
+          .json({ success: false, message: "User ID is required" });
+      }
+
+      // Kiểm tra file có tồn tại không
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ success: false, message: "No image file uploaded" });
+      }
+
+      // Lấy đường dẫn ảnh
+      const idCardFrontPath = `/uploads/documents/${req.file.filename}`;
+
+      // Cập nhật vào database
+      const user = await User.findById(userId);
+      if (!user) {
+        return res
+          .status(404)
+          .json({ success: false, message: "User not found" });
+      }
+
+      if (!user.personalInfo) {
+        user.personalInfo = {};
+      }
+
+      user.personalInfo.idCardFrontImage = idCardFrontPath;
+      await user.save();
+
+      return res.json({
+        success: true,
+        message: "ID card front image uploaded successfully",
+        imageUrl: idCardFrontPath,
+      });
+    } catch (error) {
+      console.error("Error uploading ID card front image:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+);
+
+// Upload CMND/CCCD mặt sau
+app.post(
+  "/api/verification/id-card/back",
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const { userId } = req.query;
+      if (!userId) {
+        return res
+          .status(400)
+          .json({ success: false, message: "User ID is required" });
+      }
+
+      // Kiểm tra file có tồn tại không
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ success: false, message: "No image file uploaded" });
+      }
+
+      // Lấy đường dẫn ảnh
+      const idCardBackPath = `/uploads/documents/${req.file.filename}`;
+
+      // Cập nhật vào database
+      const user = await User.findById(userId);
+      if (!user) {
+        return res
+          .status(404)
+          .json({ success: false, message: "User not found" });
+      }
+
+      if (!user.personalInfo) {
+        user.personalInfo = {};
+      }
+
+      user.personalInfo.idCardBackImage = idCardBackPath;
+      await user.save();
+
+      return res.json({
+        success: true,
+        message: "ID card back image uploaded successfully",
+        imageUrl: idCardBackPath,
+      });
+    } catch (error) {
+      console.error("Error uploading ID card back image:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+);
+
+// Lấy thông tin CMND/CCCD của người dùng
+app.get("/api/users/:userId/id-card", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    if (!user.personalInfo) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Personal info not found" });
+    }
+
+    const idCardInfo = {
+      frontImage: user.personalInfo.idCardFrontImage || null,
+      backImage: user.personalInfo.idCardBackImage || null,
+      idNumber: user.personalInfo.idNumber || null,
+      fullName: user.fullName || null,
+    };
+
+    return res.json({ success: true, idCardInfo });
+  } catch (error) {
+    console.error("Error fetching ID card info:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
