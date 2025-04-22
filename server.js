@@ -340,22 +340,26 @@ const isAdmin = async (req, res, next) => {
 
     // Kiểm tra token từ username/password trong header
     if (token) {
-      // Basic auth (cho trường hợp đơn giản)
       try {
         // Giải mã token base64 - Format: "username:password"
         const credentials = Buffer.from(token, "base64").toString();
         const [username, password] = credentials.split(":");
 
-        const admin = await Admin.findOne({ username });
+        console.log(`Attempting to authenticate with username: ${username}`);
+
+        // Tìm admin theo username, KHÔNG phải theo token như ID
+        const admin = await Admin.findOne({ username: username });
 
         if (admin && admin.password === password) {
-          console.log("Admin authenticated via basic auth token");
+          console.log("Admin authenticated via token");
           req.admin = {
             id: admin._id,
             username: admin.username,
             role: admin.role,
           };
           return next();
+        } else {
+          console.log("Admin authentication failed: invalid credentials");
         }
       } catch (tokenErr) {
         console.error("Token auth error:", tokenErr);
