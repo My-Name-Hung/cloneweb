@@ -2070,57 +2070,127 @@ app.put("/api/notifications/:notificationId/read", async (req, res) => {
   }
 });
 
-// Lấy số dư ví
-app.get("/api/wallet/balance", async (req, res) => {
+// Thêm Schema cho Wallet
+const walletSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  balance: {
+    type: Number,
+    default: 0,
+  },
+  transactions: [
+    {
+      type: {
+        type: String,
+        enum: ["deposit", "withdraw", "loan_approved", "loan_rejected"],
+        required: true,
+      },
+      amount: {
+        type: Number,
+        required: true,
+      },
+      description: String,
+      createdAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
+});
+
+const Wallet = mongoose.model("Wallet", walletSchema);
+
+// API cập nhật số dư ví
+app.post("/api/wallet/update-balance", async (req, res) => {
   try {
-    const userId = req.query.userId;
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User ID is required" });
+    const { userId, amount, type, description } = req.body;
+
+    // Tìm hoặc tạo ví cho user
+    let wallet = await Wallet.findOne({ userId });
+    if (!wallet) {
+      wallet = new Wallet({ userId, balance: 0 });
     }
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+    // Cập nhật số dư
+    if (type === "LOAN_APPROVED") {
+      wallet.balance += parseFloat(amount);
+    } else if (type === "LOAN_REJECTED") {
+      wallet.balance = 0;
     }
+
+    // Thêm giao dịch vào lịch sử
+    wallet.transactions.push({
+      type: type.toLowerCase(),
+      amount: parseFloat(amount),
+      description,
+    });
+
+    await wallet.save();
 
     return res.json({
       success: true,
-      balance: user.wallet?.balance || 0,
+      message: "Cập nhật số dư thành công",
+      balance: wallet.balance,
     });
   } catch (error) {
-    console.error("Error fetching wallet balance:", error);
-    return res.status(500).json({ success: false, message: "Server error" });
+    console.error("Error updating wallet balance:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi cập nhật số dư",
+    });
   }
 });
 
-// Lấy lịch sử giao dịch
-app.get("/api/wallet/transactions", async (req, res) => {
+// API lấy số dư ví
+app.get("/api/wallet/balance", async (req, res) => {
   try {
-    const userId = req.query.userId;
+    const { userId } = req.query;
     if (!userId) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User ID is required" });
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
     }
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
-
+    const wallet = await Wallet.findOne({ userId });
     return res.json({
       success: true,
-      transactions: user.wallet?.transactions || [],
+      balance: wallet ? wallet.balance : 0,
+    });
+  } catch (error) {
+    console.error("Error fetching wallet balance:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi lấy số dư ví",
+    });
+  }
+});
+
+// API lấy lịch sử giao dịch
+app.get("/api/wallet/transactions", async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
+    const wallet = await Wallet.findOne({ userId });
+    return res.json({
+      success: true,
+      transactions: wallet ? wallet.transactions : [],
     });
   } catch (error) {
     console.error("Error fetching transactions:", error);
-    return res.status(500).json({ success: false, message: "Server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi lấy lịch sử giao dịch",
+    });
   }
 });
 
