@@ -280,9 +280,86 @@ const adminSchema = new mongoose.Schema({
 
 const Admin = mongoose.model("Admin", adminSchema);
 
+// Middleware đảm bảo user là admin
+const isAdmin = async (req, res, next) => {
+  try {
+    // Lấy bearer token từ header Authorization
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      // Nếu không có token, kiểm tra session
+      if (req.session && req.session.admin) {
+        req.admin = req.session.admin;
+        return next();
+      }
+
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized - No authentication token provided",
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    // Xác thực token và lấy thông tin admin
+    // Trong trường hợp này, chỉ cần kiểm tra session hoặc cơ chế xác thực bạn đang sử dụng
+
+    // Tìm admin từ token - Đây là giải pháp đơn giản, trong production nên sử dụng JWT
+    const admin = await Admin.findById(token).select("-password");
+
+    if (!admin) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized - Invalid admin token",
+      });
+    }
+
+    // Gán thông tin admin vào request
+    req.admin = admin;
+    next();
+  } catch (error) {
+    console.error("Admin authentication error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error during authentication",
+    });
+  }
+};
+
+// Notification Schema
+const notificationSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  title: {
+    type: String,
+    required: true,
+  },
+  message: {
+    type: String,
+    required: true,
+  },
+  type: {
+    type: String,
+    default: "general",
+  },
+  isRead: {
+    type: Boolean,
+    default: false,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+const Notification = mongoose.model("Notification", notificationSchema);
+
 // Thêm model Settings cho lãi suất vay
 const settingsSchema = new mongoose.Schema({
-  interestRate: { type: Number, default: 0.12 }, // 1% mặc định
+  interestRate: { type: Number, default: 0.12 }, // 12% mặc định
   maxLoanAmount: { type: Number, default: 500000000 }, // 100 triệu mặc định
   maxLoanTerm: { type: Number, default: 36 }, // 36 tháng mặc định
   createdAt: { type: Date, default: Date.now },
@@ -429,47 +506,6 @@ const createDefaultAdmin = async () => {
 };
 
 createDefaultAdmin();
-
-// Admin authentication middleware
-const isAdmin = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ success: false, message: "Unauthorized" });
-  }
-
-  const token = authHeader.split(" ")[1];
-
-  // For simplicity, we'll use a basic token verification
-  // In production, use JWT or similar
-  try {
-    // Basic verification - in production use JWT
-    const [username, password] = Buffer.from(token, "base64")
-      .toString()
-      .split(":");
-
-    const admin = await Admin.findOne({ username });
-
-    if (!admin || admin.password !== password) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid credentials" });
-    }
-
-    req.admin = {
-      id: admin._id,
-      username: admin.username,
-      role: admin.role,
-    };
-
-    next();
-  } catch (error) {
-    console.error("Admin authentication error:", error);
-    return res
-      .status(401)
-      .json({ success: false, message: "Authentication failed" });
-  }
-};
 
 // API Routes
 // Sign Up
