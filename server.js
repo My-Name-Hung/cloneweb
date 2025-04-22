@@ -2194,6 +2194,53 @@ app.get("/api/wallet/transactions", async (req, res) => {
   }
 });
 
+// API endpoint để xóa hợp đồng vay
+app.delete("/api/admin/loans/:loanId", isAdmin, async (req, res) => {
+  try {
+    const { loanId } = req.params;
+
+    // Tìm hợp đồng vay
+    const loan = await Contract.findById(loanId);
+    if (!loan) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy hợp đồng vay",
+      });
+    }
+
+    // Kiểm tra trạng thái hợp đồng
+    if (loan.status === "approved") {
+      return res.status(400).json({
+        success: false,
+        message: "Không thể xóa hợp đồng đã được phê duyệt",
+      });
+    }
+
+    // Xóa hợp đồng
+    await Contract.findByIdAndDelete(loanId);
+
+    // Gửi thông báo cho user
+    await Notification.create({
+      userId: loan.userId,
+      title: "Hợp đồng vay đã bị xóa",
+      message: `Hợp đồng vay #${loan.contractId} đã bị xóa khỏi hệ thống.`,
+      type: "loan_deleted",
+      isRead: false,
+    });
+
+    return res.json({
+      success: true,
+      message: "Đã xóa hợp đồng vay thành công",
+    });
+  } catch (error) {
+    console.error("Error deleting loan:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi xóa hợp đồng vay",
+    });
+  }
+});
+
 // Cuối cùng là route catch-all
 app.get("*", (req, res) => {
   // Bỏ khai báo userAgent vì không cần thiết nữa
