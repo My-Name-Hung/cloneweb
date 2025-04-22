@@ -423,85 +423,57 @@ const notificationSchema = new mongoose.Schema({
 
 const Notification = mongoose.model("Notification", notificationSchema);
 
-// Thêm model Settings cho lãi suất vay
+// Settings Schema
 const settingsSchema = new mongoose.Schema({
-  interestRate: { type: Number, default: 0.12 }, // 12% mặc định
-  maxLoanAmount: { type: Number, default: 500000000 }, // 100 triệu mặc định
-  maxLoanTerm: { type: Number, default: 36 }, // 36 tháng mặc định
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-});
-
-settingsSchema.pre("save", function (next) {
-  this.updatedAt = Date.now();
-  next();
+  interestRate: {
+    type: Number,
+    default: 0.01, // 1% mặc định
+  },
+  maxLoanAmount: {
+    type: Number,
+    default: 500000000,
+  },
+  maxLoanTerm: {
+    type: Number,
+    default: 36,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const Settings = mongoose.model("Settings", settingsSchema);
 
-// Tạo settings mặc định nếu chưa có
-const createDefaultSettings = async () => {
+// Khởi tạo settings mặc định nếu chưa có
+const initializeSettings = async () => {
   try {
-    const settingsExists = await Settings.findOne();
-    if (!settingsExists) {
-      const settings = new Settings({
-        interestRate: 0.12, // 12% mặc định
-        maxLoanAmount: 100000000, // 100 triệu mặc định
-        maxLoanTerm: 36, // 36 tháng mặc định
+    const settings = await Settings.findOne();
+    if (!settings) {
+      await Settings.create({
+        interestRate: 0.01,
+        maxLoanAmount: 500000000,
+        maxLoanTerm: 36,
       });
-      await settings.save();
-      console.log("Default settings created successfully");
+      console.log("Default settings initialized");
     }
   } catch (error) {
-    console.error("Error creating default settings:", error);
+    console.error("Error initializing settings:", error);
   }
 };
 
-createDefaultSettings();
+initializeSettings();
 
-// Cập nhật lãi suất mặc định
-app.put("/api/admin/settings/interest-rate", isAdmin, async (req, res) => {
-  try {
-    const { rate } = req.body;
-
-    if (!rate || isNaN(parseFloat(rate))) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid interest rate" });
-    }
-
-    // Lấy hoặc tạo settings mới nếu chưa có
-    let settings = await Settings.findOne();
-    if (!settings) {
-      settings = new Settings({
-        interestRate: parseFloat(rate),
-      });
-    } else {
-      settings.interestRate = parseFloat(rate);
-    }
-
-    await settings.save();
-
-    return res.json({
-      success: true,
-      message: "Interest rate updated successfully",
-      interestRate: settings.interestRate,
-    });
-  } catch (error) {
-    console.error("Error updating interest rate:", error);
-    return res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-// Lấy lãi suất và các cài đặt khác
+// API lấy settings
 app.get("/api/settings", async (req, res) => {
   try {
     let settings = await Settings.findOne();
-
-    // Nếu không có settings, tạo mặc định
     if (!settings) {
-      settings = new Settings();
-      await settings.save();
+      settings = await Settings.create({
+        interestRate: 0.01,
+        maxLoanAmount: 500000000,
+        maxLoanTerm: 36,
+      });
     }
 
     return res.json({
@@ -514,11 +486,14 @@ app.get("/api/settings", async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching settings:", error);
-    return res.status(500).json({ success: false, message: "Server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi lấy cài đặt",
+    });
   }
 });
 
-// Cập nhật tất cả cài đặt
+// API cập nhật settings (Admin only)
 app.put("/api/admin/settings", isAdmin, async (req, res) => {
   try {
     const { interestRate, maxLoanAmount, maxLoanTerm } = req.body;
@@ -528,28 +503,30 @@ app.put("/api/admin/settings", isAdmin, async (req, res) => {
       settings = new Settings();
     }
 
-    if (interestRate !== undefined && !isNaN(parseFloat(interestRate))) {
+    if (interestRate !== undefined) {
       settings.interestRate = parseFloat(interestRate);
     }
-
-    if (maxLoanAmount !== undefined && !isNaN(parseInt(maxLoanAmount))) {
+    if (maxLoanAmount !== undefined) {
       settings.maxLoanAmount = parseInt(maxLoanAmount);
     }
-
-    if (maxLoanTerm !== undefined && !isNaN(parseInt(maxLoanTerm))) {
+    if (maxLoanTerm !== undefined) {
       settings.maxLoanTerm = parseInt(maxLoanTerm);
     }
 
+    settings.updatedAt = new Date();
     await settings.save();
 
     return res.json({
       success: true,
-      message: "Settings updated successfully",
+      message: "Cập nhật cài đặt thành công",
       settings,
     });
   } catch (error) {
     console.error("Error updating settings:", error);
-    return res.status(500).json({ success: false, message: "Server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi cập nhật cài đặt",
+    });
   }
 });
 
