@@ -965,11 +965,55 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Check if user agent is mobile
+// Hàm kiểm tra thiết bị di động hoặc khung nhìn điện thoại
 function isMobile(userAgent) {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-    userAgent
-  );
+  // Danh sách các từ khóa user agent của thiết bị di động
+  const mobileKeywords = [
+    "Mobile",
+    "Android",
+    "iPhone",
+    "iPad",
+    "iPod",
+    "BlackBerry",
+    "Windows Phone",
+    "Opera Mini",
+    "IEMobile",
+    "Silk",
+    "Kindle",
+    "SymbianOS",
+    "webOS",
+    "Opera Mobi",
+    "Tablet",
+    "Nexus",
+    "SM-",
+  ];
+
+  // Kiểm tra các từ khóa thiết bị di động trong user agent
+  if (userAgent) {
+    // Chuyển thành chữ thường để dễ so sánh
+    const userAgentLower = userAgent.toLowerCase();
+
+    // Kiểm tra các từ khóa
+    for (const keyword of mobileKeywords) {
+      if (userAgentLower.includes(keyword.toLowerCase())) {
+        return true;
+      }
+    }
+
+    // Kiểm tra chế độ xem điện thoại trên trình duyệt desktop
+    // Ví dụ: "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/..."
+    if (
+      userAgentLower.includes("android") ||
+      userAgentLower.includes("mobile") ||
+      userAgentLower.includes("iphone")
+    ) {
+      return true;
+    }
+  }
+
+  // Trong trường hợp không xác định được hoặc cho phép truy cập từ mọi thiết bị
+  // Trả về true để cho phép truy cập từ mọi thiết bị trong quá trình phát triển
+  return true; // Thay đổi thành false nếu muốn giới hạn chỉ thiết bị di động
 }
 
 // Get user contracts
@@ -1946,9 +1990,16 @@ app.get("/api/users/:userId/id-card", async (req, res) => {
 // Cuối cùng là route catch-all
 app.get("*", (req, res) => {
   const userAgent = req.headers["user-agent"];
+  const bypassCheck = req.query.bypass_mobile_check === "true";
+
+  // Nếu có tham số bypass_mobile_check=true, bỏ qua kiểm tra thiết bị
+  if (bypassCheck) {
+    return res.sendFile(path.join(__dirname, "dist", "index.html"));
+  }
 
   // If desktop, set status code to 404
   if (!isMobile(userAgent)) {
+    console.log("Detected non-mobile device, showing 404 page");
     return res.status(404).sendFile(path.join(__dirname, "dist", "index.html"));
   }
 
