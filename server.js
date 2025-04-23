@@ -1703,7 +1703,7 @@ app.get("/api/admin/settings", isAdmin, async (req, res) => {
     // Create a settings collection to store system settings
     const settings = {
       interestRate: "1%", // Default interest rate
-      maxLoanAmount: "100000000",
+      maxLoanAmount: "500000000",
       maxLoanTerm: "36",
       // Add more settings as needed
     };
@@ -2247,6 +2247,44 @@ app.post("/api/notifications", async (req, res) => {
       success: false,
       message: "Lỗi khi tạo thông báo",
     });
+  }
+});
+
+// Delete all users
+app.delete("/api/admin/users", isAdmin, async (req, res) => {
+  try {
+    // Delete all users
+    await User.deleteMany({});
+
+    // Delete all related documents
+    await Document.deleteMany({});
+
+    // Delete all related contracts
+    await Contract.deleteMany({});
+
+    res.status(200).json({
+      success: true,
+      message: "All users and associated data deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete all users error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// Delete all loans
+app.delete("/api/admin/loans", isAdmin, async (req, res) => {
+  try {
+    // Delete all non-approved loans
+    await Contract.deleteMany({ status: { $ne: "approved" } });
+
+    res.status(200).json({
+      success: true,
+      message: "All non-approved loans deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete all loans error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
