@@ -26,6 +26,11 @@ const LoanConfirmation = () => {
   const [showSignatureReview, setShowSignatureReview] = useState(false);
   const [showCompletedScreen, setShowCompletedScreen] = useState(false);
   const [contractInfo, setContractInfo] = useState(null);
+  const [settings, setSettings] = useState({
+    interestRate: 0.01,
+    maxLoanAmount: 500000000,
+    maxLoanTerm: 36,
+  });
 
   const sigCanvasRef = useRef(null);
 
@@ -94,6 +99,22 @@ const LoanConfirmation = () => {
     }
   }, [user, location]);
 
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const response = await axios.get(`${API_URL}/api/settings`);
+        if (response.data.success) {
+          setSettings(response.data.settings);
+        }
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
   const handleBackClick = () => {
     if (showCompletedScreen) {
       return;
@@ -155,7 +176,7 @@ const LoanConfirmation = () => {
   };
 
   const handleContinueToSupport = () => {
-    navigate("/home");
+    navigate("/");
   };
 
   const clearSignature = () => {
@@ -192,11 +213,117 @@ const LoanConfirmation = () => {
 
   const _formattedLoanAmount = formatCurrency(loanData.loanAmount);
 
-  const interestRate = "1%";
   const currentDate = new Date();
   const formattedDate = `08:41 PM ${currentDate.getDate()}/${
     currentDate.getMonth() + 1
   }/${currentDate.getFullYear() + 1}`;
+
+  // Generate loan term options based on settings.maxLoanTerm
+  const generateLoanTermOptions = () => {
+    const terms = [];
+    for (let i = 6; i <= settings.maxLoanTerm; i += 6) {
+      terms.push(i.toString());
+    }
+    return terms;
+  };
+
+  function CustomDropdown({ value, onChange }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+      function handleClickOutside(event) {
+        if (
+          dropdownRef.current &&
+          !dropdownRef.current.contains(event.target)
+        ) {
+          setIsOpen(false);
+        }
+      }
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }, []);
+
+    return (
+      <div
+        className="custom-dropdown"
+        ref={dropdownRef}
+        style={{ position: "relative", width: "40%" }}
+      >
+        <div
+          className="custom-dropdown-header"
+          onClick={() => setIsOpen(!isOpen)}
+          style={{
+            padding: "10px 15px",
+            backgroundColor: "white",
+            borderRadius: "8px",
+            border: "1px solid #ddd",
+            color: "black",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            cursor: "pointer",
+          }}
+        >
+          <span>{value} tháng</span>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7 10l5 5 5-5"
+              stroke="#999"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+
+        {isOpen && (
+          <div
+            className="custom-dropdown-list"
+            style={{
+              position: "absolute",
+              top: "calc(100% + 5px)",
+              left: 0,
+              width: "100%",
+              color: "black",
+              backgroundColor: "white",
+              borderRadius: "8px",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+              zIndex: 9999,
+              border: "1px solid #ddd",
+            }}
+          >
+            {generateLoanTermOptions().map((option) => (
+              <div
+                key={option}
+                className={option === value ? "active" : ""}
+                onClick={() => {
+                  onChange(option);
+                  setIsOpen(false);
+                }}
+                style={{
+                  padding: "10px 15px",
+                  cursor: "pointer",
+                  backgroundColor: option === value ? "#e6f7ff" : "white",
+                  borderBottom: "1px solid #f5f5f5",
+                }}
+              >
+                {option} tháng
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -505,7 +632,9 @@ const LoanConfirmation = () => {
                 </p>
                 <p>
                   <a className="title">Lãi suất vay : </a>
-                  <a className="laisuatvay">{interestRate}</a>{" "}
+                  <a className="laisuatvay">
+                    {settings.interestRate.toFixed()}%
+                  </a>{" "}
                   <a className="laisuatvays">mỗi tháng</a>
                 </p>
               </div>

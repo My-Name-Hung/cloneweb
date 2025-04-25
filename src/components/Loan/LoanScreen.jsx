@@ -51,7 +51,7 @@ const LoanScreen = () => {
             setIsLoading(true);
             setHasError(false);
             // Add a slight delay before navigating to avoid immediate reload
-            setTimeout(() => navigate("/home"), 300);
+            setTimeout(() => navigate("/"), 300);
           }}
         >
           Quay về trang chủ

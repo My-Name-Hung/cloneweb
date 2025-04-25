@@ -168,7 +168,7 @@ const ProfileScreen = () => {
   };
 
   const _handleHomeClick = () => {
-    navigate("/home");
+    navigate("/");
   };
 
   const _handleWalletClick = () => {

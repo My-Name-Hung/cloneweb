@@ -1,0 +1,116 @@
+/* Table Styles */
+.admin-list-container {
+  background-color: white;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.admin-list-header {
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-list-header h1 {
+  font-size: 1.5rem;
+  color: var(--admin-dark);
+  margin: 0;
+}
+
+.add-button {
+  background-color: var(--admin-primary);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 3px;
+  text-decoration: none;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.add-button:hover {
+  background-color: var(--admin-secondary);
+  transform: translateY(-1px);
+}
+
+.admin-filters {
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-search-form {
+  display: flex;
+  flex: 1;
+}
+
+.admin-search-form form {
+  display: flex;
+  width: 100%;
+  max-width: 400px;
+}
+
+.admin-search-form input {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--admin-border);
+  border-right: none;
+  border-radius: 3px 0 0 3px;
+  font-size: 0.9rem;
+}
+
+.admin-search-form button {
+  padding: 0.6rem 1.2rem;
+  background-color: var(--admin-primary);
+  color: white;
+  border: none;
+  border-radius: 0 3px 3px 0;
+  cursor: pointer;
+}
+
+.admin-status-filter select {
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 3px;
+  font-size: 0.9rem;
+  background-color: white;
+}
+
+.admin-table-container {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: var(--admin-dark);
+  white-space: nowrap;
+}
+
+.admin-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.actions-cell {
+  white-space: nowrap;
+}

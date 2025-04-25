@@ -23,9 +23,91 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <title>Ngân hàng MB Quân đội</title>
     <script defer="" src="/static/js/bundle.js"></script>
+    <style>
+      /* CSS cho cảnh báo màn hình lớn */
+      #desktop-warning {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        text-align: center;
+        padding: 20px;
+        display: none; /* Mặc định ẩn */
+      }
+
+      #desktop-warning h1 {
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+
+      #desktop-warning p {
+        font-size: 16px;
+        max-width: 500px;
+        margin-bottom: 20px;
+      }
+
+      #desktop-warning img {
+        max-width: 200px;
+        margin-bottom: 20px;
+      }
+
+      #desktop-warning button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      #desktop-warning button:hover {
+        background-color: #0056b3;
+      }
+
+      /* Chỉ hiển thị cảnh báo khi màn hình lớn hơn 1280px */
+      @media (min-width: 1280px) {
+        #desktop-warning {
+          display: flex;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- Cảnh báo cho màn hình lớn -->
+    <div id="desktop-warning">
+      <img src="./src/assets/logo/mblogo.png" alt="MB Bank Logo" />
+      <h1>Thiết bị không phù hợp</h1>
+      <p>
+        Ứng dụng này được thiết kế cho thiết bị di động hoặc khung nhìn có kích
+        thước nhỏ hơn 1280px.
+      </p>
+      <p>
+        Vui lòng sử dụng thiết bị di động hoặc thu nhỏ cửa sổ trình duyệt để
+        tiếp tục.
+      </p>
+      <button id="continue-anyway">Tiếp tục truy cập</button>
+    </div>
+
+    <script>
+      // Cho phép người dùng tiếp tục truy cập nếu muốn
+      document
+        .getElementById("continue-anyway")
+        .addEventListener("click", function () {
+          document.getElementById("desktop-warning").style.display = "none";
+        });
+    </script>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

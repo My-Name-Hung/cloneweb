@@ -1,3 +1,4 @@
+import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import bankLinkImage from "../../assets/nganhanglienket.jpg"; // Import the banks image
@@ -32,37 +33,58 @@ const WalletScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [bankInfo, setBankInfo] = useState(null);
   const navigate = useNavigate();
-  const [showBalance, setShowBalance] = useState(true);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
   const [errorType, setErrorType] = useState("info"); // "info" or "error"
+  const [balance, setBalance] = useState(0);
+
+  // Fetch wallet balance
+  const fetchWalletBalance = async () => {
+    if (!user?.id) return;
+
+    try {
+      console.log("Fetching wallet balance for user:", user.id);
+      const response = await axios.get(`${API_BASE_URL}/api/wallet/balance`, {
+        params: { userId: user.id },
+      });
+
+      if (response.data.success) {
+        console.log(
+          "Wallet balance fetched successfully:",
+          response.data.balance
+        );
+        setBalance(response.data.balance || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching wallet balance:", error);
+      // Không set balance về 0 khi có lỗi để giữ giá trị cũ
+    }
+  };
+
+  // Fetch bank info
+  const fetchBankInfo = async () => {
+    if (!user?.id) return;
+
+    setIsLoading(true);
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/api/users/${user.id}/bank-info`
+      );
+      if (response.data.success && response.data.bankInfo) {
+        setBankInfo(response.data.bankInfo);
+      }
+    } catch (error) {
+      console.error("Error fetching bank info:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Fetch bank info from user data
-    const fetchBankInfo = async () => {
-      setIsLoading(true);
-      try {
-        if (user && user.bankInfo) {
-          setBankInfo(user.bankInfo);
-        } else {
-          // Default data (for testing)
-          setBankInfo({
-            bank: "Ngân hàng Đầu tư và Phát triển Việt Nam ( BIDV )",
-            accountNumber: "12345678901234",
-            accountName: "hung",
-            bankId: "bidv",
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching bank info:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchBankInfo();
+    fetchWalletBalance();
   }, [user]);
 
   // Format account number to show only last 4 digits
@@ -74,7 +96,9 @@ const WalletScreen = () => {
 
   // Get bank logo
   const getBankLogo = (bankId) => {
-    return bankLogos[bankId] || null;
+    if (!bankId) return null;
+    console.log("Getting logo for bank ID:", bankId);
+    return bankLogos[bankId.toLowerCase()] || null;
   };
 
   const handleWithdrawButtonClick = () => {
@@ -122,7 +146,7 @@ const WalletScreen = () => {
     // Handle withdrawal logic
     try {
       // Simulate validation check
-      if (parseFloat(withdrawAmount) > 10000) {
+      if (parseFloat(withdrawAmount) > balance) {
         setErrorMessage("Không thể cao hơn mức khả dụng");
         setErrorType("info");
         setShowError(true);
@@ -203,7 +227,7 @@ const WalletScreen = () => {
               />
               <div className="bank-card-overlay">
                 <div className="card-title">
-                  {bankInfo.bankId && (
+                  {bankInfo?.bankId && (
                     <img
                       src={getBankLogo(bankInfo.bankId)}
                       alt="Bank Logo"
@@ -212,10 +236,10 @@ const WalletScreen = () => {
                   )}
                 </div>
                 <div className="bank-card-account-number">
-                  {formatAccountNumber(bankInfo.accountNumber)}
+                  {formatAccountNumber(bankInfo?.accountNumber)}
                 </div>
                 <div className="bank-card-account-name">
-                  {bankInfo.accountName || "Chưa có thông tin"}
+                  {bankInfo?.accountName || "Chưa có thông tin"}
                 </div>
               </div>
             </div>
@@ -226,7 +250,9 @@ const WalletScreen = () => {
             <div className="balance-row">
               <div className="balance-label">Số dư ví :</div>
               <div className="balance-value-container">
-                <div className="balance-value">0 VND</div>
+                <div className="balance-value">
+                  {balance.toLocaleString("vi-VN")} VND
+                </div>
                 <button
                   className="eye-toggle-button"
                   onClick={toggleWithdrawModal}

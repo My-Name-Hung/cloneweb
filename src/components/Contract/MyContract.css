@@ -146,24 +146,18 @@
 
 .loan-detail-row {
   display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.loan-detail-row:last-of-type {
-  border-bottom: none;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
 .loan-detail-label {
-  color: #666;
-  font-size: 16px;
+  min-width: 140px;
+  font-weight: 500;
 }
 
-.loan-detail-value {
-  color: #333;
-  font-weight: 600;
-  font-size: 16px;
+.loan-detail-value,
+.loan-status {
+  flex: 1;
 }
 
 .loan-details-link {
@@ -510,4 +504,55 @@
     opacity: 0;
     transform: scale(0.8);
   }
+}
+
+.loan-status {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 14px;
+  display: inline-block;
+  text-align: center;
+  min-width: 100px;
+}
+
+.status-pending {
+  background-color: #fff7e6;
+  color: #d46b08;
+  border: 1px solid #ffd591;
+}
+
+.status-approved {
+  background-color: #e6f7ff;
+  color: #1890ff;
+  border: 1px solid #91d5ff;
+}
+
+.status-rejected {
+  background-color: #fff1f0;
+  color: #f5222d;
+  border: 1px solid #ffa39e;
+}
+
+.status-disbursed {
+  background-color: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+.status-completed {
+  background-color: #f9f0ff;
+  color: #722ed1;
+  border: 1px solid #d3adf7;
+}
+
+.status-overdue {
+  background-color: #fff2e8;
+  color: #fa541c;
+  border: 1px solid #ffbb96;
+}
+
+/* Điều chỉnh khoảng cách giữa label và status */
+.loan-detail-row .loan-status {
+  margin-left: 5px;
 }

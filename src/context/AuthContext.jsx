@@ -1,6 +1,12 @@
 import axios from "axios";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { imageApi } from "../services/api";
+import {
+  imageApi,
+  notificationApi,
+  settingsApi,
+  userApi,
+  walletApi,
+} from "../services/api";
 
 // Define API base URL with a fallback for development
 const API_BASE_URL =
@@ -14,12 +20,34 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [idCardInfo, setIdCardInfo] = useState(null);
+  const [settings, setSettings] = useState({
+    interestRate: 0.012, // Default interest rate 12%
+    maxLoanAmount: 500000000, // Default max loan amount 100M
+    maxLoanTerm: 36, // Default max loan term 36 months
+  });
+  const [notifications, setNotifications] = useState([]);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [transactions, setTransactions] = useState([]);
 
   // Add this function to ensure avatar URLs are processed correctly
   const ensureFullUrl = (url) => {
     if (!url) return null;
     if (url.startsWith("http")) return url;
     return `${API_BASE_URL}${url.startsWith("/") ? url : `/${url}`}`;
+  };
+
+  // Fetch settings from server
+  const fetchSettings = async () => {
+    try {
+      const response = await settingsApi.getSettings();
+      if (response.success && response.settings) {
+        setSettings(response.settings);
+        console.log("Loaded settings from server:", response.settings);
+      }
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+    }
   };
 
   // Update the checkAuth function
@@ -52,6 +80,9 @@ export const AuthProvider = ({ children }) => {
       // Fetch latest avatar if user is logged in
       if (parsedUser && parsedUser.id) {
         try {
+          // Fetch latest settings
+          await fetchSettings();
+
           // Try to get the avatar first
           const avatarUrl = await imageApi.getUserAvatar(parsedUser.id);
           if (avatarUrl && avatarUrl !== parsedUser.avatarUrl) {
@@ -63,6 +94,13 @@ export const AuthProvider = ({ children }) => {
 
             // Update state
             setUser({ ...parsedUser });
+          }
+
+          // Get ID card information
+          const idCardInfo = await imageApi.getIdCardInfo(parsedUser.id);
+          if (idCardInfo) {
+            console.log("Retrieved ID card info:", idCardInfo);
+            setIdCardInfo(idCardInfo);
           }
 
           // Then get the bank info
@@ -87,6 +125,30 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem("userData", JSON.stringify(updatedUser));
             console.log("User updated with bank info:", updatedUser);
           }
+
+          // Get full profile to ensure latest changes from admin
+          const profileRes = await userApi.getProfile(parsedUser.id);
+
+          if (profileRes.success && profileRes.user) {
+            console.log("Retrieved updated profile from API:", profileRes.user);
+
+            // Merge with existing data, preserving avatar and other important fields
+            const mergedUser = {
+              ...parsedUser,
+              fullName: profileRes.user.fullName || parsedUser.fullName,
+              personalInfo:
+                profileRes.user.personalInfo || parsedUser.personalInfo,
+              hasVerifiedDocuments:
+                profileRes.user.hasVerifiedDocuments !== undefined
+                  ? profileRes.user.hasVerifiedDocuments
+                  : parsedUser.hasVerifiedDocuments,
+            };
+
+            // Update state and localStorage
+            setUser(mergedUser);
+            localStorage.setItem("userData", JSON.stringify(mergedUser));
+            console.log("User updated with full profile data:", mergedUser);
+          }
         } catch (error) {
           console.error("Could not fetch user data:", error);
         }
@@ -99,9 +161,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Kiểm tra authentication khi component mount
   useEffect(() => {
     checkAuth();
   }, []);
+
+  // Thiết lập cập nhật thông tin định kỳ
+  useEffect(() => {
+    // Chỉ thiết lập interval nếu đã đăng nhập
+    if (user && user.id) {
+      // Kiểm tra cập nhật thông tin mỗi 30 giây
+      const intervalId = setInterval(() => {
+        checkAuth();
+      }, 30000);
+
+      return () => clearInterval(intervalId);
+    }
+  }, [user]);
 
   const login = async (phone, password) => {
     setLoading(true);
@@ -300,6 +376,39 @@ export const AuthProvider = ({ children }) => {
       return {
         success: false,
         message: "Có lỗi khi lấy thông tin ngân hàng từ server",
+      };
+    }
+  };
+
+  const getBankInfo = async () => {
+    if (!user || !user.id) {
+      console.log(
+        "Không thể lấy thông tin ngân hàng: Không có người dùng đăng nhập"
+      );
+      return { success: false, message: "Không có người dùng đăng nhập" };
+    }
+
+    try {
+      const bankInfoRes = await axios.get(
+        `${API_BASE_URL}/api/users/${user.id}/bank-info`
+      );
+
+      if (bankInfoRes.data.success && bankInfoRes.data.bankInfo) {
+        return {
+          success: true,
+          bankInfo: bankInfoRes.data.bankInfo,
+        };
+      }
+
+      return {
+        success: false,
+        message: "Không tìm thấy thông tin ngân hàng",
+      };
+    } catch (error) {
+      console.error("Lỗi khi lấy thông tin ngân hàng:", error);
+      return {
+        success: false,
+        message: "Có lỗi khi lấy thông tin ngân hàng",
       };
     }
   };
@@ -716,20 +825,120 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Upload CMND/CCCD mặt trước
+  const uploadIdCardFront = async (imageData) => {
+    if (!user || !user.id) {
+      console.error("Cannot upload ID card front: No user logged in");
+      return { success: false, message: "No user logged in" };
+    }
+
+    try {
+      const result = await imageApi.upload(imageData, user.id, "idCardFront");
+
+      if (result.success) {
+        // Cập nhật thông tin CMND/CCCD
+        const updatedIdCardInfo = await imageApi.getIdCardInfo(user.id);
+        setIdCardInfo(updatedIdCardInfo);
+
+        return { success: true, imageUrl: result.imageUrl };
+      }
+
+      return { success: false, message: "Upload failed" };
+    } catch (error) {
+      console.error("Error uploading ID card front:", error);
+      return { success: false, message: error.message || "Upload failed" };
+    }
+  };
+
+  // Upload CMND/CCCD mặt sau
+  const uploadIdCardBack = async (imageData) => {
+    if (!user || !user.id) {
+      console.error("Cannot upload ID card back: No user logged in");
+      return { success: false, message: "No user logged in" };
+    }
+
+    try {
+      const result = await imageApi.upload(imageData, user.id, "idCardBack");
+
+      if (result.success) {
+        // Cập nhật thông tin CMND/CCCD
+        const updatedIdCardInfo = await imageApi.getIdCardInfo(user.id);
+        setIdCardInfo(updatedIdCardInfo);
+
+        return { success: true, imageUrl: result.imageUrl };
+      }
+
+      return { success: false, message: "Upload failed" };
+    } catch (error) {
+      console.error("Error uploading ID card back:", error);
+      return { success: false, message: error.message || "Upload failed" };
+    }
+  };
+
+  // Hàm lấy thông báo
+  const fetchNotifications = async () => {
+    if (!user?.id) return;
+    try {
+      const response = await notificationApi.getNotifications(user.id);
+      if (response.success) {
+        setNotifications(response.notifications);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
+
+  // Hàm lấy số dư và lịch sử giao dịch
+  const fetchWalletData = async () => {
+    if (!user?.id) return;
+    try {
+      const [balanceRes, transactionsRes] = await Promise.all([
+        walletApi.getBalance(user.id),
+        walletApi.getTransactions(user.id),
+      ]);
+
+      if (balanceRes.success) {
+        setWalletBalance(balanceRes.balance);
+      }
+      if (transactionsRes.success) {
+        setTransactions(transactionsRes.transactions);
+      }
+    } catch (error) {
+      console.error("Error fetching wallet data:", error);
+    }
+  };
+
+  // Thêm useEffect để lấy dữ liệu khi user thay đổi
+  useEffect(() => {
+    if (user?.id) {
+      fetchNotifications();
+      fetchWalletData();
+    }
+  }, [user]);
+
   const value = {
     user,
-    setUser,
     loading,
     login,
     logout,
     checkAuth,
-    checkVerificationStatus,
     updateUser,
+    checkVerificationStatus,
     updateBankInfo,
+    getBankInfo,
     saveUserContract,
     getUserContracts,
     checkUserVerificationStatus,
     updateUserAvatar,
+    uploadIdCardFront,
+    uploadIdCardBack,
+    idCardInfo,
+    settings,
+    notifications,
+    walletBalance,
+    transactions,
+    fetchNotifications,
+    fetchWalletData,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

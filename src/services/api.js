@@ -122,6 +122,7 @@ export const contractApi = {
   },
 };
 
+// Upload ảnh (bao gồm CMND/CCCD)
 export const uploadImage = async (imageData, userId, type) => {
   // Prevent duplicate upload attempts
   const uploadKey = `upload-${userId}-${type}`;
@@ -142,19 +143,25 @@ export const uploadImage = async (imageData, userId, type) => {
     // For base64 images
     if (typeof imageData === "string" && imageData.startsWith("data:image")) {
       console.log("Uploading base64 image data");
-      const response = await fetch(
-        `${API_URL}/api/verification/upload/${type}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId,
-            imageData,
-          }),
-        }
-      );
+
+      // Xác định endpoint dựa vào loại ảnh
+      let endpoint = `/api/verification/upload/${type}`;
+      if (type === "idCardFront") {
+        endpoint = `/api/verification/id-card/front`;
+      } else if (type === "idCardBack") {
+        endpoint = `/api/verification/id-card/back`;
+      }
+
+      const response = await fetch(`${API_URL}${endpoint}?userId=${userId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          imageData,
+        }),
+      });
 
       // Reset on success
       pendingRequests.delete(uploadKey);
@@ -183,16 +190,20 @@ export const uploadImage = async (imageData, userId, type) => {
       console.log("Uploading file object");
       const formData = new FormData();
       formData.append("image", imageData);
-      formData.append("userId", userId);
 
-      const response = await fetch(
-        `${API_URL}/api/verification/upload/${type}`,
-        {
-          method: "POST",
-          body: formData,
-          // No Content-Type header for multipart/form-data
-        }
-      );
+      // Xác định endpoint dựa vào loại ảnh
+      let endpoint = `/api/verification/upload/${type}`;
+      if (type === "idCardFront") {
+        endpoint = `/api/verification/id-card/front`;
+      } else if (type === "idCardBack") {
+        endpoint = `/api/verification/id-card/back`;
+      }
+
+      const response = await fetch(`${API_URL}${endpoint}?userId=${userId}`, {
+        method: "POST",
+        body: formData,
+        // No Content-Type header for multipart/form-data
+      });
 
       // Reset on success
       pendingRequests.delete(uploadKey);
@@ -248,107 +259,211 @@ export const imageApi = {
 
     // Ensure path starts with /
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-
-    // Combine with API URL
-    const fullUrl = `${API_URL}${normalizedPath}`;
-    console.log("Constructed full image URL:", fullUrl);
-
-    return fullUrl;
+    console.log("Formatted image URL:", `${API_URL}${normalizedPath}`);
+    return `${API_URL}${normalizedPath}`;
   },
 
-  // Get user avatar with full URL
+  // Get user avatar
   getUserAvatar: async (userId) => {
     if (!userId) {
-      console.error("Missing userId for getUserAvatar");
+      console.error("getUserAvatar: No user ID provided");
       return null;
-    }
-
-    const avatarKey = `avatar-${userId}`;
-    if (pendingRequests.has(avatarKey)) {
-      const failureCount = pendingRequests.get(avatarKey);
-      if (failureCount >= MAX_CONSECUTIVE_FAILURES) {
-        console.warn(
-          `Preventing repeated failing avatar fetch for user ${userId}`
-        );
-        pendingRequests.delete(avatarKey); // Reset after preventing
-        return null;
-      }
-    }
-
-    // Check if we have a recently cached avatar result
-    const cachedAvatarTime = localStorage.getItem(
-      `avatar_fetch_time_${userId}`
-    );
-    const currentTime = new Date().getTime();
-
-    // Only try to fetch once every 5 minutes (300000 ms)
-    if (cachedAvatarTime && currentTime - parseInt(cachedAvatarTime) < 300000) {
-      console.log("Using cached avatar result to prevent API spam");
-      const cachedAvatarUrl = localStorage.getItem(`avatar_url_${userId}`);
-      return cachedAvatarUrl === "null" ? null : cachedAvatarUrl;
     }
 
     try {
-      console.log(`Fetching avatar for user ${userId}`);
-
-      // Create a timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Avatar fetch timed out")), 3000);
+      const response = await apiCall(`/api/users/${userId}/avatar`, {
+        method: "GET",
       });
 
-      const response = await Promise.race([
-        fetch(`${API_URL}/api/users/${userId}/avatar`),
-        timeoutPromise,
-      ]);
-
-      // Reset on success
-      pendingRequests.delete(avatarKey);
-
-      // Cache the fetch time regardless of outcome
-      localStorage.setItem(
-        `avatar_fetch_time_${userId}`,
-        currentTime.toString()
-      );
-
-      // Handle 404 specifically - it's an expected response if no avatar exists
-      if (response.status === 404) {
-        console.log("No avatar found (404 response)");
-        localStorage.setItem(`avatar_url_${userId}`, "null");
-        return null;
+      if (response && response.success && response.avatarUrl) {
+        // Ensure we return a full URL
+        return (
+          response.fullAvatarUrl || imageApi.getImageUrl(response.avatarUrl)
+        );
       }
-
-      if (!response.ok) {
-        console.error(`Failed to get avatar: ${response.statusText}`);
-
-        // Track failures
-        const currentFailures = pendingRequests.get(avatarKey) || 0;
-        pendingRequests.set(avatarKey, currentFailures + 1);
-
-        localStorage.setItem(`avatar_url_${userId}`, "null");
-        return null;
-      }
-
-      const data = await response.json();
-
-      if (data.success && data.fullAvatarUrl) {
-        console.log("Avatar found:", data.fullAvatarUrl);
-        localStorage.setItem(`avatar_url_${userId}`, data.fullAvatarUrl);
-        return data.fullAvatarUrl;
-      }
-
-      console.log("No avatar found for user");
-      localStorage.setItem(`avatar_url_${userId}`, "null");
       return null;
     } catch (error) {
-      console.error("Error getting user avatar:", error);
-
-      // Track failures
-      const currentFailures = pendingRequests.get(avatarKey) || 0;
-      pendingRequests.set(avatarKey, currentFailures + 1);
-
-      // Cache the negative result to avoid repeated requests
-      localStorage.setItem(`avatar_url_${userId}`, "null");
+      console.error("Error fetching user avatar:", error);
       return null;
+    }
+  },
+
+  // Lấy thông tin CMND/CCCD
+  getIdCardInfo: async (userId) => {
+    if (!userId) {
+      console.error("getIdCardInfo: No user ID provided");
+      return null;
+    }
+
+    try {
+      const response = await apiCall(`/api/users/${userId}/id-card`, {
+        method: "GET",
+      });
+
+      if (response && response.success && response.idCardInfo) {
+        // Đảm bảo trả về URL đầy đủ cho ảnh
+        const idCardInfo = response.idCardInfo;
+        if (idCardInfo.frontImage) {
+          idCardInfo.frontImageUrl = imageApi.getImageUrl(
+            idCardInfo.frontImage
+          );
+        }
+        if (idCardInfo.backImage) {
+          idCardInfo.backImageUrl = imageApi.getImageUrl(idCardInfo.backImage);
+        }
+        return idCardInfo;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error fetching ID card info:", error);
+      return null;
+    }
+  },
+};
+
+// User profile API
+export const userApi = {
+  // Get user profile
+  getProfile: (userId) => {
+    if (!userId) {
+      return Promise.reject(new Error("User ID is required"));
+    }
+    return apiCall(`/api/users/${userId}/profile`, {
+      method: "GET",
+    });
+  },
+
+  // Update user profile
+  updateProfile: (userId, profileData) => {
+    if (!userId) {
+      return Promise.reject(new Error("User ID is required"));
+    }
+    return apiCall(`/api/users/${userId}/profile`, {
+      method: "POST",
+      body: JSON.stringify(profileData),
+    });
+  },
+
+  // Get user bank information
+  getBankInfo: (userId) => {
+    if (!userId) {
+      return Promise.reject(new Error("User ID is required"));
+    }
+    return apiCall(`/api/users/${userId}/bank-info`, {
+      method: "GET",
+    });
+  },
+
+  // Update user bank information
+  updateBankInfo: (userId, bankData) => {
+    if (!userId) {
+      return Promise.reject(new Error("User ID is required"));
+    }
+    return apiCall(`/api/users/${userId}/bank-info`, {
+      method: "POST",
+      body: JSON.stringify(bankData),
+    });
+  },
+};
+
+// Verification API
+export const verificationApi = {
+  // Get verification status
+  getStatus: (userId) => {
+    if (!userId) {
+      return Promise.reject(new Error("User ID is required"));
+    }
+    return apiCall(`/api/verification/status/${userId}`, {
+      method: "GET",
+    });
+  },
+};
+
+// Settings API (lãi suất và các cài đặt khác)
+export const settingsApi = {
+  // Lấy tất cả cài đặt
+  getSettings: () => {
+    return apiCall(`/api/settings`, {
+      method: "GET",
+    });
+  },
+
+  // Cập nhật lãi suất (Admin only)
+  updateInterestRate: (rate, token) => {
+    return apiCall(`/api/admin/settings/interest-rate`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ rate }),
+    });
+  },
+
+  // Cập nhật tất cả cài đặt (Admin only)
+  updateSettings: (settingsData, token) => {
+    return apiCall(`/api/admin/settings`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(settingsData),
+    });
+  },
+};
+
+// Thêm API cho thông báo
+export const notificationApi = {
+  // Lấy danh sách thông báo
+  getNotifications: async (userId) => {
+    try {
+      const response = await apiCall(`/api/notifications?userId=${userId}`);
+      return response;
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      throw error;
+    }
+  },
+
+  // Đánh dấu thông báo đã đọc
+  markAsRead: async (notificationId) => {
+    try {
+      const response = await apiCall(
+        `/api/notifications/${notificationId}/read`,
+        {
+          method: "PUT",
+        }
+      );
+      return response;
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      throw error;
+    }
+  },
+};
+
+// Thêm API cho ví tiền
+export const walletApi = {
+  // Lấy số dư
+  getBalance: async (userId) => {
+    try {
+      const response = await apiCall(`/api/wallet/balance?userId=${userId}`);
+      return response;
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+      throw error;
+    }
+  },
+
+  // Lấy lịch sử giao dịch
+  getTransactions: async (userId) => {
+    try {
+      const response = await apiCall(
+        `/api/wallet/transactions?userId=${userId}`
+      );
+      return response;
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      throw error;
     }
   },
 };

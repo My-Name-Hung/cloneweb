@@ -1,0 +1,235 @@
+/* Layout Styles */
+:root {
+  --sidebar-width: 250px;
+  --header-height: 64px;
+  --content-padding: 1.5rem;
+  --border-radius: 8px;
+  --transition-speed: 0.3s;
+  --z-sidebar: 100;
+  --z-header: 90;
+  --z-overlay: 80;
+  --admin-primary: #4f46e5;
+  --admin-secondary: #6366f1;
+  --admin-background: #f9fafb;
+  --admin-text: #1f2937;
+  --admin-text-light: #6b7280;
+  --admin-border: #e5e7eb;
+}
+
+/* Base Layout */
+.admin-layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  grid-template-rows: var(--header-height) 1fr;
+  grid-template-areas:
+    "sidebar header"
+    "sidebar content";
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--admin-background);
+}
+
+/* Header */
+.admin-header {
+  grid-area: header;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 0 var(--content-padding);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Sidebar */
+.admin-sidebar {
+  grid-area: sidebar;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  z-index: var(--z-sidebar);
+  background-color: white;
+  box-shadow: 1px 0 3px rgba(0, 0, 0, 0.1);
+  transition: transform var(--transition-speed) ease;
+}
+
+.sidebar-header {
+  padding: var(--content-padding);
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.sidebar-header h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.admin-profile {
+  padding: var(--content-padding);
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--admin-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.75rem;
+  color: white;
+  font-weight: 600;
+}
+
+.admin-info h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--admin-text);
+  margin: 0;
+}
+
+.admin-info p {
+  font-size: 0.875rem;
+  color: var(--admin-text-light);
+  margin: 0;
+}
+
+/* Content Area */
+.admin-content {
+  grid-area: content;
+  overflow-y: auto;
+  padding: var(--content-padding);
+  background-color: var(--admin-background);
+  min-height: calc(100vh - var(--header-height));
+}
+
+.admin-content h1 {
+  margin-bottom: 1.5rem;
+  color: var(--admin-text);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+  .admin-layout {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "content";
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    transform: translateX(-100%);
+    width: var(--sidebar-width);
+  }
+
+  .admin-sidebar.active {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: var(--z-overlay);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-speed) ease;
+  }
+
+  .sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .admin-content {
+    padding: 1rem;
+  }
+}
+
+/* Tablet Responsive */
+@media (min-width: 768px) and (max-width: 1024px) {
+  :root {
+    --sidebar-width: 220px;
+    --content-padding: 1.25rem;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  :root {
+    --content-padding: 1rem;
+    --header-height: 56px;
+  }
+
+  .admin-header {
+    padding: 0 1rem;
+  }
+
+  .admin-content h1 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --admin-background: #1a1a1a;
+    --admin-text: #ffffff;
+    --admin-text-light: #a0a0a0;
+    --admin-border: #333333;
+  }
+
+  .admin-header,
+  .admin-sidebar {
+    background-color: #242424;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Accessibility Improvements */
+.admin-layout:focus-within {
+  outline: 2px solid var(--admin-primary);
+  outline-offset: 2px;
+}
+
+.admin-sidebar a:focus,
+.admin-header button:focus {
+  outline: 2px solid var(--admin-primary);
+  outline-offset: 2px;
+}
+
+/* Performance Optimizations */
+.admin-sidebar,
+.admin-header {
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* Print Styles */
+@media print {
+  .admin-sidebar,
+  .admin-header {
+    display: none;
+  }
+
+  .admin-content {
+    padding: 0;
+    background-color: white;
+  }
+}

@@ -1,77 +1,193 @@
 .notification-screen {
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
   background-color: #f5f5f5;
+  padding: 20px;
 }
 
 .notification-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #0039a6; /* MB Bank blue */
-  color: white;
-  padding: 15px 20px;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  margin-bottom: 20px;
+}
+
+.back-buttons {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #000000;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.3s;
 }
 
 .notification-title {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
+  color: #333;
   margin: 0;
-  text-align: center;
-  flex-grow: 1;
-}
-
-.back-button {
-  background: none;
-  border: none;
-  padding: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .placeholder {
-  width: 30px; /* Same width as back button to center the title */
+  width: 40px;
 }
 
 .notification-content {
-  flex: 1;
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
+  background-color: white;
+  border-radius: 12px;
   padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .empty-notification {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  text-align: center;
-  width: 100%;
-  margin-top: 20px;
+  justify-content: center;
+  padding: 40px 0;
 }
 
 .notification-icon-container {
+  width: 120px;
+  height: 120px;
   margin-bottom: 20px;
-  display: flex;
-  justify-content: center;
 }
 
 .notification-image {
-  width: 150px;
-  height: auto;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  margin-bottom: 20px;
 }
 
 .empty-text {
   font-size: 16px;
   color: #666;
-  margin: 0;
+  text-align: center;
+}
+
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.notification-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.notification-item.approved {
+  border-left: 4px solid #28a745;
+}
+
+.notification-item.rejected {
+  border-left: 4px solid #dc3545;
+}
+
+.notification-icon {
+  margin-right: 16px;
+  font-size: 24px;
+}
+
+.notification-item.approved .notification-icon {
+  color: #28a745;
+}
+
+.notification-item.rejected .notification-icon {
+  color: #dc3545;
+}
+
+.notification-details {
+  flex: 1;
+}
+
+.notification-details h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.notification-details p {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 8px 0;
+}
+
+.notification-time {
+  font-size: 12px;
+  color: #999;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .notification-screen {
+    background-color: #ffffff;
+  }
+
+  .notification-title {
+    color: #000000;
+  }
+
+  .notification-content {
+    background-color: #2d2d2d;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .notification-item {
+    background-color: #333;
+  }
+
+  .notification-details h3 {
+    color: #000000;
+  }
+
+  .notification-details p {
+    color: #000000;
+  }
+
+  .notification-time {
+    color: #999;
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .notification-screen {
+    padding: 16px;
+  }
+
+  .notification-title {
+    font-size: 20px;
+  }
+
+  .notification-icon-container {
+    width: 100px;
+    height: 100px;
+  }
+
+  .notification-item {
+    padding: 12px;
+  }
+
+  .notification-icon {
+    font-size: 20px;
+  }
+
+  .notification-details h3 {
+    font-size: 14px;
+  }
+
+  .notification-details p {
+    font-size: 12px;
+  }
 }

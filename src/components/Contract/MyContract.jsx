@@ -1,3 +1,4 @@
+import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import thongbaoIcon from "../../assets/Home/thongbao.png";
@@ -19,6 +20,11 @@ const MyContract = () => {
   const modalRef = useRef(null);
   const overlayRef = useRef(null);
   const [error, setError] = useState(null);
+  const [settings, setSettings] = useState({
+    interestRate: 0.02,
+    maxLoanAmount: 500000000,
+    maxLoanTerm: 36,
+  });
 
   // Define the API_BASE_URL from environment variables or use fallback
   const API_BASE_URL =
@@ -86,6 +92,27 @@ const MyContract = () => {
       setIsLoading(false);
     }
   }, [user, getUserContracts]);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const response = await axios.get(`${API_URL}/api/settings`);
+        if (response.data.success) {
+          console.log("Settings fetched:", response.data.settings);
+          setSettings({
+            interestRate: response.data.settings.interestRate || 0.01,
+            maxLoanAmount: response.data.settings.maxLoanAmount || 500000000,
+            maxLoanTerm: response.data.settings.maxLoanTerm || 36,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+      }
+    };
+
+    fetchSettings();
+  }, []);
 
   const handleBackClick = () => {
     navigate(-1);
@@ -155,14 +182,11 @@ const MyContract = () => {
     if (!contract) return [];
 
     const payments = [];
-
-    // Lấy thông tin khoản vay
     const amount = parseFloat(
       contract.loanAmount.replace(/\./g, "").replace(/,/g, "")
     );
     const termMonths = parseInt(contract.loanTerm);
-    const annualInterestRate = 0.12; // 12% năm
-    const monthlyInterestRate = annualInterestRate / 12;
+    const monthlyInterestRate = settings.interestRate;
 
     // Tính ngày bắt đầu trả nợ
     let startDate = new Date();
@@ -173,35 +197,24 @@ const MyContract = () => {
       }
     }
 
-    // Tạo lịch trả nợ
     for (let i = 1; i <= termMonths; i++) {
-      // Tính toán ngày trả nợ
       const paymentDate = new Date(startDate);
       paymentDate.setMonth(paymentDate.getMonth() + i);
       const monthDisplay =
         paymentDate.getDate() + "/" + (paymentDate.getMonth() + 1);
 
-      // Tính toán số tiền còn lại
       const remainingPrincipal = amount - (amount / termMonths) * (i - 1);
-
-      // Tính toán lãi trong tháng
       const interestPayment = remainingPrincipal * monthlyInterestRate;
-
-      // Tính toán tiền gốc trả trong tháng
       const principalPayment = amount / termMonths;
-
-      // Tổng số tiền phải trả trong tháng
       const totalPayment = principalPayment + interestPayment;
 
-      const payment = {
+      payments.push({
         ki: `Kì thứ ${i}`,
         amount: Math.round(totalPayment),
         date: monthDisplay,
         principal: Math.round(principalPayment),
         interest: Math.round(interestPayment),
-      };
-
-      payments.push(payment);
+      });
     }
 
     return payments;
@@ -223,6 +236,26 @@ const MyContract = () => {
     }
   };
 
+  // Memoized status text getter
+  const getStatusText = (status) => {
+    const statusMap = {
+      pending: "Đang chờ duyệt",
+      approved: "Đã duyệt",
+      rejected: "Từ chối",
+    };
+    return statusMap[status] || status;
+  };
+
+  // Get status class
+  const getStatusClass = (status) => {
+    const statusClassMap = {
+      pending: "status-pending",
+      approved: "status-approved",
+      rejected: "status-rejected",
+    };
+    return statusClassMap[status] || "";
+  };
+
   if (isLoading) {
     return (
       <div className="contract-loading">
@@ -232,26 +265,27 @@ const MyContract = () => {
     );
   }
 
-  const interestRate = "1%";
   const _formattedDate = new Date().toLocaleDateString("vi-VN");
 
   return (
     <div className="contract-container">
       {/* Header */}
       <div className="contract-header">
-        <button className="back-button" onClick={handleBackClick}>
-          <svg
-            viewBox="64 64 896 896"
-            focusable="false"
-            data-icon="left"
-            width="1em"
-            height="1em"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path d="M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8a31.86 31.86 0 000 50.3l450.8 352.1c5.3 4.1 12.9.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-360-281 360-281.1c3.8-3 6.1-7.7 6.1-12.6z"></path>
-          </svg>
-        </button>
+        <a href="/">
+          <button className="back-button">
+            <svg
+              viewBox="64 64 896 896"
+              focusable="false"
+              data-icon="left"
+              width="1em"
+              height="1em"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8a31.86 31.86 0 000 50.3l450.8 352.1c5.3 4.1 12.9.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-360-281 360-281.1c3.8-3 6.1-7.7 6.1-12.6z"></path>
+            </svg>
+          </button>
+        </a>
         <h1 className="header-title">Khoản vay</h1>
       </div>
 
@@ -299,6 +333,14 @@ const MyContract = () => {
                   {contract.createdTime}, {contract.createdDate}
                 </span>
               </div>
+              {/* <div className="loan-detail-row">
+                <span className="loan-detail-label">Trạng thái :</span>
+                <span
+                  className={`loan-status ${getStatusClass(contract.status)}`}
+                >
+                  {getStatusText(contract.status)}
+                </span>
+              </div> */}
               <div className="loan-details-link">
                 <a onClick={() => handleShowDetails(contract)}>
                   Chi tiết trả nợ
@@ -336,7 +378,7 @@ const MyContract = () => {
               <div className="contract-parties">
                 <p>
                   <a className="title">Bên A (Bên cho vay):</a>
-                   Ngân hàng MB Quân đội
+                  Ngân hàng MB Quân đội
                 </p>
                 <p>
                   <a className="title">Bên B (Bên vay) Ông / Bà :</a>
@@ -363,9 +405,11 @@ const MyContract = () => {
                   {selectedContract.loanTerm} tháng
                 </p>
                 <p>
-                  <a className="title">Lãi suất vay : </a>
-                  <a className="laisuatvay">{interestRate}</a>{" "}
-                  <a className="laisuatvays">mỗi tháng</a>
+                  <span className="title">Lãi suất vay : </span>
+                  <span className="laisuatvay">
+                    {settings.interestRate.toFixed(0)}%
+                  </span>{" "}
+                  <span className="laisuatvays">mỗi tháng</span>
                 </p>
               </div>
 

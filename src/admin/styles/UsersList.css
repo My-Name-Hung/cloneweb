@@ -1,0 +1,245 @@
+/* Users List Styles */
+
+.admin-content-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  min-height: calc(100vh - 60px);
+}
+
+.admin-content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.admin-content-header h1 {
+  font-size: 24px;
+  margin: 0;
+  color: #333;
+}
+
+.admin-filters {
+  margin-bottom: 20px;
+}
+
+.admin-search-form {
+  display: flex;
+  gap: 10px;
+}
+
+.admin-search-form input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.admin-button {
+  background-color: #4361ee;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-block;
+  transition: background-color 0.3s;
+}
+
+.admin-button:hover {
+  background-color: #3a56d4;
+}
+
+.admin-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.admin-spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top: 4px solid #4361ee;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.admin-error-message {
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-error-message.error {
+  background-color: #fee2e2;
+  border: 1px solid #ef4444;
+  color: #dc2626;
+}
+
+.admin-error-message.success {
+  background-color: #dcfce7;
+  border: 1px solid #22c55e;
+  color: #16a34a;
+}
+
+.admin-error-message p {
+  margin: 0;
+  font-weight: 500;
+}
+
+.admin-error-message button {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.admin-error-message.error button:hover {
+  background-color: #fecaca;
+}
+
+.admin-error-message.success button:hover {
+  background-color: #bbf7d0;
+}
+
+.admin-table-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.admin-table th {
+  background-color: #f7fafc;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.users-table tr:hover {
+  background-color: #f9fafb;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-approved {
+  background-color: #c6f6d5;
+  color: #2f855a;
+}
+
+.status-pending {
+  background-color: #feebc8;
+  color: #c05621;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 5px;
+}
+
+.pagination button {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  background-color: white;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination button.active {
+  background-color: #4361ee;
+  color: white;
+  border-color: #4361ee;
+}
+
+.user-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-button {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  background-color: transparent;
+}
+
+.action-view {
+  color: #4299e1;
+  border: 1px solid #4299e1;
+}
+
+.action-edit {
+  color: #48bb78;
+  border: 1px solid #48bb78;
+}
+
+.action-delete {
+  color: #f56565;
+  border: 1px solid #f56565;
+}
+
+.admin-header-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.delete-all-button {
+  background-color: #dc2626 !important;
+  color: white;
+}
+
+.delete-all-button:hover {
+  background-color: #b91c1c !important;
+}
+
+.delete-all-button:disabled {
+  background-color: #f87171 !important;
+  cursor: not-allowed;
+}

@@ -42,7 +42,7 @@ const SignUp = () => {
       timer = setTimeout(() => {
         hideLoading();
         setSuccessNotification(false);
-        navigate("/home");
+        navigate("/");
       }, 3000);
     }
 

@@ -1,0 +1,132 @@
+.admin-layout {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "sidebar header"
+    "sidebar content";
+  height: 100vh;
+  width: 100%;
+}
+
+.admin-header {
+  grid-area: header;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.admin-sidebar {
+  grid-area: sidebar;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.admin-content {
+  grid-area: content;
+  overflow-y: auto;
+  padding: 1.5rem;
+  background-color: #f9fafb;
+  min-height: calc(100vh - 64px);
+}
+
+.admin-content h1 {
+  margin-bottom: 1.5rem;
+  color: #172b4d;
+}
+
+/* Sidebar overlay for mobile */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 80;
+  transition: opacity 0.3s ease;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* CSS Variables for admin theme */
+:root {
+  --admin-primary: #1a73e8;
+  --admin-dark: #1f2937;
+  --admin-light: #f3f4f6;
+  --admin-border: #e5e7eb;
+  --admin-bg: #f9fafb;
+  --admin-gray: #6b7280;
+  --admin-success: #10b981;
+  --admin-warning: #f59e0b;
+  --admin-error: #ef4444;
+}
+
+/* Mobile layout */
+@media (max-width: 768px) {
+  .admin-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .admin-header {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    height: calc(100vh - 60px);
+    width: 80%;
+    max-width: 300px;
+    top: 60px;
+    left: 0;
+    z-index: 90;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .admin-sidebar.expanded {
+    transform: translateX(0);
+  }
+
+  .admin-content {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    width: 100%;
+  }
+
+  .sidebar-overlay {
+    display: block;
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+  }
+}
+
+/* Tablet layout */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .admin-layout {
+    grid-template-columns: 200px 1fr;
+  }
+
+  .admin-content {
+    padding: 1.25rem;
+  }
+}

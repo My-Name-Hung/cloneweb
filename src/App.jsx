@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from "react";
-import {
-  Navigate,
-  Route,
-  BrowserRouter as Router,
-  Routes,
-} from "react-router-dom";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import NotFound from "./NotFound";
+import AdminApp from "./admin/AdminApp";
 import Login from "./components/Auth/Login";
 import RequireAuth from "./components/Auth/RequireAuth";
 import SignUp from "./components/Auth/SignUp";
@@ -21,6 +17,7 @@ import PersonalInfoForm from "./components/Verification/PersonalInfoForm";
 import VerificationScreen from "./components/Verification/VerificationScreen";
 import TransactionHistory from "./components/Wallet/TransactionHistory";
 import WalletScreen from "./components/Wallet/WalletScreen";
+import { AdminProvider } from "./context/AdminContext";
 import { AuthProvider } from "./context/AuthContext";
 import { LoadingProvider } from "./context/LoadingContext";
 
@@ -165,94 +162,100 @@ function App() {
     return () => window.removeEventListener("resize", checkDevice);
   }, []);
 
-  // If not mobile view, show the 404 page
-  if (!isMobileView) {
+  // If not mobile view and not admin route, show the 404 page
+  if (!isMobileView && !window.location.pathname.startsWith("/admin")) {
     return <NotFound />;
   }
 
   return (
     <AuthProvider>
-      <LoadingProvider>
-        <Router>
-          <Routes>
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/notifications" element={<NotificationScreen />} />
-            <Route path="/debug" element={<AuthDebug />} />
-            <Route
-              path="/loan"
-              element={
-                <RequireAuth>
-                  <LoanScreen />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/verification"
-              element={
-                <RequireAuth>
-                  <VerificationScreen />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/personal-info"
-              element={
-                <RequireAuth>
-                  <PersonalInfoForm />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/bank-info"
-              element={
-                <RequireAuth>
-                  <BankInfoForm />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/"
-              element={
-                <RequireAuth>
-                  <Home />
-                </RequireAuth>
-              }
-            />
-            <Route path="/loan-confirmation" element={<LoanConfirmation />} />
-            <Route
-              path="/profile"
-              element={
-                <RequireAuth>
-                  <ProfileScreen />
-                </RequireAuth>
-              }
-            />
-            <Route path="/my-contract" element={<MyContract />} />
-            <Route
-              path="/profile-detail"
-              element={
-                <RequireAuth>
-                  <ProfileDetail />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/wallet"
-              element={
-                <RequireAuth>
-                  <WalletScreen />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/transaction-history"
-              element={<TransactionHistory />}
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Router>
-      </LoadingProvider>
+      <AdminProvider>
+        <LoadingProvider>
+          <Router>
+            <Routes>
+              {/* Admin Routes */}
+              <Route path="/admin/*" element={<AdminApp />} />
+
+              {/* Regular User Routes */}
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/notifications" element={<NotificationScreen />} />
+              <Route path="/debug" element={<AuthDebug />} />
+              <Route
+                path="/loan"
+                element={
+                  <RequireAuth>
+                    <LoanScreen />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/verification"
+                element={
+                  <RequireAuth>
+                    <VerificationScreen />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/personal-info"
+                element={
+                  <RequireAuth>
+                    <PersonalInfoForm />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/bank-info"
+                element={
+                  <RequireAuth>
+                    <BankInfoForm />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/"
+                element={
+                  <RequireAuth>
+                    <Home />
+                  </RequireAuth>
+                }
+              />
+              <Route path="/loan-confirmation" element={<LoanConfirmation />} />
+              <Route
+                path="/profile"
+                element={
+                  <RequireAuth>
+                    <ProfileScreen />
+                  </RequireAuth>
+                }
+              />
+              <Route path="/my-contract" element={<MyContract />} />
+              <Route
+                path="/profile-detail"
+                element={
+                  <RequireAuth>
+                    <ProfileDetail />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/wallet"
+                element={
+                  <RequireAuth>
+                    <WalletScreen />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/transaction-history"
+                element={<TransactionHistory />}
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Router>
+        </LoadingProvider>
+      </AdminProvider>
     </AuthProvider>
   );
 }

@@ -33,7 +33,7 @@ const BottomNavigation = ({ activePage }) => {
 
       <div
         className={`nav-item ${activePage === "home" ? "active" : ""}`}
-        onClick={() => handleNavigation("/home")}
+        onClick={() => handleNavigation("/")}
       >
         <div className="nav-icon">
           <svg fill="none" viewBox="0 0 24 24" width="22" height="22">

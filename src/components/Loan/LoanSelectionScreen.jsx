@@ -25,27 +25,41 @@ const LoanSelectionScreen = () => {
   const overlayRef = useRef(null);
   const [_documentsUploaded, setDocumentsUploaded] = useState(false);
   const dropdownRef = useRef(null);
+  const [settings, setSettings] = useState({
+    interestRate: 0.01,
+    maxLoanAmount: 500000000,
+    maxLoanTerm: 36,
+  });
+
+  // Fetch settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const response = await axios.get(`${API_URL}/api/settings`);
+        if (response.data.success) {
+          setSettings(response.data.settings);
+        }
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+      }
+    };
+
+    fetchSettings();
+  }, []);
 
   // Calculate the first payment based on correct formula
-  const calculatePayment = (principal, termMonths, annualInterestRate) => {
+  const calculatePayment = (principal, termMonths) => {
     try {
-      // Convert from formatted string (with dots) to number if needed
       let amount = principal;
       if (typeof principal === "string") {
-        // Remove dots and convert to number
         amount = parseFloat(principal.replace(/\./g, ""));
       }
 
-      // Convert annual interest rate to monthly
-      const monthlyInterestRate = annualInterestRate / 12;
-
-      // Calculate monthly interest payment
+      // Use settings.interestRate instead of hardcoded value
+      const monthlyInterestRate = settings.interestRate;
       const monthlyInterestPayment = amount * monthlyInterestRate;
-
-      // Calculate principal payment per month
       const monthlyPrincipalPayment = amount / termMonths;
-
-      // Total monthly payment
       const totalMonthlyPayment =
         monthlyPrincipalPayment + monthlyInterestPayment;
 
@@ -86,13 +100,21 @@ const LoanSelectionScreen = () => {
 
     // Check if amount is within range
     if (numericValue < 20000000) {
-      setErrorMessage("Hạn mức vay trong khoảng 20tr đến 500tr đồng.");
+      setErrorMessage(
+        `Hạn mức vay trong khoảng 20tr đến ${formatCurrency(
+          settings.maxLoanAmount.toString()
+        )} đồng.`
+      );
       setShowError(true);
       return false;
     }
 
-    if (numericValue > 500000000) {
-      setErrorMessage("Hạn mức vay trong khoảng 20tr đến 500tr đồng.");
+    if (numericValue > settings.maxLoanAmount) {
+      setErrorMessage(
+        `Hạn mức vay trong khoảng 20tr đến ${formatCurrency(
+          settings.maxLoanAmount.toString()
+        )} đồng.`
+      );
       setShowError(true);
       return false;
     }
@@ -134,18 +156,11 @@ const LoanSelectionScreen = () => {
       // Term in months
       const termMonths = parseInt(loanTerm);
 
-      // Annual interest rate (1%)
-      const annualInterestRate = 0.12;
-
       if (isNaN(principal) || isNaN(termMonths) || termMonths === 0) {
         return "0";
       }
 
-      const payment = calculatePayment(
-        principal,
-        termMonths,
-        annualInterestRate
-      );
+      const payment = calculatePayment(principal, termMonths);
       return formatCurrency(payment);
     } catch (error) {
       console.error("Error calculating first payment:", error);
@@ -156,50 +171,33 @@ const LoanSelectionScreen = () => {
   // Generate payment schedule data
   const generatePaymentSchedule = () => {
     const payments = [];
-
-    // Get loan details
     const amount = loanAmount ? parseFloat(loanAmount.replace(/\./g, "")) : 0;
     const termMonths = parseInt(loanTerm);
-    const annualInterestRate = 0.12; // 12%
-    const monthlyInterestRate = annualInterestRate / 12;
+    const monthlyInterestRate = settings.interestRate;
 
-    // Lấy ngày hiện tại
     const today = new Date();
     const currentDay = today.getDate();
-    const currentMonth = today.getMonth(); // 0-11
+    const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
 
-    // Generate payment schedule
     for (let i = 1; i <= termMonths; i++) {
-      // Tính toán ngày trả nợ kỳ này (ngày giữ nguyên, tháng tăng dần)
       const paymentDate = new Date(currentYear, currentMonth + i, currentDay);
       const paymentDay = paymentDate.getDate();
-      const paymentMonth = paymentDate.getMonth() + 1; // Chuyển về 1-12
-
-      // Định dạng ngày trả nợ
+      const paymentMonth = paymentDate.getMonth() + 1;
       const dateDisplay = `${paymentDay} - ${paymentMonth}`;
 
-      // Calculate remaining principal for this month
       const remainingPrincipal = amount - (amount / termMonths) * (i - 1);
-
-      // Calculate interest for this month
       const interestPayment = remainingPrincipal * monthlyInterestRate;
-
-      // Calculate principal payment for this month
       const principalPayment = amount / termMonths;
-
-      // Total payment for this month
       const totalPayment = principalPayment + interestPayment;
 
-      const payment = {
+      payments.push({
         ki: `Kì thứ ${i}`,
         amount: Math.round(totalPayment),
         date: dateDisplay,
         principal: Math.round(principalPayment),
         interest: Math.round(interestPayment),
-      };
-
-      payments.push(payment);
+      });
     }
 
     return payments;
@@ -469,6 +467,15 @@ const LoanSelectionScreen = () => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
+    // Generate loan term options based on settings.maxLoanTerm
+    const generateLoanTermOptions = () => {
+      const terms = [];
+      for (let i = 6; i <= settings.maxLoanTerm; i += 6) {
+        terms.push(i.toString());
+      }
+      return terms;
+    };
+
     useEffect(() => {
       function handleClickOutside(event) {
         if (
@@ -539,7 +546,7 @@ const LoanSelectionScreen = () => {
               border: "1px solid #ddd",
             }}
           >
-            {options.map((option) => (
+            {generateLoanTermOptions().map((option) => (
               <div
                 key={option}
                 className={option === value ? "active" : ""}
@@ -609,7 +616,9 @@ const LoanSelectionScreen = () => {
             />
             <div className="loan-range">
               <span>Từ 20.000.000đ</span>
-              <span>Đến 500.000.000đ</span>
+              <span>
+                Đến {formatCurrency(settings.maxLoanAmount.toString())}đ
+              </span>
             </div>
           </div>
 
@@ -659,7 +668,9 @@ const LoanSelectionScreen = () => {
 
           <div className="payment-info-row">
             <span className="payment-info-label">Lãi suất hàng tháng</span>
-            <span className="payment-info-value">1% (12%/năm)</span>
+            <span className="payment-info-value">
+              {settings.interestRate.toFixed(0)}%
+            </span>
           </div>
 
           <div className="loan-details-link">
